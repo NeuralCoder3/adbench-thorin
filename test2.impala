@@ -1,0 +1,12 @@
+extern "C" {
+    fn println(i32) -> ();
+}
+
+fn main(a : f32 ) -> i32 {
+    let n = 2;
+    let a = [n : i32]; //indefinite
+    //let a = [0, .. n]; /definite
+
+    println(a(0));
+    0
+}
