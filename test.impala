@@ -5,6 +5,7 @@ extern "C" {
     fn log(f64) -> (f64);
     fn exp(f64) -> (f64);
     fn logf(f32) -> (f32);
+    fn lgamma(f64) -> (f64);
 }
 
 fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
@@ -95,13 +96,11 @@ fn logsumexp( n: i32, x : &[f64] ) -> f64
 
 fn log_gamma_distrib( a: f64, p: i32) -> f64
 {
-    //let PI : f64 = 3.14159;
-    //val mut out = 0.25 * (p as f64) * ((p as f64) - 1) * log(PI);
-
-    val out = 0.0;
+    let PI : f64 = 3.14159;
+    let mut out = 0.25 * ((p * (p - 1)) as f64) * log(PI);
 
     for j in range(1, p+1) {
-        //out += lgamma(a + 0.5 * (1 - j));
+        out += lgamma(a + 0.5 * ((1 - j) as f64));
     }
 
     out
@@ -118,9 +117,9 @@ fn log_wishart_prior( p: i32, k: i32,
     let n = p + wishartM + 1;
     let icf_sz = p * (p + 1) / 2;
 
-    let C = n * p * (log(wishartGamma) - 0.5 * log(2.0)) - log_gamma_distrib(0.5 * n, p);
+    let C = (n as f64) * (p as f64) * (log(wishartGamma) - 0.5 * log(2.0)) - log_gamma_distrib(0.5 * (n as f64), p);
 
-    let mut out = 0;
+    let mut out = 0.0;
     
     for ik in range(0, k) {
         
@@ -129,10 +128,10 @@ fn log_wishart_prior( p: i32, k: i32,
     
         let frobenius = sqnorm(p, currentQdiags) + sqnorm(icf_sz - p, currentIfc);
         out += 0.5 * wishartGamma * wishartGamma * (frobenius)
-            -wishartM * sum_qs[ik];
+            -(wishartM as f64) * sum_qs(ik);
     }
 
-    out - k * C
+    out - (k as f64) * C
 }
 
 fn gmm(d: i32, k: i32, n: i32,
@@ -185,7 +184,7 @@ fn main() -> i32 {
     let n = 1000;
 
     let wishartM: i32 = 0;
-    let wishartGamma: f64 = 0.0;
+    let wishartGamma: f64 = 1.0;
 
     let alphas: &mut[f64] = ~[k:f64];
     let means: &mut[f64] = ~[d*k:f64];
@@ -197,36 +196,3 @@ fn main() -> i32 {
 
     2
 }
-
-
-
-    //let a : &[i32] = [4:i32];
-    //let b : &[i32] = [4:i32];
-
-    //let a : &[i32] = [1, 2, 3, 4];
-    //let b : &[i32] = [1, 2, 3, 4];
-
-
-
-/*
-fn f(x: &[i32]) -> i32 {
-
-    2
-}*/
-/*
-fn range(mut a: int, b: int, body: fn(int) -> ()) -> () {
-    while a < b {
-        body(a);
-        a += 1;
-    }
-}
-
-fn dot(a: &[i32], b: &[i32], n: i32) -> i32 {
-    let mut sum = 0;
-
-    for i in range(0, n) {
-        sum += a(i) * b(i);
-    }
-
-    sum
-}*/
