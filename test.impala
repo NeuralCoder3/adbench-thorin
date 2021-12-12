@@ -6,7 +6,14 @@ extern "C" {
     fn exp(f64) -> (f64);
     fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
+    fn read_gmm_size(
+        file: &[u8],
+        d: &mut i32,
+        k: &mut i32,
+        n: &mut i32
+    ) -> ();
     fn read_gmm(
+        file: &[u8],
         d: &mut i32,
         k: &mut i32,
         n: &mut i32,
@@ -34,11 +41,14 @@ fn preprocess_qs( d: i32, k: i32,
 
     for ik in range(0, k) {
         sum_qs(ik) = 0.0;
-        for id in range(0, d) {
-            let q = icf(ik * icf_sz + id);
-            sum_qs(ik) = sum_qs(ik) + q;
-            Qdiags(ik * d + id) = exp(q);
-        }
+
+
+
+        /*for id in range(0, d) {
+        //    let q = icf(ik * icf_sz + id);
+        //    sum_qs(ik) = sum_qs(ik) + q;
+        //    Qdiags(ik * d + id) = exp(q);
+        }*/
     }
 }
 
@@ -163,13 +173,14 @@ fn gmm(d: i32, k: i32, n: i32,
     let Qxcentered : &mut[f64] = ~[d:f64];
     let main_term : &mut[f64] = ~[k:f64];
 
+
     preprocess_qs(d, k, icf, sum_qs, Qdiags);
 
     let mut slse = 0.0;
 
     for ix in range(0, n) {
+        let currentX : &[f64] =  &x(ix * d) as &[f64];
         for ik in range(0, k) {
-            let currentX : &[f64] =  &x(ix * d) as &[f64];
             let currentQdiags : &[f64] =  &Qdiags(ik * d) as &[f64];
             let currentMeans : &[f64] =  &means(ik * d) as &[f64];
             let currentIfc : &[f64] =  &icf(ik * icf_sz + d) as &[f64];
@@ -189,14 +200,17 @@ fn gmm(d: i32, k: i32, n: i32,
     err
 }
 
-fn main() -> i32 {
+
+fn runGmmBenchmark(file: &[u8]) -> (){
     let mut d = 2;
     let mut k = 5;
     let mut n = 1000;
 
-    let mut d2 = 2;
-    let mut k2 = 5;
-    let mut n2 = 1000;
+    let dp = &mut d;
+    let kp = &mut k;
+    let np = &mut n;
+
+    read_gmm_size(file, dp, kp, np);
 
 
     let mut wishartM: i32 = 0;
@@ -207,27 +221,23 @@ fn main() -> i32 {
     let icf: &mut[f64] = ~[k * ( d + d * ( d - 1 ) / 2 ):f64];
     let x : &mut[f64] = ~[n*d:f64];
 
-    read_gmm(&mut d2, &mut k2, &mut n2, &mut wishartM, &mut wishartGamma, alphas, means, icf, x);
+    let wishartMp = &mut wishartM;
+    let wishartGammap = &mut wishartGamma;
 
-    printInteger(d2);
-    printInteger(k2);
-    printInteger(n2);
+    read_gmm(file, dp, kp, np, wishartMp, wishartGammap, alphas, means, icf, x);
 
-    /*let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x );
-
-    printDouble(result);
-*/
-    2
-}
-
-
-
-
-
-
-/*
-    read_gmm(&mut d, &mut k, &mut n);
+    printDouble(means(0));
 
     printInteger(d);
     printInteger(k);
-    printInteger(n);*/
+    printInteger(n);
+    let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x );
+
+    //printDouble(result);
+}
+
+fn main() -> i32 {
+    runGmmBenchmark("gmm_d2_K5.txt");
+    0
+}
+
