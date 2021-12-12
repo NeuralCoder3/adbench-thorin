@@ -1,25 +1,232 @@
 extern "C" {
-    fn println(i32) -> ();
+    fn printFloat(f32) -> ();
+    fn printDouble(f64) -> ();
+    fn printInteger(i32) -> ();
+    fn log(f64) -> (f64);
+    fn exp(f64) -> (f64);
+    fn logf(f32) -> (f32);
 }
 
-fn sq(a: f32) -> f32 {
-    a*a
+fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
+    while b < e {
+        body(b++)
+    }
 }
-fn f(a: f32) -> f32 {
-    a+sq(a)
+
+fn preprocess_qs( d: i32, k: i32,
+    icf : &[f64],
+    sum_qs : &mut[f64],
+    Qdiags : &mut[f64]) -> ()
+{
+    let icf_sz = d * (d + 1) / 2;
+
+    for ik in range(0, k) {
+        sum_qs(ik) = 0.0;
+        for id in range(0, d) {
+            let q = icf(ik * icf_sz + id);
+            sum_qs(ik) = sum_qs(ik) + q;
+            Qdiags(ik * d + id) = exp(q);
+        }
+    }
 }
-fn main(a : f32 ) -> i32 {
-    let Df = rev_diff(f);
-    let yp = Df(a);
-    let y  = yp(0);
-    let yP = yp(1);
-    let r = y as i32;
-    let q = yP(1f) as i32;
-    println(f(1f) as i32);
-    println(r as i32);
-    println(q as i32);
-    // old: x³, 3x²
-    // x+x², 1+2x
-    // 6005
-    0
+
+fn subtract( d: i32,
+    x: &[f64],
+    y: &[f64],
+    out: &mut[f64]) -> ()
+{
+
+    for id in range(0, d) {
+        out(id) = x(id) - y(id);
+    }
 }
+
+fn Qtimesx( d: i32,
+    Qdiag: &[f64],
+    ltri: &[f64], // strictly lower triangular part
+    x: &[f64],
+    out: &mut[f64]) -> ()
+{
+
+    for id in range(0, d) {
+        out(id) = Qdiag(id) * x(id);
+    }
+
+    let mut Lparamsidx = 0;
+
+    for i in range(0, d) {
+        for j in range(i + 1, d) {
+            out(j) = out(j) + ltri(Lparamsidx) * x(i);
+            Lparamsidx++;
+        }
+    }
+}
+
+fn sqnorm(d: i32, v : &[f64]) -> (f64){
+    let mut sum = 0.0;
+    for i in range(0, d) {
+        sum += v(i) * v(i);
+    }
+
+    sum
+}
+
+fn arr_max(n: i32,x : &[f64] ) -> f64
+{
+    let mut m = x(0);
+    for i in range(1, n) {
+        if (m < x(i)){
+            m = x(i);
+        }
+    }
+
+    m
+}
+
+fn logsumexp( n: i32, x : &[f64] ) -> f64
+{
+    let mx = arr_max(n, x);
+    let mut semx = 0.0;
+    for i in range(0, n) {
+        semx += exp(x(i) - mx);
+    }
+    log(semx) + mx
+}
+
+fn log_gamma_distrib( a: f64, p: i32) -> f64
+{
+    //let PI : f64 = 3.14159;
+    //val mut out = 0.25 * (p as f64) * ((p as f64) - 1) * log(PI);
+
+    val out = 0.0;
+
+    for j in range(1, p+1) {
+        //out += lgamma(a + 0.5 * (1 - j));
+    }
+
+    out
+}
+
+
+fn log_wishart_prior( p: i32, k: i32,
+    wishartM: i32,
+    wishartGamma: f64,
+    sum_qs: &[f64],
+    Qdiags: &[f64],
+    icf: &[f64]) -> f64
+{
+    let n = p + wishartM + 1;
+    let icf_sz = p * (p + 1) / 2;
+
+    let C = n * p * (log(wishartGamma) - 0.5 * log(2.0)) - log_gamma_distrib(0.5 * n, p);
+
+    let mut out = 0;
+    
+    for ik in range(0, k) {
+        
+        let currentQdiags : &[f64] =  &Qdiags(ik * p) as &[f64];
+        let currentIfc : &[f64] =  &icf(ik * icf_sz + p) as &[f64];
+    
+        let frobenius = sqnorm(p, currentQdiags) + sqnorm(icf_sz - p, currentIfc);
+        out += 0.5 * wishartGamma * wishartGamma * (frobenius)
+            -wishartM * sum_qs[ik];
+    }
+
+    out - k * C
+}
+
+fn gmm(d: i32, k: i32, n: i32,
+            wishartM: i32,
+            wishartGamma: f64,
+           alphas : &[f64],
+           means : &[f64],
+           icf : &[f64]) -> f64{
+
+    let PI : f64 = 3.14159;
+    let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
+    let icf_sz = d * (d + 1) / 2;
+
+    let Qdiags : &mut[f64] = ~[d*k:f64];
+    let sum_qs : &mut[f64] = ~[k:f64];
+    let xcentered : &mut[f64] = ~[d:f64];
+    let Qxcentered : &mut[f64] = ~[d:f64];
+    let main_term : &mut[f64] = ~[k:f64];
+    let x : &mut[f64] = ~[n*d:f64];
+
+    preprocess_qs(d, k, icf, sum_qs, Qdiags);
+
+    let mut slse = 0.0;
+
+    for ix in range(0, n) {
+        for ik in range(0, k) {
+            let currentX : &[f64] =  &x(ix * d) as &[f64];
+            let currentQdiags : &[f64] =  &Qdiags(ik * d) as &[f64];
+            let currentMeans : &[f64] =  &means(ik * d) as &[f64];
+            let currentIfc : &[f64] =  &icf(ik * icf_sz + d) as &[f64];
+
+            subtract(d, currentX, currentMeans, xcentered);
+            Qtimesx(d, currentQdiags, currentIfc, xcentered, Qxcentered);
+            main_term(ik) = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm(d, Qxcentered);
+        }
+        slse += logsumexp(k, main_term);
+    }
+
+    let lse_alphas = logsumexp(k, alphas);
+
+    let mut err = CONSTANT + slse - (n as f64) * lse_alphas;
+    err += log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
+
+    err
+}
+
+fn main() -> i32 {
+    let d = 2;
+    let k = 5;
+    let n = 1000;
+
+    let wishartM: i32 = 0;
+    let wishartGamma: f64 = 0.0;
+
+    let alphas: &mut[f64] = ~[k:f64];
+    let means: &mut[f64] = ~[d*k:f64];
+    let icf: &mut[f64] = ~[k * ( d + d * ( d - 1 ) / 2 ):f64];
+
+    let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf);
+
+    printDouble(result);
+
+    2
+}
+
+
+
+    //let a : &[i32] = [4:i32];
+    //let b : &[i32] = [4:i32];
+
+    //let a : &[i32] = [1, 2, 3, 4];
+    //let b : &[i32] = [1, 2, 3, 4];
+
+
+
+/*
+fn f(x: &[i32]) -> i32 {
+
+    2
+}*/
+/*
+fn range(mut a: int, b: int, body: fn(int) -> ()) -> () {
+    while a < b {
+        body(a);
+        a += 1;
+    }
+}
+
+fn dot(a: &[i32], b: &[i32], n: i32) -> i32 {
+    let mut sum = 0;
+
+    for i in range(0, n) {
+        sum += a(i) * b(i);
+    }
+
+    sum
+}*/
