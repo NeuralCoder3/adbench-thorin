@@ -6,6 +6,17 @@ extern "C" {
     fn exp(f64) -> (f64);
     fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
+    fn read_gmm(
+        d: &mut i32,
+        k: &mut i32,
+        n: &mut i32,
+        wishartM: &mut i32,
+        wishartGamma: &mut f64,
+        alphas: &mut[f64],
+        means: &mut[f64],
+        icf: &mut[f64],
+        x: &mut[f64],
+    ) -> ();
 }
 
 fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
@@ -135,11 +146,12 @@ fn log_wishart_prior( p: i32, k: i32,
 }
 
 fn gmm(d: i32, k: i32, n: i32,
-            wishartM: i32,
-            wishartGamma: f64,
-           alphas : &[f64],
-           means : &[f64],
-           icf : &[f64]) -> f64{
+        wishartM: i32,
+        wishartGamma: f64,
+        alphas : &[f64],
+        means : &[f64],
+        icf : &[f64],
+        x : &[f64]) -> f64{
 
     let PI : f64 = 3.14159;
     let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
@@ -150,7 +162,6 @@ fn gmm(d: i32, k: i32, n: i32,
     let xcentered : &mut[f64] = ~[d:f64];
     let Qxcentered : &mut[f64] = ~[d:f64];
     let main_term : &mut[f64] = ~[k:f64];
-    let x : &mut[f64] = ~[n*d:f64];
 
     preprocess_qs(d, k, icf, sum_qs, Qdiags);
 
@@ -179,20 +190,44 @@ fn gmm(d: i32, k: i32, n: i32,
 }
 
 fn main() -> i32 {
-    let d = 2;
-    let k = 5;
-    let n = 1000;
+    let mut d = 2;
+    let mut k = 5;
+    let mut n = 1000;
 
-    let wishartM: i32 = 0;
-    let wishartGamma: f64 = 1.0;
+    let mut d2 = 2;
+    let mut k2 = 5;
+    let mut n2 = 1000;
+
+
+    let mut wishartM: i32 = 0;
+    let mut wishartGamma: f64 = 1.0;
 
     let alphas: &mut[f64] = ~[k:f64];
     let means: &mut[f64] = ~[d*k:f64];
     let icf: &mut[f64] = ~[k * ( d + d * ( d - 1 ) / 2 ):f64];
+    let x : &mut[f64] = ~[n*d:f64];
 
-    let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf);
+    read_gmm(&mut d2, &mut k2, &mut n2, &mut wishartM, &mut wishartGamma, alphas, means, icf, x);
+
+    printInteger(d2);
+    printInteger(k2);
+    printInteger(n2);
+
+    /*let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x );
 
     printDouble(result);
-
+*/
     2
 }
+
+
+
+
+
+
+/*
+    read_gmm(&mut d, &mut k, &mut n);
+
+    printInteger(d);
+    printInteger(k);
+    printInteger(n);*/
