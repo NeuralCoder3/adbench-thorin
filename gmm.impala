@@ -42,13 +42,11 @@ fn preprocess_qs( d: i32, k: i32,
     for ik in range(0, k) {
         sum_qs(ik) = 0.0;
 
-        //*
         for id in range(0, d) {
-        //    let q = icf(ik * icf_sz + id);
-        //    sum_qs(ik) = sum_qs(ik) + q;
-        //    Qdiags(ik * d + id) = exp(q);
+            let q = icf(ik * icf_sz + id);
+            sum_qs(ik) = sum_qs(ik) + q;
+            Qdiags(ik * d + id) = exp(q);
         }
-        //*/
     }
 }
 
