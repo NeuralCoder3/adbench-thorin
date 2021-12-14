@@ -231,7 +231,7 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 }
 
 fn main() -> i32 {
-    runGmmBenchmark("gmm_d2_K5.txt");
+    runGmmBenchmark("benchmark/gmm_d2_K5.txt");
     0
 }
 
