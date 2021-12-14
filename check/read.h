@@ -1,5 +1,11 @@
 #pragma once
 
+#include <cstring>
+#include <string>
+#include <vector>
+#include "defs.h"
+
+
 void read_gmm_instance(const std::string& fn,
                        int* d, int* k, int* n,
                        std::vector<double>& alphas,

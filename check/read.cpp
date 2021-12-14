@@ -1,4 +1,6 @@
+#include "read.h"
 
+using namespace std;
 
 void read_gmm_instance(const string& fn,
                        int* d, int* k, int* n,
@@ -12,7 +14,6 @@ void read_gmm_instance(const string& fn,
   FILE* fid = fopen(fn.c_str(), "r");
 
   if (!fid) {
-    std::cerr << "Cannot open " << fn << std::endl;
     throw "oiks";
   }
 
