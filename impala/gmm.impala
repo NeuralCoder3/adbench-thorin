@@ -220,13 +220,17 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     read_gmm(file, dp, kp, np, wishartMp, wishartGammap, alphas, means, icf, x);
 
-    printDouble(means(0));
 
-    printInteger(d);
-    printInteger(k);
-    printInteger(n);
     let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x );
-    let derivate = rev_diff(gmm);
+    /*
+    let diff = rev_diff(gmm);
+
+    let value = diff(0);
+    let _, _, _, _, _, alphas_d, means_d, icf_d = diff(1)(1.0);
+
+
+
+    */
 
     printDouble(result);
 }
