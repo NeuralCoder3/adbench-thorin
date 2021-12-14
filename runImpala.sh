@@ -1,3 +1,4 @@
+#!/bin/bash
 . ../project.sh
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../runtime/build/lib
 impala impala/gmm.impala --emit-thorin -o build/out &&
