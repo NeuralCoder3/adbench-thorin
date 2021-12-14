@@ -3,506 +3,574 @@ source_filename = "build/out"
 target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
 target triple = "arm64-apple-darwin21.1.0"
 
-@_17793 = internal constant [24 x i8] c"benchmark/gmm_d2_K5.txt\00"
+@"%_32397" = global [24 x i8] c"benchmark/gmm_d2_K5.txt\00"
 
-define i32 @main() local_unnamed_addr {
-main:
-  %b_17930 = alloca i32, align 4
-  %b_18085 = alloca i32, align 4
-  %b_18078 = alloca i32, align 4
-  %Lparamsidx_18099 = alloca i32, align 4
-  %b_18046 = alloca i32, align 4
-  %b_18004 = alloca i32, align 4
-  %b_17997 = alloca i32, align 4
-  %b_18370 = alloca i32, align 4
-  %out_18398 = alloca double, align 8
-  %b_18334 = alloca i32, align 4
-  %out_18361 = alloca double, align 8
-  %err_18307 = alloca double, align 8
-  %b_17989 = alloca i32, align 4
-  %slse_18291 = alloca double, align 8
-  %b_17922 = alloca i32, align 4
-  %wishartGammap_17813 = alloca double, align 8
-  %wishartMp_17810 = alloca i32, align 4
-  %np_17769 = alloca i32, align 4
-  %kp_17766 = alloca i32, align 4
-  %dp_17763 = alloca i32, align 4
-  store i32 2, i32* %dp_17763, align 4
-  store i32 5, i32* %kp_17766, align 4
-  store i32 1000, i32* %np_17769, align 4
-  call void @read_gmm_size([0 x i8]* bitcast ([24 x i8]* @_17793 to [0 x i8]*), i32* nonnull %dp_17763, i32* nonnull %kp_17766, i32* nonnull %np_17769)
-  store i32 0, i32* %wishartMp_17810, align 4
-  store double 1.000000e+00, double* %wishartGammap_17813, align 8
-  %0 = load i32, i32* %kp_17766, align 4
+define i32 @main() {
+main_start:
+  %"%out_33353" = alloca double, align 8
+  %"%out_33346" = alloca double, align 8
+  %"%Lparamsidx_34149" = alloca i32, align 4
+  %"%slse_33262" = alloca double, align 8
+  %"%wishartGamma_32536" = alloca double, align 8
+  %"%wishartM_32528" = alloca i32, align 4
+  %"%n_32346" = alloca i32, align 4
+  %"%k_32335" = alloca i32, align 4
+  %"%d_32324" = alloca i32, align 4
+  br label %main
+
+main:                                             ; preds = %main_start
+  store i32 2, i32* %"%d_32324", align 4
+  store i32 5, i32* %"%k_32335", align 4
+  store i32 1000, i32* %"%n_32346", align 4
+  call void @read_gmm_size([0 x i8]* bitcast ([24 x i8]* @"%_32397" to [0 x i8]*), i32* %"%d_32324", i32* %"%k_32335", i32* %"%n_32346")
+  br label %read_gmm_size_cont
+
+read_gmm_size_cont:                               ; preds = %main
+  store i32 0, i32* %"%wishartM_32528", align 4
+  store double 1.000000e+00, double* %"%wishartGamma_32536", align 8
+  %0 = load i32, i32* %"%k_32335", align 4
   %1 = zext i32 %0 to i64
-  %2 = shl nuw nsw i64 %1, 3
-  %3 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %2)
-  %4 = bitcast [0 x i8]* %3 to [0 x double]*
-  %5 = load i32, i32* %dp_17763, align 4
-  %6 = load i32, i32* %kp_17766, align 4
-  %7 = mul nsw i32 %5, %6
-  %8 = zext i32 %7 to i64
-  %9 = shl nuw nsw i64 %8, 3
-  %10 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %9)
-  %11 = bitcast [0 x i8]* %10 to [0 x double]*
-  %12 = load i32, i32* %kp_17766, align 4
-  %13 = load i32, i32* %dp_17763, align 4
-  %14 = add nsw i32 %13, -1
-  %15 = mul nsw i32 %13, %14
-  %16 = sdiv i32 %15, 2
-  %17 = add nsw i32 %13, %16
-  %18 = mul nsw i32 %12, %17
-  %19 = zext i32 %18 to i64
-  %20 = shl nuw nsw i64 %19, 3
-  %21 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %20)
-  %22 = bitcast [0 x i8]* %21 to [0 x double]*
-  %23 = load i32, i32* %np_17769, align 4
-  %24 = load i32, i32* %dp_17763, align 4
-  %25 = mul nsw i32 %23, %24
-  %26 = zext i32 %25 to i64
-  %27 = shl nuw nsw i64 %26, 3
-  %28 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %27)
-  %29 = bitcast [0 x i8]* %28 to [0 x double]*
-  call void @read_gmm([0 x i8]* bitcast ([24 x i8]* @_17793 to [0 x i8]*), i32* nonnull %dp_17763, i32* nonnull %kp_17766, i32* nonnull %np_17769, i32* nonnull %wishartMp_17810, double* nonnull %wishartGammap_17813, [0 x double]* %4, [0 x double]* %11, [0 x double]* %22, [0 x double]* %29)
-  %30 = bitcast [0 x i8]* %10 to double*
-  %31 = load double, double* %30, align 8
-  call void @printDouble(double %31)
-  %32 = load i32, i32* %dp_17763, align 4
-  call void @printInteger(i32 %32)
-  %33 = load i32, i32* %kp_17766, align 4
-  call void @printInteger(i32 %33)
-  %34 = load i32, i32* %np_17769, align 4
-  call void @printInteger(i32 %34)
-  %35 = load i32, i32* %dp_17763, align 4
-  %36 = load i32, i32* %kp_17766, align 4
-  %37 = load i32, i32* %np_17769, align 4
-  %38 = load i32, i32* %wishartMp_17810, align 4
-  %39 = load double, double* %wishartGammap_17813, align 8
-  %40 = call double @log(double 6.283180e+00)
-  %41 = mul nsw i32 %35, %36
-  %42 = zext i32 %41 to i64
-  %43 = shl nuw nsw i64 %42, 3
-  %44 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %43)
-  %45 = bitcast [0 x i8]* %44 to [0 x double]*
-  %46 = zext i32 %36 to i64
-  %47 = shl nuw nsw i64 %46, 3
-  %48 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %47)
-  %49 = bitcast [0 x i8]* %48 to [0 x double]*
-  %50 = zext i32 %35 to i64
-  %51 = shl nuw nsw i64 %50, 3
-  %52 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %51)
-  %53 = bitcast [0 x i8]* %52 to [0 x double]*
-  %54 = zext i32 %35 to i64
-  %55 = shl nuw nsw i64 %54, 3
+  %2 = mul i64 %1, 8
+  %3 = add i64 0, %2
+  %4 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %3)
+  %5 = bitcast [0 x i8]* %4 to [0 x double]*
+  %6 = load i32, i32* %"%d_32324", align 4
+  %7 = load i32, i32* %"%k_32335", align 4
+  %8 = mul nsw i32 %6, %7
+  %9 = zext i32 %8 to i64
+  %10 = mul i64 %9, 8
+  %11 = add i64 0, %10
+  %12 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %11)
+  %13 = bitcast [0 x i8]* %12 to [0 x double]*
+  %14 = load i32, i32* %"%k_32335", align 4
+  %15 = load i32, i32* %"%d_32324", align 4
+  %16 = load i32, i32* %"%d_32324", align 4
+  %17 = load i32, i32* %"%d_32324", align 4
+  %18 = add nsw i32 -1, %17
+  %19 = mul nsw i32 %16, %18
+  %20 = sdiv i32 %19, 2
+  %21 = add nsw i32 %15, %20
+  %22 = mul nsw i32 %14, %21
+  %23 = zext i32 %22 to i64
+  %24 = mul i64 %23, 8
+  %25 = add i64 0, %24
+  %26 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %25)
+  %27 = bitcast [0 x i8]* %26 to [0 x double]*
+  %28 = load i32, i32* %"%n_32346", align 4
+  %29 = load i32, i32* %"%d_32324", align 4
+  %30 = mul nsw i32 %28, %29
+  %31 = zext i32 %30 to i64
+  %32 = mul i64 %31, 8
+  %33 = add i64 0, %32
+  %34 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %33)
+  %35 = bitcast [0 x i8]* %34 to [0 x double]*
+  call void @read_gmm([0 x i8]* bitcast ([24 x i8]* @"%_32397" to [0 x i8]*), i32* %"%d_32324", i32* %"%k_32335", i32* %"%n_32346", i32* %"%wishartM_32528", double* %"%wishartGamma_32536", [0 x double]* %5, [0 x double]* %13, [0 x double]* %27, [0 x double]* %35)
+  br label %read_gmm_cont
+
+read_gmm_cont:                                    ; preds = %read_gmm_size_cont
+  %36 = getelementptr inbounds [0 x double], [0 x double]* %13, i64 0, i64 0
+  %37 = load double, double* %36, align 8
+  call void @printDouble(double %37)
+  br label %printDouble_cont
+
+printDouble_cont:                                 ; preds = %read_gmm_cont
+  %38 = load i32, i32* %"%d_32324", align 4
+  call void @printInteger(i32 %38)
+  br label %printInteger_cont
+
+printInteger_cont:                                ; preds = %printDouble_cont
+  %39 = load i32, i32* %"%k_32335", align 4
+  call void @printInteger(i32 %39)
+  br label %printInteger_cont1
+
+printInteger_cont1:                               ; preds = %printInteger_cont
+  %40 = load i32, i32* %"%n_32346", align 4
+  call void @printInteger(i32 %40)
+  br label %printInteger_cont2
+
+printInteger_cont2:                               ; preds = %printInteger_cont1
+  %41 = load i32, i32* %"%d_32324", align 4
+  %42 = load i32, i32* %"%k_32335", align 4
+  %43 = load i32, i32* %"%n_32346", align 4
+  %44 = load i32, i32* %"%wishartM_32528", align 4
+  %45 = load double, double* %"%wishartGamma_32536", align 8
+  %46 = call double @log(double 6.283180e+00)
+  br label %log_cont
+
+log_cont:                                         ; preds = %printInteger_cont2
+  %log = phi double [ %46, %printInteger_cont2 ]
+  %47 = zext i32 %42 to i64
+  %48 = zext i32 %41 to i64
+  %49 = mul nsw i32 %42, %41
+  %50 = zext i32 %49 to i64
+  %51 = add nsw i32 1, %41
+  %52 = mul nsw i32 %41, %51
+  %53 = sdiv i32 %52, 2
+  %54 = mul i64 %50, 8
+  %55 = add i64 0, %54
   %56 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %55)
   %57 = bitcast [0 x i8]* %56 to [0 x double]*
-  %58 = zext i32 %36 to i64
-  %59 = shl nuw nsw i64 %58, 3
+  %58 = mul i64 %47, 8
+  %59 = add i64 0, %58
   %60 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %59)
   %61 = bitcast [0 x i8]* %60 to [0 x double]*
-  store i32 0, i32* %b_17922, align 4
-  %62 = add nsw i32 %35, 1
-  %63 = mul nsw i32 %35, %62
-  %icf_sz = sdiv i32 %63, 2
-  %64 = icmp sgt i32 %36, 0
-  br i1 %64, label %expr_true40.preheader, label %expr_false
+  %62 = mul i64 %48, 8
+  %63 = add i64 0, %62
+  %64 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %63)
+  %65 = bitcast [0 x i8]* %64 to [0 x double]*
+  %66 = mul i64 %48, 8
+  %67 = add i64 0, %66
+  %68 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %67)
+  %69 = bitcast [0 x i8]* %68 to [0 x double]*
+  %70 = mul i64 %47, 8
+  %71 = add i64 0, %70
+  %72 = call [0 x i8]* @anydsl_alloc(i32 0, i64 %71)
+  %73 = bitcast [0 x i8]* %72 to [0 x double]*
+  %74 = sdiv i32 %52, 2
+  br label %while_head
 
-expr_true40.preheader:                            ; preds = %main
-  %65 = icmp sgt i32 %35, 0
-  br label %expr_true40
+while_head:                                       ; preds = %eta_while_head, %log_cont
+  %75 = phi i32 [ %94, %eta_while_head ], [ 0, %log_cont ]
+  %76 = icmp slt i32 %75, %42
+  br i1 %76, label %while_body, label %preprocess_qs_cont
 
-expr_false:                                       ; preds = %expr_false42, %main
-  store double 0.000000e+00, double* %slse_18291, align 8
-  store i32 0, i32* %b_17989, align 4
-  %66 = icmp sgt i32 %37, 0
-  br i1 %66, label %expr_true20.preheader, label %expr_false4
+while_body:                                       ; preds = %while_head
+  %77 = zext i32 %75 to i64
+  %78 = mul nsw i32 %75, %74
+  %79 = mul nsw i32 %41, %75
+  %80 = getelementptr inbounds [0 x double], [0 x double]* %61, i64 0, i64 %77
+  store double 0.000000e+00, double* %80, align 8
+  br label %while_head3
 
-expr_true20.preheader:                            ; preds = %expr_false
-  %67 = icmp sgt i32 %36, 0
-  %68 = icmp sgt i32 %35, 0
-  %69 = icmp sgt i32 %35, 0
-  %70 = icmp sgt i32 %35, 0
-  br label %expr_true20
+while_head3:                                      ; preds = %exp_cont, %while_body
+  %81 = phi i32 [ %92, %exp_cont ], [ 0, %while_body ]
+  %82 = icmp slt i32 %81, %41
+  br i1 %82, label %while_body4, label %eta_while_head
 
-expr_false4:                                      ; preds = %expr_false22, %expr_false
-  %71 = call fastcc double @logsumexp_18203(i32 %36, [0 x double]* %4)
-  %72 = load double, double* %slse_18291, align 8
-  %73 = sitofp i32 %37 to double
-  %74 = fneg double %73
-  %75 = sitofp i32 %35 to double
-  %76 = fmul double %74, %75
-  %77 = fmul double %76, 5.000000e-01
-  %CONSTANT = fmul double %77, 0x3FFD67F0E5A7DC92
-  %78 = fadd double %CONSTANT, %72
-  %79 = fmul double %71, %73
-  %err = fsub double %78, %79
-  store double %err, double* %err_18307, align 8
-  %80 = call double @log(double %39)
-  %81 = call double @log(double 2.000000e+00)
-  %82 = call double @log(double 3.141590e+00)
-  %83 = add nsw i32 %35, -1
-  %84 = mul nsw i32 %35, %83
-  %85 = sitofp i32 %84 to double
-  %86 = fmul double %85, 2.500000e-01
-  %out = fmul double %86, 0x3FF250CF662ABF9A
-  store double %out, double* %out_18361, align 8
-  store i32 1, i32* %b_18334, align 4
-  %87 = add nsw i32 %35, %38
-  %n = add nsw i32 %87, 1
-  %88 = sitofp i32 %n to double
-  %89 = fmul double %88, 5.000000e-01
-  %90 = icmp sgt i32 %35, 0
-  br i1 %90, label %expr_true18, label %expr_false12
+while_body4:                                      ; preds = %while_head3
+  %83 = add nsw i32 %81, %78
+  %84 = zext i32 %83 to i64
+  %85 = getelementptr inbounds [0 x double], [0 x double]* %27, i64 0, i64 %84
+  %86 = load double, double* %85, align 8
+  %87 = load double, double* %80, align 8
+  %88 = fadd double %86, %87
+  store double %88, double* %80, align 8
+  %89 = call double @exp(double %86)
+  br label %exp_cont
 
-expr_false12:                                     ; preds = %expr_true18, %expr_false4
-  %91 = load double, double* %out_18361, align 8
-  store double 0.000000e+00, double* %out_18398, align 8
-  store i32 0, i32* %b_18370, align 4
-  %92 = sub nsw i32 %icf_sz, %35
-  %93 = fmul double %39, 5.000000e-01
-  %94 = fmul double %93, %39
-  %95 = sitofp i32 %38 to double
-  %96 = icmp sgt i32 %36, 0
-  br i1 %96, label %expr_true, label %expr_false14
+exp_cont:                                         ; preds = %while_body4
+  %exp = phi double [ %89, %while_body4 ]
+  %90 = add nsw i32 %81, %79
+  %91 = zext i32 %90 to i64
+  %92 = add nsw i32 1, %81
+  %93 = getelementptr inbounds [0 x double], [0 x double]* %57, i64 0, i64 %91
+  store double %exp, double* %93, align 8
+  br label %while_head3
 
-expr_false14:                                     ; preds = %expr_true, %expr_false12
-  %97 = load double, double* %out_18398, align 8
-  %98 = load double, double* %err_18307, align 8
-  %99 = sitofp i32 %36 to double
-  %100 = fmul double %88, %75
-  %101 = fadd double %80, 0xBFD62E42FEFA39EF
-  %102 = fmul double %100, %101
-  %C = fsub double %102, %91
-  %103 = fmul double %C, %99
-  %104 = fsub double %97, %103
-  %105 = fadd double %98, %104
-  store double %105, double* %err_18307, align 8
-  call void @printDouble(double %105)
-  ret i32 0
+eta_while_head:                                   ; preds = %while_head3
+  %94 = add nsw i32 1, %75
+  br label %while_head
 
-expr_true:                                        ; preds = %expr_false12, %expr_true
-  %106 = load i32, i32* %b_18370, align 4
-  %107 = add nsw i32 %106, 1
-  store i32 %107, i32* %b_18370, align 4
-  %108 = mul nsw i32 %106, %35
-  %109 = sext i32 %108 to i64
-  %110 = getelementptr inbounds [0 x double], [0 x double]* %45, i64 0, i64 %109
-  %111 = bitcast double* %110 to [0 x double]*
-  %112 = call fastcc double @sqnorm_18133(i32 %35, [0 x double]* %111)
-  %113 = mul nsw i32 %106, %icf_sz
-  %114 = add nsw i32 %113, %35
-  %115 = sext i32 %114 to i64
-  %116 = getelementptr inbounds [0 x double], [0 x double]* %22, i64 0, i64 %115
-  %117 = bitcast double* %116 to [0 x double]*
-  %118 = call fastcc double @sqnorm_18133(i32 %92, [0 x double]* %117)
-  %119 = sext i32 %106 to i64
-  %120 = getelementptr inbounds [0 x double], [0 x double]* %49, i64 0, i64 %119
-  %121 = load double, double* %120, align 8
-  %122 = load double, double* %out_18398, align 8
-  %frobenius = fadd double %112, %118
-  %123 = fmul double %94, %frobenius
-  %124 = fmul double %121, %95
-  %125 = fsub double %123, %124
-  %126 = fadd double %122, %125
-  store double %126, double* %out_18398, align 8
-  %127 = load i32, i32* %b_18370, align 4
-  %128 = icmp slt i32 %127, %36
-  br i1 %128, label %expr_true, label %expr_false14
+preprocess_qs_cont:                               ; preds = %while_head
+  store double 0.000000e+00, double* %"%slse_33262", align 8
+  br label %while_head5
 
-expr_true18:                                      ; preds = %expr_false4, %expr_true18
-  %129 = load i32, i32* %b_18334, align 4
-  %130 = add nsw i32 %129, 1
-  store i32 %130, i32* %b_18334, align 4
-  %131 = sub nsw i32 1, %129
-  %132 = sitofp i32 %131 to double
-  %133 = fmul double %132, 5.000000e-01
-  %134 = fadd double %89, %133
-  %135 = call double @lgamma(double %134)
-  %136 = load double, double* %out_18361, align 8
-  %137 = fadd double %136, %135
-  store double %137, double* %out_18361, align 8
-  %138 = load i32, i32* %b_18334, align 4
-  %.not = icmp sgt i32 %138, %35
-  br i1 %.not, label %expr_false12, label %expr_true18
+while_head5:                                      ; preds = %logsumexp_cont, %preprocess_qs_cont
+  %95 = phi i32 [ %166, %logsumexp_cont ], [ 0, %preprocess_qs_cont ]
+  %96 = icmp slt i32 %95, %43
+  br i1 %96, label %while_body6, label %break19
 
-expr_true20:                                      ; preds = %expr_true20.preheader, %expr_false22
-  %139 = load i32, i32* %b_17989, align 4
-  %140 = add nsw i32 %139, 1
-  store i32 %140, i32* %b_17989, align 4
-  store i32 0, i32* %b_17997, align 4
-  %141 = mul nsw i32 %139, %35
-  %142 = sext i32 %141 to i64
-  %143 = getelementptr inbounds [0 x double], [0 x double]* %29, i64 0, i64 %142
-  br i1 %67, label %expr_true25, label %expr_false22
+while_body6:                                      ; preds = %while_head5
+  %97 = mul nsw i32 %41, %95
+  %98 = zext i32 %97 to i64
+  %99 = getelementptr inbounds [0 x double], [0 x double]* %35, i64 0, i64 %98
+  %100 = bitcast double* %99 to [0 x double]*
+  br label %while_head7
 
-expr_false22:                                     ; preds = %expr_false31, %expr_true20
-  %144 = call fastcc double @logsumexp_18203(i32 %36, [0 x double]* %61)
-  %145 = load double, double* %slse_18291, align 8
-  %146 = fadd double %145, %144
-  store double %146, double* %slse_18291, align 8
-  %147 = load i32, i32* %b_17989, align 4
-  %148 = icmp slt i32 %147, %37
-  br i1 %148, label %expr_true20, label %expr_false4
+while_head7:                                      ; preds = %sqnorm_cont, %while_body6
+  %101 = phi i32 [ %161, %sqnorm_cont ], [ 0, %while_body6 ]
+  %102 = icmp slt i32 %101, %42
+  br i1 %102, label %while_body8, label %break18
 
-expr_true25:                                      ; preds = %expr_true20, %expr_false31
-  %149 = load i32, i32* %b_17997, align 4
-  %150 = add nsw i32 %149, 1
-  store i32 %150, i32* %b_17997, align 4
-  store i32 0, i32* %b_18004, align 4
-  %151 = mul nsw i32 %149, %35
-  %152 = sext i32 %151 to i64
-  %153 = getelementptr inbounds [0 x double], [0 x double]* %11, i64 0, i64 %152
-  br i1 %68, label %expr_true39, label %expr_false27
+while_body8:                                      ; preds = %while_head7
+  %103 = mul nsw i32 %41, %101
+  %104 = zext i32 %103 to i64
+  %105 = getelementptr inbounds [0 x double], [0 x double]* %13, i64 0, i64 %104
+  %106 = bitcast double* %105 to [0 x double]*
+  br label %while_head9
 
-expr_false27:                                     ; preds = %expr_true39, %expr_true25
-  store i32 0, i32* %b_18046, align 4
-  %154 = sext i32 %151 to i64
-  %155 = getelementptr inbounds [0 x double], [0 x double]* %45, i64 0, i64 %154
-  br i1 %69, label %expr_true38, label %expr_false29
+while_head9:                                      ; preds = %while_body10, %while_body8
+  %107 = phi i32 [ %110, %while_body10 ], [ 0, %while_body8 ]
+  %108 = icmp slt i32 %107, %41
+  br i1 %108, label %while_body10, label %subtract_cont
 
-expr_false29:                                     ; preds = %expr_true38, %expr_false27
-  store i32 0, i32* %Lparamsidx_18099, align 4
-  store i32 0, i32* %b_18078, align 4
-  %156 = mul nsw i32 %149, %icf_sz
-  %157 = add nsw i32 %156, %35
-  %158 = sext i32 %157 to i64
-  %159 = getelementptr inbounds [0 x double], [0 x double]* %22, i64 0, i64 %158
-  br i1 %70, label %expr_true34, label %expr_false31
+while_body10:                                     ; preds = %while_head9
+  %109 = zext i32 %107 to i64
+  %110 = add nsw i32 1, %107
+  %111 = getelementptr inbounds [0 x double], [0 x double]* %100, i64 0, i64 %109
+  %112 = getelementptr inbounds [0 x double], [0 x double]* %65, i64 0, i64 %109
+  %113 = getelementptr inbounds [0 x double], [0 x double]* %106, i64 0, i64 %109
+  %114 = load double, double* %111, align 8
+  %115 = load double, double* %113, align 8
+  %116 = fsub double %114, %115
+  store double %116, double* %112, align 8
+  br label %while_head9
 
-expr_false31:                                     ; preds = %expr_false36, %expr_false29
-  %160 = sext i32 %149 to i64
-  %161 = getelementptr inbounds [0 x double], [0 x double]* %4, i64 0, i64 %160
-  %162 = load double, double* %161, align 8
-  %163 = sext i32 %149 to i64
-  %164 = getelementptr inbounds [0 x double], [0 x double]* %49, i64 0, i64 %163
-  %165 = load double, double* %164, align 8
-  %166 = call fastcc double @sqnorm_18133(i32 %35, [0 x double]* %57)
-  %167 = sext i32 %149 to i64
-  %168 = getelementptr inbounds [0 x double], [0 x double]* %61, i64 0, i64 %167
-  %169 = fadd double %162, %165
-  %170 = fmul double %166, 5.000000e-01
-  %171 = fsub double %169, %170
-  store double %171, double* %168, align 8
-  %172 = load i32, i32* %b_17997, align 4
-  %173 = icmp slt i32 %172, %36
-  br i1 %173, label %expr_true25, label %expr_false22
+subtract_cont:                                    ; preds = %while_head9
+  %117 = getelementptr inbounds [0 x double], [0 x double]* %57, i64 0, i64 %104
+  %118 = bitcast double* %117 to [0 x double]*
+  br label %while_head11
 
-expr_true34:                                      ; preds = %expr_false29, %expr_false36
-  %174 = load i32, i32* %b_18078, align 4
-  %175 = add nsw i32 %174, 1
-  store i32 %175, i32* %b_18078, align 4
-  store i32 %175, i32* %b_18085, align 4
-  %176 = sext i32 %174 to i64
-  %177 = getelementptr inbounds [0 x double], [0 x double]* %53, i64 0, i64 %176
-  %178 = icmp slt i32 %175, %35
-  br i1 %178, label %expr_true37, label %expr_false36
+while_head11:                                     ; preds = %while_body12, %subtract_cont
+  %119 = phi i32 [ %125, %while_body12 ], [ 0, %subtract_cont ]
+  %120 = icmp slt i32 %119, %41
+  br i1 %120, label %while_body12, label %break
 
-expr_false36:                                     ; preds = %expr_true37, %expr_true34
-  %179 = load i32, i32* %b_18078, align 4
-  %180 = icmp slt i32 %179, %35
-  br i1 %180, label %expr_true34, label %expr_false31
+while_body12:                                     ; preds = %while_head11
+  %121 = zext i32 %119 to i64
+  %122 = getelementptr inbounds [0 x double], [0 x double]* %65, i64 0, i64 %121
+  %123 = getelementptr inbounds [0 x double], [0 x double]* %118, i64 0, i64 %121
+  %124 = getelementptr inbounds [0 x double], [0 x double]* %69, i64 0, i64 %121
+  %125 = add nsw i32 1, %119
+  %126 = load double, double* %123, align 8
+  %127 = load double, double* %122, align 8
+  %128 = fmul double %126, %127
+  store double %128, double* %124, align 8
+  br label %while_head11
 
-expr_true37:                                      ; preds = %expr_true34, %expr_true37
-  %181 = load i32, i32* %b_18085, align 4
-  %182 = add nsw i32 %181, 1
-  store i32 %182, i32* %b_18085, align 4
-  %183 = sext i32 %181 to i64
-  %184 = getelementptr inbounds [0 x double], [0 x double]* %57, i64 0, i64 %183
-  %185 = load double, double* %184, align 8
-  %186 = load i32, i32* %Lparamsidx_18099, align 4
-  %187 = sext i32 %186 to i64
-  %188 = getelementptr inbounds double, double* %159, i64 %187
-  %189 = load double, double* %188, align 8
-  %190 = load double, double* %177, align 8
-  %191 = fmul double %189, %190
-  %192 = fadd double %185, %191
-  store double %192, double* %184, align 8
-  %193 = load i32, i32* %Lparamsidx_18099, align 4
-  %194 = add nsw i32 %193, 1
-  store i32 %194, i32* %Lparamsidx_18099, align 4
-  %195 = load i32, i32* %b_18085, align 4
-  %196 = icmp slt i32 %195, %35
-  br i1 %196, label %expr_true37, label %expr_false36
+break:                                            ; preds = %while_head11
+  %129 = mul nsw i32 %101, %53
+  %130 = add nsw i32 %41, %129
+  %131 = zext i32 %130 to i64
+  store i32 0, i32* %"%Lparamsidx_34149", align 4
+  %132 = getelementptr inbounds [0 x double], [0 x double]* %27, i64 0, i64 %131
+  %133 = bitcast double* %132 to [0 x double]*
+  br label %while_head13
 
-expr_true38:                                      ; preds = %expr_false27, %expr_true38
-  %197 = load i32, i32* %b_18046, align 4
-  %198 = add nsw i32 %197, 1
-  store i32 %198, i32* %b_18046, align 4
-  %199 = sext i32 %197 to i64
-  %200 = getelementptr inbounds double, double* %155, i64 %199
-  %201 = load double, double* %200, align 8
-  %202 = sext i32 %197 to i64
-  %203 = getelementptr inbounds [0 x double], [0 x double]* %53, i64 0, i64 %202
-  %204 = load double, double* %203, align 8
-  %205 = sext i32 %197 to i64
-  %206 = getelementptr inbounds [0 x double], [0 x double]* %57, i64 0, i64 %205
-  %207 = fmul double %201, %204
-  store double %207, double* %206, align 8
-  %208 = load i32, i32* %b_18046, align 4
-  %209 = icmp slt i32 %208, %35
-  br i1 %209, label %expr_true38, label %expr_false29
+while_head13:                                     ; preds = %eta_while_head17, %break
+  %134 = phi i32 [ %138, %eta_while_head17 ], [ 0, %break ]
+  %135 = icmp slt i32 %134, %41
+  br i1 %135, label %while_body14, label %Qtimesx_cont
 
-expr_true39:                                      ; preds = %expr_true25, %expr_true39
-  %210 = load i32, i32* %b_18004, align 4
-  %211 = add nsw i32 %210, 1
-  store i32 %211, i32* %b_18004, align 4
-  %212 = sext i32 %210 to i64
-  %213 = getelementptr inbounds double, double* %143, i64 %212
-  %214 = load double, double* %213, align 8
-  %215 = sext i32 %210 to i64
-  %216 = getelementptr inbounds double, double* %153, i64 %215
-  %217 = load double, double* %216, align 8
-  %218 = sext i32 %210 to i64
-  %219 = getelementptr inbounds [0 x double], [0 x double]* %53, i64 0, i64 %218
-  %220 = fsub double %214, %217
-  store double %220, double* %219, align 8
-  %221 = load i32, i32* %b_18004, align 4
-  %222 = icmp slt i32 %221, %35
-  br i1 %222, label %expr_true39, label %expr_false27
+while_body14:                                     ; preds = %while_head13
+  %136 = zext i32 %134 to i64
+  %137 = getelementptr inbounds [0 x double], [0 x double]* %65, i64 0, i64 %136
+  %138 = add nsw i32 1, %134
+  br label %while_head15
 
-expr_true40:                                      ; preds = %expr_true40.preheader, %expr_false42
-  %223 = load i32, i32* %b_17922, align 4
-  %224 = add nsw i32 %223, 1
-  store i32 %224, i32* %b_17922, align 4
-  %225 = sext i32 %223 to i64
-  %226 = getelementptr inbounds [0 x double], [0 x double]* %49, i64 0, i64 %225
-  store double 0.000000e+00, double* %226, align 8
-  store i32 0, i32* %b_17930, align 4
-  %227 = mul nsw i32 %223, %icf_sz
-  %228 = mul nsw i32 %223, %35
-  br i1 %65, label %expr_true43, label %expr_false42
+while_head15:                                     ; preds = %while_body16, %while_body14
+  %139 = phi i32 [ %141, %while_body16 ], [ %138, %while_body14 ]
+  %140 = icmp slt i32 %139, %41
+  br i1 %140, label %while_body16, label %eta_while_head17
 
-expr_false42:                                     ; preds = %expr_true43, %expr_true40
-  %229 = load i32, i32* %b_17922, align 4
-  %230 = icmp slt i32 %229, %36
-  br i1 %230, label %expr_true40, label %expr_false
+while_body16:                                     ; preds = %while_head15
+  %141 = add nsw i32 1, %139
+  %142 = zext i32 %139 to i64
+  %143 = getelementptr inbounds [0 x double], [0 x double]* %69, i64 0, i64 %142
+  %144 = load double, double* %143, align 8
+  %145 = load i32, i32* %"%Lparamsidx_34149", align 4
+  %146 = zext i32 %145 to i64
+  %147 = getelementptr inbounds [0 x double], [0 x double]* %133, i64 0, i64 %146
+  %148 = load double, double* %147, align 8
+  %149 = load double, double* %137, align 8
+  %150 = fmul double %148, %149
+  %151 = fadd double %144, %150
+  store double %151, double* %143, align 8
+  %152 = load i32, i32* %"%Lparamsidx_34149", align 4
+  %153 = add nsw i32 1, %152
+  store i32 %153, i32* %"%Lparamsidx_34149", align 4
+  br label %while_head15
 
-expr_true43:                                      ; preds = %expr_true40, %expr_true43
-  %231 = load i32, i32* %b_17930, align 4
-  %232 = add nsw i32 %231, 1
-  store i32 %232, i32* %b_17930, align 4
-  %233 = add nsw i32 %227, %231
-  %234 = sext i32 %233 to i64
-  %235 = getelementptr inbounds [0 x double], [0 x double]* %22, i64 0, i64 %234
-  %236 = load double, double* %235, align 8
-  %237 = load double, double* %226, align 8
-  %238 = fadd double %237, %236
-  store double %238, double* %226, align 8
-  %239 = call double @exp(double %236)
-  %240 = add nsw i32 %228, %231
-  %241 = sext i32 %240 to i64
-  %242 = getelementptr inbounds [0 x double], [0 x double]* %45, i64 0, i64 %241
-  store double %239, double* %242, align 8
-  %243 = load i32, i32* %b_17930, align 4
-  %244 = icmp slt i32 %243, %35
-  br i1 %244, label %expr_true43, label %expr_false42
+eta_while_head17:                                 ; preds = %while_head15
+  br label %while_head13
+
+Qtimesx_cont:                                     ; preds = %while_head13
+  %154 = zext i32 %101 to i64
+  %155 = getelementptr inbounds [0 x double], [0 x double]* %61, i64 0, i64 %154
+  %156 = getelementptr inbounds [0 x double], [0 x double]* %5, i64 0, i64 %154
+  %157 = load double, double* %156, align 8
+  %158 = load double, double* %155, align 8
+  %159 = call double @sqnorm_33536(i32 %41, [0 x double]* %69)
+  br label %sqnorm_cont
+
+sqnorm_cont:                                      ; preds = %Qtimesx_cont
+  %sqnorm = phi double [ %159, %Qtimesx_cont ]
+  %160 = getelementptr inbounds [0 x double], [0 x double]* %73, i64 0, i64 %154
+  %161 = add nsw i32 1, %101
+  %162 = fadd double %157, %158
+  %163 = fmul double 5.000000e-01, %sqnorm
+  %164 = fsub double %162, %163
+  store double %164, double* %160, align 8
+  br label %while_head7
+
+break18:                                          ; preds = %while_head7
+  %165 = call double @logsumexp_32940(i32 %42, [0 x double]* %73)
+  br label %logsumexp_cont
+
+logsumexp_cont:                                   ; preds = %break18
+  %logsumexp = phi double [ %165, %break18 ]
+  %166 = add nsw i32 1, %95
+  %167 = load double, double* %"%slse_33262", align 8
+  %168 = fadd double %logsumexp, %167
+  store double %168, double* %"%slse_33262", align 8
+  br label %while_head5
+
+break19:                                          ; preds = %while_head5
+  %169 = call double @logsumexp_32940(i32 %42, [0 x double]* %5)
+  br label %logsumexp_cont20
+
+logsumexp_cont20:                                 ; preds = %break19
+  %logsumexp21 = phi double [ %169, %break19 ]
+  %170 = load double, double* %"%slse_33262", align 8
+  %171 = sdiv i32 %52, 2
+  %172 = call double @log(double %45)
+  br label %log_cont22
+
+log_cont22:                                       ; preds = %logsumexp_cont20
+  %log23 = phi double [ %172, %logsumexp_cont20 ]
+  %173 = call double @log(double 2.000000e+00)
+  br label %log_cont24
+
+log_cont24:                                       ; preds = %log_cont22
+  %log25 = phi double [ %173, %log_cont22 ]
+  %174 = call double @log(double 3.141590e+00)
+  br label %log_cont26
+
+log_cont26:                                       ; preds = %log_cont24
+  %log27 = phi double [ %174, %log_cont24 ]
+  %175 = add nsw i32 -1, %41
+  %176 = add nsw i32 %41, %44
+  %177 = mul nsw i32 %41, %175
+  %178 = add nsw i32 1, %176
+  %179 = sitofp i32 %177 to double
+  %180 = sitofp i32 %178 to double
+  %181 = fmul double 2.500000e-01, %179
+  %182 = fmul double 5.000000e-01, %180
+  %183 = fmul double %181, %log27
+  store double %183, double* %"%out_33346", align 8
+  br label %while_head28
+
+while_head28:                                     ; preds = %lgamma_cont, %log_cont26
+  %184 = phi i32 [ %191, %lgamma_cont ], [ 1, %log_cont26 ]
+  %185 = icmp slt i32 %184, %51
+  br i1 %185, label %while_body29, label %break30
+
+while_body29:                                     ; preds = %while_head28
+  %186 = sub nsw i32 1, %184
+  %187 = sitofp i32 %186 to double
+  %188 = fmul double 5.000000e-01, %187
+  %189 = fadd double %182, %188
+  %190 = call double @lgamma(double %189)
+  br label %lgamma_cont
+
+lgamma_cont:                                      ; preds = %while_body29
+  %lgamma = phi double [ %190, %while_body29 ]
+  %191 = add nsw i32 1, %184
+  %192 = load double, double* %"%out_33346", align 8
+  %193 = fadd double %lgamma, %192
+  store double %193, double* %"%out_33346", align 8
+  br label %while_head28
+
+break30:                                          ; preds = %while_head28
+  %194 = sitofp i32 %44 to double
+  %195 = fmul double 5.000000e-01, %45
+  %196 = fmul double %45, %195
+  %197 = load double, double* %"%out_33346", align 8
+  %198 = sub nsw i32 %171, %41
+  store double 0.000000e+00, double* %"%out_33353", align 8
+  br label %while_head31
+
+while_head31:                                     ; preds = %sqnorm_cont35, %break30
+  %199 = phi i32 [ %213, %sqnorm_cont35 ], [ 0, %break30 ]
+  %200 = icmp slt i32 %199, %42
+  br i1 %200, label %while_body32, label %break37
+
+while_body32:                                     ; preds = %while_head31
+  %201 = mul nsw i32 %41, %199
+  %202 = zext i32 %201 to i64
+  %203 = getelementptr inbounds [0 x double], [0 x double]* %57, i64 0, i64 %202
+  %204 = bitcast double* %203 to [0 x double]*
+  %205 = call double @sqnorm_33536(i32 %41, [0 x double]* %204)
+  br label %sqnorm_cont33
+
+sqnorm_cont33:                                    ; preds = %while_body32
+  %sqnorm34 = phi double [ %205, %while_body32 ]
+  %206 = mul nsw i32 %199, %171
+  %207 = add nsw i32 %41, %206
+  %208 = zext i32 %207 to i64
+  %209 = getelementptr inbounds [0 x double], [0 x double]* %27, i64 0, i64 %208
+  %210 = bitcast double* %209 to [0 x double]*
+  %211 = call double @sqnorm_33536(i32 %198, [0 x double]* %210)
+  br label %sqnorm_cont35
+
+sqnorm_cont35:                                    ; preds = %sqnorm_cont33
+  %sqnorm36 = phi double [ %211, %sqnorm_cont33 ]
+  %212 = zext i32 %199 to i64
+  %213 = add nsw i32 1, %199
+  %214 = getelementptr inbounds [0 x double], [0 x double]* %61, i64 0, i64 %212
+  %215 = fadd double %sqnorm34, %sqnorm36
+  %216 = load double, double* %214, align 8
+  %217 = fmul double %196, %215
+  %218 = load double, double* %"%out_33353", align 8
+  %219 = fmul double %194, %216
+  %220 = fsub double %217, %219
+  %221 = fadd double %220, %218
+  store double %221, double* %"%out_33353", align 8
+  br label %while_head31
+
+break37:                                          ; preds = %while_head31
+  %222 = sitofp i32 %41 to double
+  %223 = sitofp i32 %42 to double
+  %224 = sitofp i32 %43 to double
+  %225 = fmul double %222, %180
+  %226 = fmul double %224, %logsumexp21
+  %227 = fsub double -0.000000e+00, %224
+  %228 = load double, double* %"%out_33353", align 8
+  %229 = fmul double 5.000000e-01, %log25
+  %230 = fmul double %227, %222
+  %231 = fsub double %log23, %229
+  %232 = fmul double 5.000000e-01, %230
+  %233 = fmul double %225, %231
+  %234 = fmul double %232, %log
+  %235 = fsub double %233, %197
+  %236 = fadd double %234, %170
+  %237 = fmul double %223, %235
+  %238 = fsub double %236, %226
+  %239 = fsub double %228, %237
+  %240 = fadd double %238, %239
+  call void @printDouble(double %240)
+  br label %runGmmBenchmark_cont
+
+runGmmBenchmark_cont:                             ; preds = %break37
+  br label %return
+
+return:                                           ; preds = %runGmmBenchmark_cont
+  %241 = phi i32 [ 0, %runGmmBenchmark_cont ]
+  ret i32 %241
 }
 
-declare void @read_gmm_size([0 x i8]*, i32*, i32*, i32*) local_unnamed_addr
+declare void @read_gmm_size([0 x i8]*, i32*, i32*, i32*)
 
-declare [0 x i8]* @anydsl_alloc(i32, i64) local_unnamed_addr
+declare [0 x i8]* @anydsl_alloc(i32, i64)
 
-declare void @read_gmm([0 x i8]*, i32*, i32*, i32*, i32*, double*, [0 x double]*, [0 x double]*, [0 x double]*, [0 x double]*) local_unnamed_addr
+declare void @read_gmm([0 x i8]*, i32*, i32*, i32*, i32*, double*, [0 x double]*, [0 x double]*, [0 x double]*, [0 x double]*)
 
-declare void @printDouble(double) local_unnamed_addr
+declare void @printDouble(double)
 
-declare void @printInteger(i32) local_unnamed_addr
+declare void @printInteger(i32)
 
-declare double @log(double) local_unnamed_addr
+declare double @log(double)
 
-define internal fastcc double @logsumexp_18203(i32 %n_18205, [0 x double]* %x_18206) unnamed_addr {
-logsumexp:
-  %b_18243 = alloca i32, align 4
-  %semx_18264 = alloca double, align 8
-  %b_18212 = alloca i32, align 4
-  %m_18223 = alloca double, align 8
-  %0 = getelementptr inbounds [0 x double], [0 x double]* %x_18206, i64 0, i64 0
+declare double @exp(double)
+
+define internal double @sqnorm_33536(i32 %"%d_33623", [0 x double]* %"%v_33588") {
+sqnorm_33536_start:
+  %"%sum_33566" = alloca double, align 8
+  br label %sqnorm
+
+sqnorm:                                           ; preds = %sqnorm_33536_start
+  store double 0.000000e+00, double* %"%sum_33566", align 8
+  br label %while_head
+
+while_head:                                       ; preds = %while_body, %sqnorm
+  %0 = phi i32 [ %3, %while_body ], [ 0, %sqnorm ]
+  %1 = icmp slt i32 %0, %"%d_33623"
+  br i1 %1, label %while_body, label %break
+
+while_body:                                       ; preds = %while_head
+  %2 = zext i32 %0 to i64
+  %3 = add nsw i32 1, %0
+  %4 = getelementptr inbounds [0 x double], [0 x double]* %"%v_33588", i64 0, i64 %2
+  %5 = load double, double* %4, align 8
+  %6 = load double, double* %4, align 8
+  %7 = load double, double* %"%sum_33566", align 8
+  %8 = fmul double %5, %6
+  %9 = fadd double %8, %7
+  store double %9, double* %"%sum_33566", align 8
+  br label %while_head
+
+break:                                            ; preds = %while_head
+  %10 = load double, double* %"%sum_33566", align 8
+  br label %return
+
+return:                                           ; preds = %break
+  %11 = phi double [ %10, %break ]
+  ret double %11
+}
+
+define internal double @logsumexp_32940(i32 %"%n_33133", [0 x double]* %"%x_32986") {
+logsumexp_32940_start:
+  %"%semx_33001" = alloca double, align 8
+  %"%m_32994" = alloca double, align 8
+  br label %logsumexp
+
+logsumexp:                                        ; preds = %logsumexp_32940_start
+  %0 = getelementptr inbounds [0 x double], [0 x double]* %"%x_32986", i64 0, i64 0
   %1 = load double, double* %0, align 8
-  store double %1, double* %m_18223, align 8
-  store i32 1, i32* %b_18212, align 4
-  %2 = icmp sgt i32 %n_18205, 1
-  br i1 %2, label %expr_true5, label %expr_false
+  store double %1, double* %"%m_32994", align 8
+  br label %while_head
 
-expr_false:                                       ; preds = %body_cont, %logsumexp
-  %3 = load double, double* %m_18223, align 8
-  store double 0.000000e+00, double* %semx_18264, align 8
-  store i32 0, i32* %b_18243, align 4
-  %4 = icmp sgt i32 %n_18205, 0
-  br i1 %4, label %expr_true, label %expr_false2
+while_head:                                       ; preds = %eta_while_head, %logsumexp
+  %2 = phi i32 [ %10, %eta_while_head ], [ 1, %logsumexp ]
+  %3 = icmp slt i32 %2, %"%n_33133"
+  br i1 %3, label %while_body, label %break
 
-expr_false2:                                      ; preds = %expr_true, %expr_false
-  %5 = load double, double* %semx_18264, align 8
-  %6 = call double @log(double %5)
-  %7 = fadd double %6, %3
-  ret double %7
+while_body:                                       ; preds = %while_head
+  %4 = zext i32 %2 to i64
+  %5 = load double, double* %"%m_32994", align 8
+  %6 = getelementptr inbounds [0 x double], [0 x double]* %"%x_32986", i64 0, i64 %4
+  %7 = load double, double* %6, align 8
+  %8 = fcmp olt double %5, %7
+  br i1 %8, label %if_then, label %eta_while_head
 
-expr_true:                                        ; preds = %expr_false, %expr_true
-  %8 = load i32, i32* %b_18243, align 4
-  %9 = add nsw i32 %8, 1
-  store i32 %9, i32* %b_18243, align 4
-  %10 = sext i32 %8 to i64
-  %11 = getelementptr inbounds [0 x double], [0 x double]* %x_18206, i64 0, i64 %10
-  %12 = load double, double* %11, align 8
-  %13 = fsub double %12, %3
-  %14 = call double @exp(double %13)
-  %15 = load double, double* %semx_18264, align 8
-  %16 = fadd double %15, %14
-  store double %16, double* %semx_18264, align 8
-  %17 = load i32, i32* %b_18243, align 4
-  %18 = icmp slt i32 %17, %n_18205
-  br i1 %18, label %expr_true, label %expr_false2
+if_then:                                          ; preds = %while_body
+  %9 = load double, double* %6, align 8
+  store double %9, double* %"%m_32994", align 8
+  br label %eta_while_head
 
-expr_true5:                                       ; preds = %logsumexp, %body_cont
-  %19 = load i32, i32* %b_18212, align 4
-  %20 = add nsw i32 %19, 1
-  store i32 %20, i32* %b_18212, align 4
-  %21 = load double, double* %m_18223, align 8
-  %22 = sext i32 %19 to i64
-  %23 = getelementptr inbounds [0 x double], [0 x double]* %x_18206, i64 0, i64 %22
-  %24 = load double, double* %23, align 8
-  %25 = fcmp olt double %21, %24
-  br i1 %25, label %expr_true7, label %body_cont
+eta_while_head:                                   ; preds = %if_then, %while_body
+  %10 = add nsw i32 1, %2
+  br label %while_head
 
-expr_true7:                                       ; preds = %expr_true5
-  %26 = load double, double* %23, align 8
-  store double %26, double* %m_18223, align 8
-  br label %body_cont
+break:                                            ; preds = %while_head
+  %11 = load double, double* %"%m_32994", align 8
+  store double 0.000000e+00, double* %"%semx_33001", align 8
+  br label %while_head1
 
-body_cont:                                        ; preds = %expr_true5, %expr_true7
-  %27 = load i32, i32* %b_18212, align 4
-  %28 = icmp slt i32 %27, %n_18205
-  br i1 %28, label %expr_true5, label %expr_false
+while_head1:                                      ; preds = %exp_cont, %break
+  %12 = phi i32 [ %19, %exp_cont ], [ 0, %break ]
+  %13 = icmp slt i32 %12, %"%n_33133"
+  br i1 %13, label %while_body2, label %break3
+
+while_body2:                                      ; preds = %while_head1
+  %14 = zext i32 %12 to i64
+  %15 = getelementptr inbounds [0 x double], [0 x double]* %"%x_32986", i64 0, i64 %14
+  %16 = load double, double* %15, align 8
+  %17 = fsub double %16, %11
+  %18 = call double @exp(double %17)
+  br label %exp_cont
+
+exp_cont:                                         ; preds = %while_body2
+  %exp = phi double [ %18, %while_body2 ]
+  %19 = add nsw i32 1, %12
+  %20 = load double, double* %"%semx_33001", align 8
+  %21 = fadd double %exp, %20
+  store double %21, double* %"%semx_33001", align 8
+  br label %while_head1
+
+break3:                                           ; preds = %while_head1
+  %22 = load double, double* %"%semx_33001", align 8
+  %23 = call double @log(double %22)
+  br label %log_cont
+
+log_cont:                                         ; preds = %break3
+  %log = phi double [ %23, %break3 ]
+  %24 = fadd double %11, %log
+  br label %return
+
+return:                                           ; preds = %log_cont
+  %25 = phi double [ %24, %log_cont ]
+  ret double %25
 }
 
-define internal fastcc double @sqnorm_18133(i32 %d_18135, [0 x double]* %v_18136) unnamed_addr {
-sqnorm:
-  %b_18142 = alloca i32, align 4
-  %sum_18158 = alloca double, align 8
-  store double 0.000000e+00, double* %sum_18158, align 8
-  store i32 0, i32* %b_18142, align 4
-  %0 = icmp sgt i32 %d_18135, 0
-  br i1 %0, label %expr_true, label %expr_false
-
-expr_false:                                       ; preds = %expr_true, %sqnorm
-  %1 = load double, double* %sum_18158, align 8
-  ret double %1
-
-expr_true:                                        ; preds = %sqnorm, %expr_true
-  %2 = load i32, i32* %b_18142, align 4
-  %3 = add nsw i32 %2, 1
-  store i32 %3, i32* %b_18142, align 4
-  %4 = sext i32 %2 to i64
-  %5 = getelementptr inbounds [0 x double], [0 x double]* %v_18136, i64 0, i64 %4
-  %6 = load double, double* %5, align 8
-  %7 = load double, double* %sum_18158, align 8
-  %8 = fmul double %6, %6
-  %9 = fadd double %7, %8
-  store double %9, double* %sum_18158, align 8
-  %10 = load i32, i32* %b_18142, align 4
-  %11 = icmp slt i32 %10, %d_18135
-  br i1 %11, label %expr_true, label %expr_false
-}
-
-declare double @lgamma(double) local_unnamed_addr
-
-declare double @exp(double) local_unnamed_addr
+declare double @lgamma(double)
