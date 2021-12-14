@@ -228,7 +228,7 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x );
     let derivate = rev_diff(gmm);
 
-    //printDouble(result);
+    printDouble(result);
 }
 
 fn main() -> i32 {
