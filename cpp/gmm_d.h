@@ -21,11 +21,15 @@
 // x: d*n points
 // err: objective function output
 // J: gradient output
-void gmm_objective_d(int d, int k, int n,
-                     const double *alphas,
-                     const double *means,
-                     const double *icf,
-                     const double *x,
-                     Wishart wishart,
-                     double *err,
-                     double *J);
+extern "C" {
+
+    void gmm_objective_d(int d, int k, int n,
+                         const double *alphas,
+                         const double *means,
+                         const double *icf,
+                         const double *x,
+                         const int wishart_m,
+                         const double wishart_gamma,
+                         double *err,
+                         double *J);
+}
