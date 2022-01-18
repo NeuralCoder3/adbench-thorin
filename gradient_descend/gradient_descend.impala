@@ -77,7 +77,7 @@ fn adamOptimizer(epoch: i32, size: i32, weights: &mut[f64], J: &[f64], lr: f64, 
 
         let offset = lr * mHat / ( sqrt( vHat ) + 10e-8 );
 
-        weights(index) -= offset;
+        weights(index) += offset;
     }
 }
 
