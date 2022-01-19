@@ -8,19 +8,17 @@ extern "C" {
     fn lgamma(f64) -> (f64);
 }
 
-fn f(a: f32) -> f32 {
-    logf(a)
+fn f(a: f64) -> f64 {
+    2.0 * exp(a)
 }
 
 fn main() -> i32 {
     let Df = rev_diff(f);
-    let yp = Df(4.0f);
+    let yp = Df(4.0);
     let y  = yp(0); // function value
     let yP = yp(1);
-    let yd = yP(1.0f); // derivate
-    printFloat(y);
-    printFloat(f(4.0f));
-    printFloat(yd);
-
+    let yd = yP(1.0); // derivate
+    printDouble(y);
+    printDouble(yd);
     0
 }
