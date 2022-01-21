@@ -4,12 +4,14 @@ extern "C" {
     fn printInteger(i32) -> ();
     fn log(f64) -> (f64);
     fn exp(f64) -> (f64);
+    fn sin(f64) -> (f64);
+    fn cos(f64) -> (f64);
     fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
 }
 
 fn f(a: f64) -> f64 {
-    2.0 * exp(a)
+    cos(a)
 }
 
 fn main() -> i32 {
@@ -20,5 +22,7 @@ fn main() -> i32 {
     let yd = yP(1.0); // derivate
     printDouble(y);
     printDouble(yd);
+    printDouble(sin(4.0));
+    printDouble(cos(4.0));
     0
 }

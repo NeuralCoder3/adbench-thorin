@@ -223,10 +223,10 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x );
 
+    let diff = rev_diff(gmm);
 
     /*
 
-    let diff = rev_diff(gmm);
     let value = diff(0);
     let _, _, _, _, _, alphas_d, means_d, icf_d, _ = diff(1)(1.0);
 
