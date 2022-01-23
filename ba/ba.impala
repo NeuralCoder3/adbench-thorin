@@ -1,0 +1,279 @@
+extern "C" {
+    fn printFloat(f32) -> ();
+    fn printDouble(f64) -> ();
+    fn printInteger(i32) -> ();
+    fn log(f64) -> (f64);
+    fn exp(f64) -> (f64);
+    fn logf(f32) -> (f32);
+    fn lgamma(f64) -> (f64);
+    fn read_ba_size(
+        file: &[u8],
+        n: &mut i32,
+        m: &mut i32,
+        p: &mut i32
+    ) -> ();
+    fn read_ba_instance(
+        file: &[u8],
+        n: i32,
+        m: i32,
+        p: i32,
+        cams: &mut[f64],
+        X: &mut[f64],
+        w: &mut[f64],
+        obs: &mut[i32],
+        feats: &mut[f64]
+    ) -> ();
+    fn compute_reproj_error_d(
+        cams: &[f64],
+        X: &[f64],
+        w: f64,
+        feat_x: f64,
+        feat_y: f64,
+        err: &mut[f64],
+        J: &mut[f64],
+    ) -> ();
+    fn compute_zach_weight_error_d(
+        w: f64,
+        err: &mut f64,
+        J: &mut f64
+    ) -> ();
+}
+
+fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
+    while b < e {
+        body(b++)
+    }
+}
+
+fn preprocess_qs( d: i32, k: i32,
+    icf : &[f64],
+    sum_qs : &mut[f64],
+    Qdiags : &mut[f64]) -> ()
+{
+    let icf_sz = d * (d + 1) / 2;
+
+    for ik in range(0, k) {
+        sum_qs(ik) = 0.0;
+
+        for id in range(0, d) {
+            let q = icf(ik * icf_sz + id);
+            sum_qs(ik) = sum_qs(ik) + q;
+            Qdiags(ik * d + id) = exp(q);
+        }
+    }
+}
+
+fn subtract( d: i32,
+    x: &[f64],
+    y: &[f64],
+    out: &mut[f64]) -> ()
+{
+    for id in range(0, d) {
+        out(id) = x(id) - y(id);
+    }
+}
+
+fn Qtimesx( d: i32,
+    Qdiag: &[f64],
+    ltri: &[f64], // strictly lower triangular part
+    x: &[f64],
+    out: &mut[f64]) -> ()
+{
+    for id in range(0, d) {
+        out(id) = Qdiag(id) * x(id);
+    }
+
+    let mut Lparamsidx = 0;
+
+    for i in range(0, d) {
+        for j in range(i + 1, d) {
+            out(j) = out(j) + ltri(Lparamsidx) * x(i);
+            Lparamsidx++;
+        }
+    }
+}
+
+fn sqnorm(d: i32, v : &[f64]) -> (f64){
+    let mut sum = 0.0;
+    for i in range(0, d) {
+        sum += v(i) * v(i);
+    }
+
+    sum
+}
+
+fn arr_max(n: i32,x : &[f64] ) -> f64
+{
+    let mut m = x(0);
+    for i in range(1, n) {
+        if (m < x(i)){
+            m = x(i);
+        }
+    }
+
+    m
+}
+
+fn logsumexp( n: i32, x : &[f64] ) -> f64
+{
+    let mx = arr_max(n, x);
+    let mut semx = 0.0;
+    for i in range(0, n) {
+        semx += exp(x(i) - mx);
+    }
+    log(semx) + mx
+}
+
+fn log_gamma_distrib( a: f64, p: i32) -> f64
+{
+    let PI : f64 = 3.14159;
+    let mut out = 0.25 * ((p * (p - 1)) as f64) * log(PI);
+
+    for j in range(1, p+1) {
+        out += lgamma(a + 0.5 * ((1 - j) as f64));
+    }
+
+    out
+}
+
+
+fn log_wishart_prior( p: i32, k: i32,
+    wishartM: i32,
+    wishartGamma: f64,
+    sum_qs: &[f64],
+    Qdiags: &[f64],
+    icf: &[f64]) -> f64
+{
+    let n = p + wishartM + 1;
+    let icf_sz = p * (p + 1) / 2;
+
+    let C = (n as f64) * (p as f64) * (log(wishartGamma) - 0.5 * log(2.0)) - log_gamma_distrib(0.5 * (n as f64), p);
+
+    let mut out = 0.0;
+    
+    for ik in range(0, k) {
+        let currentQdiags : &[f64] =  &Qdiags(ik * p) as &[f64];
+        let currentIfc : &[f64] =  &icf(ik * icf_sz + p) as &[f64];
+    
+        let frobenius = sqnorm(p, currentQdiags) + sqnorm(icf_sz - p, currentIfc);
+        out += 0.5 * wishartGamma * wishartGamma * frobenius - (wishartM as f64) * sum_qs(ik);
+    }
+
+    out - (k as f64) * C
+}
+
+fn gmm(d: i32, k: i32, n: i32,
+        wishartM: i32,
+        wishartGamma: f64,
+        alphas : &[f64],
+        means : &[f64],
+        icf : &[f64],
+        x : &[f64]) -> f64{
+
+    let PI : f64 = 3.14159;
+    let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
+    let icf_sz = d * (d + 1) / 2;
+
+    let Qdiags : &mut[f64] = ~[d*k:f64];
+    let sum_qs : &mut[f64] = ~[k:f64];
+    let xcentered : &mut[f64] = ~[d:f64];
+    let Qxcentered : &mut[f64] = ~[d:f64];
+    let main_term : &mut[f64] = ~[k:f64];
+
+
+    preprocess_qs(d, k, icf, sum_qs, Qdiags);
+
+    let mut slse = 0.0;
+
+    for ix in range(0, n) {
+        let currentX : &[f64] =  &x(ix * d) as &[f64];
+        for ik in range(0, k) {
+            let currentQdiags : &[f64] =  &Qdiags(ik * d) as &[f64];
+            let currentMeans : &[f64] =  &means(ik * d) as &[f64];
+            let currentIfc : &[f64] =  &icf(ik * icf_sz + d) as &[f64];
+
+            subtract(d, currentX, currentMeans, xcentered);
+            Qtimesx(d, currentQdiags, currentIfc, xcentered, Qxcentered);
+            main_term(ik) = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm(d, Qxcentered);
+        }
+        slse += logsumexp(k, main_term);
+    }
+
+    let lse_alphas = logsumexp(k, alphas);
+
+    let mut err = CONSTANT + slse - (n as f64) * lse_alphas;
+    err += log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
+
+    err
+}
+
+fn runGmmBenchmark(file: &[u8]) -> (){
+    let mut n = 2;
+    let mut m = 5;
+    let mut p = 1000;
+
+    read_ba_size(file, &mut n, &mut m, &mut p);
+
+    let nCamParams = 11;
+
+    let cams: &mut[f64] = ~[nCamParams * n:f64];
+    let X: &mut[f64] = ~[3 * m:f64];
+    let w: &mut[f64] = ~[p:f64];
+    let obs : &mut[i32] = ~[2 * p:i32];
+    let feats : &mut[f64] = ~[2 * p:f64];
+
+    read_ba_instance(file, n, m, p, cams, X, w, obs, feats);
+
+    printInteger(n);
+    printInteger(m);
+    printInteger(p);
+    printDouble(cams(0));
+
+
+    let reproj_err = ~[2 * p:f64];
+    let J = ~[2 * (nCamParams + 3):f64];
+
+    for i in range(0, p) {
+        let camIdx = obs(2 * i);
+        let ptIdx = obs(2 * i + 1);
+
+        let currentCams =  &cams(nCamParams * camIdx) as &[f64];
+        let currentX =  &X(nCamParams * camIdx) as &[f64];
+        let currentW = w(i);
+        let feat_x = feats(2 * i);
+        let feat_y = feats(2 * i + 1);
+        let current_reproj_err =  &reproj_err(2 * i) as &mut[f64];
+
+        compute_reproj_error_d(currentCams, currentX, currentW, feat_x, feat_y, current_reproj_err, J );
+    }
+
+
+    for i in range(0, p) {
+        let mut w_err = 0.0;
+        let mut w_d = 0.0;
+        compute_zach_weight_error_d(w(i), &mut w_err, &mut w_d);
+
+        printDouble(w_err);
+        printDouble(w_d);
+    }
+
+
+
+    /*
+    let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x );
+
+    let diff = rev_diff(gmm);
+
+    let value = diff(0);
+    let _, _, _, _, _, alphas_d, means_d, icf_d, _ = diff(1)(1.0);
+
+    printDouble(result);
+    */
+
+}
+
+fn main() -> i32 {
+    runGmmBenchmark("benchmark/ba/ba1_n49_m7776_p31843.txt");
+    0
+}
+

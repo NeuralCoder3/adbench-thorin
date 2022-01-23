@@ -22,7 +22,6 @@ fn main() -> i32 {
     let yd = yP(1.0); // derivate
     printDouble(y);
     printDouble(yd);
-    printDouble(sin(4.0));
-    printDouble(cos(4.0));
+    printDouble(f(4.0));
     0
 }

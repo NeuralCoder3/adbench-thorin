@@ -35,4 +35,15 @@ void read_gmm_size(
         int* k,
         int* n
 );
+
+void read_ba_instance(const char* file,
+                      int n, int m, int p,
+                      double* cams,
+                      double* X,
+                      double* w,
+                      int* obs,
+                      double* feats);
+
+void read_ba_size(const char* file,
+                  int& n, int& m, int& p);
 }
