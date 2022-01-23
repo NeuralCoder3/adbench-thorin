@@ -4,6 +4,9 @@ extern "C" {
     fn printInteger(i32) -> ();
     fn log(f64) -> (f64);
     fn exp(f64) -> (f64);
+    fn sqrt(f64) -> (f64);
+    fn sin(f64) -> (f64);
+    fn cos(f64) -> (f64);
     fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
     fn read_ba_size(
@@ -32,6 +35,19 @@ extern "C" {
         err: &mut[f64],
         J: &mut[f64],
     ) -> ();
+
+    fn ba_objective(
+        n: i32,
+        m: i32,
+        p: i32,
+        cams: &[f64],
+        X: &[f64],
+        w: &[f64],
+        obs: &[i32],
+        feats: &[f64],
+        reproj_err: &mut[f64],
+        w_err: &mut[f64]) -> ();
+
     fn compute_zach_weight_error_d(
         w: f64,
         err: &mut f64,
@@ -102,7 +118,7 @@ fn sqnorm(d: i32, v : &[f64]) -> (f64){
     sum
 }
 
-fn arr_max(n: i32,x : &[f64] ) -> f64
+fn arr_max(n: i32,x : &[f64] ) -> (f64)
 {
     let mut m = x(0);
     for i in range(1, n) {
@@ -114,97 +130,141 @@ fn arr_max(n: i32,x : &[f64] ) -> f64
     m
 }
 
-fn logsumexp( n: i32, x : &[f64] ) -> f64
+
+
+fn cross(
+    a : &[f64],
+    b : &[f64],
+    out : &mut[f64]) -> ()
 {
-    let mx = arr_max(n, x);
-    let mut semx = 0.0;
+    out(0) = a(1) * b(2) - a(2) * b(1);
+    out(1) = a(2) * b(0) - a(0) * b(2);
+    out(2) = a(0) * b(1) - a(1) * b(0);
+}
+
+
+fn sqsum( n: i32, x : &[f64]) -> (f64)
+{
+    let mut res = 0.0;
     for i in range(0, n) {
-        semx += exp(x(i) - mx);
+        res = res + x(i) * x(i);
     }
-    log(semx) + mx
+
+    res
 }
 
-fn log_gamma_distrib( a: f64, p: i32) -> f64
+
+fn rodrigues_rotate_point(
+    rot: &[f64],
+    pt: &[f64],
+    rotatedPt : &mut[f64]) -> ()
 {
-    let PI : f64 = 3.14159;
-    let mut out = 0.25 * ((p * (p - 1)) as f64) * log(PI);
+    let sqtheta = sqsum(3, rot);
+    if (sqtheta != 0.0)
+    {
+        let w = ~[3:f64];
+        let w_cross_pt = ~[3:f64];
 
-    for j in range(1, p+1) {
-        out += lgamma(a + 0.5 * ((1 - j) as f64));
-    }
+        let theta = sqrt(sqtheta);
+        let costheta = cos(theta);
+        let sintheta = sin(theta);
+        let theta_inverse = 1.0 / theta;
 
-    out
-}
-
-
-fn log_wishart_prior( p: i32, k: i32,
-    wishartM: i32,
-    wishartGamma: f64,
-    sum_qs: &[f64],
-    Qdiags: &[f64],
-    icf: &[f64]) -> f64
-{
-    let n = p + wishartM + 1;
-    let icf_sz = p * (p + 1) / 2;
-
-    let C = (n as f64) * (p as f64) * (log(wishartGamma) - 0.5 * log(2.0)) - log_gamma_distrib(0.5 * (n as f64), p);
-
-    let mut out = 0.0;
-    
-    for ik in range(0, k) {
-        let currentQdiags : &[f64] =  &Qdiags(ik * p) as &[f64];
-        let currentIfc : &[f64] =  &icf(ik * icf_sz + p) as &[f64];
-    
-        let frobenius = sqnorm(p, currentQdiags) + sqnorm(icf_sz - p, currentIfc);
-        out += 0.5 * wishartGamma * wishartGamma * frobenius - (wishartM as f64) * sum_qs(ik);
-    }
-
-    out - (k as f64) * C
-}
-
-fn gmm(d: i32, k: i32, n: i32,
-        wishartM: i32,
-        wishartGamma: f64,
-        alphas : &[f64],
-        means : &[f64],
-        icf : &[f64],
-        x : &[f64]) -> f64{
-
-    let PI : f64 = 3.14159;
-    let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
-    let icf_sz = d * (d + 1) / 2;
-
-    let Qdiags : &mut[f64] = ~[d*k:f64];
-    let sum_qs : &mut[f64] = ~[k:f64];
-    let xcentered : &mut[f64] = ~[d:f64];
-    let Qxcentered : &mut[f64] = ~[d:f64];
-    let main_term : &mut[f64] = ~[k:f64];
-
-
-    preprocess_qs(d, k, icf, sum_qs, Qdiags);
-
-    let mut slse = 0.0;
-
-    for ix in range(0, n) {
-        let currentX : &[f64] =  &x(ix * d) as &[f64];
-        for ik in range(0, k) {
-            let currentQdiags : &[f64] =  &Qdiags(ik * d) as &[f64];
-            let currentMeans : &[f64] =  &means(ik * d) as &[f64];
-            let currentIfc : &[f64] =  &icf(ik * icf_sz + d) as &[f64];
-
-            subtract(d, currentX, currentMeans, xcentered);
-            Qtimesx(d, currentQdiags, currentIfc, xcentered, Qxcentered);
-            main_term(ik) = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm(d, Qxcentered);
+        for i in range(0, 3) {
+            w(i) = rot(i) * theta_inverse;
         }
-        slse += logsumexp(k, main_term);
+
+        cross(w, pt, w_cross_pt);
+
+        let tmp = (w(0) * pt(0) + w(1) * pt(1) + w(2) * pt(2)) *
+            (1.0 - costheta);
+
+        for i in range(0, 3) {
+            rotatedPt(i) = pt(i) * costheta + w_cross_pt(i) * sintheta + w(i) * tmp;
+        }
+    }
+    else
+    {
+        let rot_cross_pt = ~[3:f64];
+        cross(rot, pt, rot_cross_pt);
+
+        for i in range(0, 3) {
+            rotatedPt(i) = pt(i) + rot_cross_pt(i);
+        }
+    }
+}
+
+
+fn radial_distort(
+    rad_params : &[f64],
+    proj: &mut[f64]) -> ()
+{
+    let rsq = sqsum(2, proj);
+    let L = 1.0 + rad_params(0) * rsq + rad_params(1) * rsq * rsq;
+    proj(0) = proj(0) * L;
+    proj(1) = proj(1) * L;
+}
+
+
+fn project(cam: &[f64], X: &[f64], proj: &mut[f64]) -> (){
+
+    let C =  &cam(3) as &[f64];
+    let Xo = ~[2:f64];
+    let Xcam = ~[3:f64];
+
+    Xo(0) = X(0) - C(0);
+    Xo(1) = X(1) - C(1);
+    Xo(2) = X(2) - C(2);
+    
+    rodrigues_rotate_point(&cam(1) as &[f64], Xo, Xcam);
+    
+    proj(0) = Xcam(0) / Xcam(2);
+    proj(1) = Xcam(1) / Xcam(2);
+    
+
+    radial_distort(&cam(9) as &[f64], proj);
+
+    proj(0) = proj(0) * cam(6) + cam(7);
+    proj(1) = proj(1) * cam(6) + cam(8);
+}
+
+
+
+fn computeReprojError(cam: &[f64], X: &[f64], w: f64, feats: &[f64], err: &mut[f64]) -> (){
+    let proj = ~[2:f64];
+    project(cam, X, proj);
+
+    err(0) = w * (proj(0) - feats(0));
+    err(1) = w * (proj(1) - feats(1));
+}
+
+
+
+fn computeZachWeightError(w: f64, err: &mut f64) -> ()
+{
+    *err = 1.0 - w * w;
+}
+
+
+fn ba(n: i32, m: i32, p: i32, cams: &[f64], X: &[f64], w: &[f64], obs: &[i32], feats: &[f64], reproj_err: &[f64], w_err: &mut[f64]) -> (){
+
+    for i in range(0, p)
+    {
+        let camIdx = obs(i * 2 + 0);
+        let ptIdx = obs(i * 2 + 1);
+        computeReprojError(
+            &cams(camIdx * 11)  as &[f64],
+            &X(ptIdx * 3)  as &[f64],
+            w(i),
+            &feats(i * 2) as &[f64],
+            &reproj_err(2 * i) as &mut[f64]
+        );
     }
 
-    let lse_alphas = logsumexp(k, alphas);
-
-    let mut err = CONSTANT + slse - (n as f64) * lse_alphas;
-    err += log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
-
-    err
+    for i in range(0, p)
+    {
+        computeZachWeightError(w(i), &mut w_err(i));
+    }
 }
 
 fn runGmmBenchmark(file: &[u8]) -> (){
@@ -216,11 +276,11 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     let nCamParams = 11;
 
-    let cams: &mut[f64] = ~[nCamParams * n:f64];
-    let X: &mut[f64] = ~[3 * m:f64];
-    let w: &mut[f64] = ~[p:f64];
-    let obs : &mut[i32] = ~[2 * p:i32];
-    let feats : &mut[f64] = ~[2 * p:f64];
+    let cams = ~[nCamParams * n:f64];
+    let X = ~[3 * m:f64];
+    let w = ~[p:f64];
+    let obs = ~[2 * p:i32];
+    let feats = ~[2 * p:f64];
 
     read_ba_instance(file, n, m, p, cams, X, w, obs, feats);
 
@@ -231,6 +291,23 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
 
     let reproj_err = ~[2 * p:f64];
+    let w_err = ~[p:f64];
+
+    ba(n, m, p, cams, X, w, obs, feats, reproj_err, w_err);
+
+    printDouble(w_err(0));
+
+    ba_objective(n, m, p, cams, X, w, obs, feats, reproj_err, w_err);
+
+    printDouble(w_err(0));
+
+
+    /*for i in range(0, p) {
+        printDouble(w_err(i));
+    }*/
+
+/*
+
     let J = ~[2 * (nCamParams + 3):f64];
 
     for i in range(0, p) {
@@ -255,7 +332,7 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
         printDouble(w_err);
         printDouble(w_d);
-    }
+    }*/
 
 
 

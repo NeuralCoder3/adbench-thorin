@@ -28,3 +28,15 @@
 
 
 #endif //IMPALA_BA_H
+
+
+extern "C"{
+void ba_objective(int n, int m, int p,
+                  const double* const cams,
+                  const double* const X,
+                  const double* const w,
+                  const int* const obs,
+                  const double* const feats,
+                  double* reproj_err,
+                  double* w_err);
+}

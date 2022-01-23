@@ -109,6 +109,8 @@ void computeZachWeightError(const double* const w, double* err)
     *err = 1 - (*w)*(*w);
 }
 
+
+extern "C"{
 void ba_objective(int n, int m, int p,
                   const double* const cams,
                   const double* const X,
@@ -131,3 +133,4 @@ void ba_objective(int n, int m, int p,
         computeZachWeightError(&w[i], &w_err[i]);
     }
 }
+};
