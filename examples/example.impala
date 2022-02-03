@@ -6,12 +6,13 @@ extern "C" {
     fn exp(f64) -> (f64);
     fn sin(f64) -> (f64);
     fn cos(f64) -> (f64);
+    fn sqrt(f64) -> (f64);
     fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
 }
 
 fn f(a: f64) -> f64 {
-    cos(a)
+    sin(sin(a))
 }
 
 fn main() -> i32 {
