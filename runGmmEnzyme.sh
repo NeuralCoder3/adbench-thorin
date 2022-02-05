@@ -13,5 +13,5 @@ llvm-dis build/gmm/bundle.bc -o build/gmm/bundle.ll &&
 
 /opt/homebrew/Cellar/llvm/13.0.0_2/bin/opt build/gmm/bundle.ll -load=/opt/homebrew/Cellar/enzyme/0.0.26/lib/LLVMEnzyme-13.dylib -enzyme -o build/gmm/out.ll -S -enable-new-pm=0
 llvm-as build/gmm/out.ll
-clang++ -L../runtime/build/lib -lruntime -lm gmm/lib.c cpp/read.cpp build/gmm/out.bc -o build/gmm/prog_enzyme
+clang++ -L../runtime/build/lib -lruntime -lm cpp/print_lib.cpp cpp/read.cpp build/gmm/out.bc -o build/gmm/prog_enzyme
 #./build/gmm/prog_enzyme

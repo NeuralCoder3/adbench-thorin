@@ -6,5 +6,5 @@ clang -shared -undefined dynamic_lookup -o build/libadbench.so cpp/read.cpp cpp/
 impala gradient_descend/gradient_descend.impala --emit-thorin -o build/gradient_descend/out &&
 impala gradient_descend/gradient_descend.impala --emit-llvm -o build/gradient_descend/out &&
 llvm-as build/gradient_descend/out.ll &&
-clang -L../runtime/build/lib -Lbuild -lruntime -lm -ladbench gradient_descend/lib.c build/gradient_descend/out.bc -o build/gradient_descend/prog &&
+clang -L../runtime/build/lib -Lbuild -lruntime -lm -ladbench cpp/print_lib.cpp build/gradient_descend/out.bc -o build/gradient_descend/prog &&
 ./build/gradient_descend/prog

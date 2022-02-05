@@ -29,16 +29,19 @@ void gmm_d(int d, int k, int n,
     double *means_d = &J[k];
     double *icf_d = &J[k + d * k];
 
-    *err = __enzyme_autodiff((void*)gmm,
-                      enzyme_const, d,
-                      enzyme_const, k,
-                      enzyme_const, n,
-                      enzyme_const, wishart_gamma,
-                      enzyme_const, wishart_m,
-                      enzyme_dup,   alphas, alphas_d,
-                      enzyme_dup,   means, means_d,
-                      enzyme_dup,   icf, icf_d,
-                      enzyme_const, x);
+    double err_d = 1.0;
+
+    __enzyme_autodiff((void*)gmm,
+                        enzyme_const, d,
+                        enzyme_const, k,
+                        enzyme_const, n,
+                        enzyme_const, wishart_gamma,
+                        enzyme_const, wishart_m,
+                        enzyme_dup,   alphas, alphas_d,
+                        enzyme_dup,   means, means_d,
+                        enzyme_dup,   icf, icf_d,
+                        enzyme_const, x,
+                        enzyme_dup, err, &err_d);
 }
 
 int main(){
