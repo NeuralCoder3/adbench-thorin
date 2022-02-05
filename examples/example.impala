@@ -11,8 +11,13 @@ extern "C" {
     fn lgamma(f64) -> (f64);
 }
 
+fn sin_diff(x: f64) -> f64{
+    x
+}
+
+
 fn f(a: f64) -> f64 {
-    sin(sin(a))
+    lgamma(a)
 }
 
 fn main() -> i32 {
