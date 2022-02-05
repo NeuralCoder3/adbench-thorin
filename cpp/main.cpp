@@ -8,7 +8,12 @@
 #include <string>
 
 
-int main(){
+int main(int argc, const char** argv){
+    if(argc < 2){
+        printf("No file specified!");
+        return -1;
+    }
+
     int d;
     int k;
     int n;
@@ -18,7 +23,7 @@ int main(){
     vector<double> x;
     Wishart wishart;
 
-    std::string benchmark = "benchmark/gmm_d2_K5.txt";
+    std::string benchmark = argv[1];//"benchmark/gmm_d2_K5.txt";
     read_gmm_instance(benchmark, &d, &k, &n, alphas, means, icf, x, wishart, false);
 
     //cpp : -5240.590563
