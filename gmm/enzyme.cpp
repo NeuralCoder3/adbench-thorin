@@ -44,7 +44,12 @@ void gmm_d(int d, int k, int n,
                         enzyme_dup, err, &err_d);
 }
 
-int main(){
+int main(int argc, const char** argv){
+    if(argc < 2){
+        printf("No file specified!");
+        return -1;
+    }
+
     int d = 1;
     int k = 1;
     int n = 1;
@@ -54,7 +59,7 @@ int main(){
     std::vector<double> x;
     Wishart wishart;
 
-    std::string benchmark = "benchmark/gmm_d2_K5.txt";
+    std::string benchmark = argv[1];
     read_gmm_instance(benchmark, &d, &k, &n, alphas, means, icf, x, wishart, false);
 
     //cpp : -5240.590563

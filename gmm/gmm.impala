@@ -7,7 +7,6 @@ extern "C" {
     fn exp(f64) -> (f64);
     fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
-    fn malloc(i64) -> (&mut[f64]);
     fn read_gmm_size(
         file: &[u8],
         d: &mut i32,
@@ -26,21 +25,8 @@ extern "C" {
         icf: &mut[f64],
         x: &mut[f64],
     ) -> ();
-
-    /*fn gmm_enzyme_diff( f:fn (i32, i32, i32, i32, f64, &[f64], &[f64], &[f64], &[f64]) -> f64,
-        d: i32, k: i32, n: i32,
-        wishartM: i32,
-        wishartGamma: f64,
-        alphas : &[f64], alphas_d : & mut[f64],
-        means : &[f64], means_d : & mut[f64],
-        icf : &[f64], icf_d : & mut[f64],
-        x : &[f64]
-    ) -> ();*/
 }
 
-static mut enzyme_dup: i32;
-static mut enzyme_out: i32;
-static mut enzyme_const: i32;
 
 fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
     while b < e {
@@ -165,8 +151,33 @@ fn log_wishart_prior( p: i32, k: i32,
     out - (k as f64) * C
 }
 
-fn malloc_double(size: i32) -> &mut[f64]{
-    malloc((size * 8) as i64)
+fn gmm_wrapper(args:[(
+    i32, //d
+    i32, //k
+    i32, //n
+    f64, //wishartGamma
+    i32, //wishartM
+    &[f64], // alphas
+    &[f64], // means
+    &[f64], // icf
+    &[f64] // x
+)*1]) -> f64 {
+    let arg = args(0);
+    let d: i32 = arg(0);
+    let k: i32 = arg(1);
+    let n: i32 = arg(2);
+    let wishartGamma: f64 = arg(3);
+    let wishartM: i32 = arg(4);
+    let alphas: &[f64] = arg(5);
+    let means: &[f64] = arg(6);
+    let icf: &[f64] = arg(7);
+    let x: &[f64] = arg(8);
+
+    let mut err = 0.0;
+
+    gmm(d,k,n, wishartGamma, wishartM, alphas, means, icf, x, &mut err);
+
+    err
 }
 
 extern fn gmm(d: i32, k: i32, n: i32,
@@ -182,11 +193,11 @@ extern fn gmm(d: i32, k: i32, n: i32,
     let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
     let icf_sz = d * (d + 1) / 2;
 
-    let Qdiags = malloc_double(d*k);
-    let sum_qs =  malloc_double(k);
-    let xcentered =  malloc_double(d);
-    let Qxcentered = malloc_double(d);
-    let main_term = malloc_double(k);
+    let Qdiags = ~[d*k:f64];
+    let sum_qs = ~[k:f64];
+    let xcentered = ~[d:f64];
+    let Qxcentered = ~[d:f64];
+    let main_term = ~[k:f64];
 
     preprocess_qs(d, k, icf, sum_qs, Qdiags);
 
@@ -212,7 +223,7 @@ extern fn gmm(d: i32, k: i32, n: i32,
     *err
 }
 
-/*
+
 fn runGmmBenchmark(file: &[u8]) -> (){
     let mut d = 2;
     let mut k = 5;
@@ -224,7 +235,6 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     read_gmm_size(file, dp, kp, np);
 
-
     let mut wishartM: i32 = 0;
     let mut wishartGamma: f64 = 1.0;
 
@@ -234,10 +244,10 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     let size = alphas_size + means_size + icf_size;
 
-    let alphas = malloc_double(k);
-    let means = malloc_double(d*k);
-    let icf = malloc_double(k * ( d + d * ( d - 1 ) / 2 ));
-    let x =malloc_double(n*d);
+    let alphas: &mut[f64] = ~[k:f64];
+    let means: &mut[f64] = ~[d*k:f64];
+    let icf: &mut[f64] = ~[k * ( d + d * ( d - 1 ) / 2 ):f64];
+    let x: &mut[f64] = ~[n*d:f64];
 
     let wishartMp = &mut wishartM;
     let wishartGammap = &mut wishartGamma;
@@ -248,6 +258,14 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     gmm(d, k, n, wishartGamma, wishartM, alphas, means, icf, x, &mut result );
 
+    let Df = rev_diff(gmm_wrapper);
+
+    let tup = (d, k, n, wishartGamma, wishartM, alphas, means, icf, x);
+    let (y,pb) = Df([tup]);
+    //let Gf = pb(1.0);
+    //let arg_deriv=Gf(0);
+    //let m1_deriv=arg_deriv(2);
+    //let m2_deriv=arg_deriv(3);
 
     printDouble(result);
 }
@@ -263,7 +281,10 @@ fn main(argc: i32,argv :&[&[u8]]) -> i32 {
     }
 
     0
-}*/
+}
+
+
+
 
 /*
     let J : &mut[f64] = ~[size:f64];

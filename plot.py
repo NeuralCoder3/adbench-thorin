@@ -28,69 +28,38 @@ def groupBy(list, key):
             res[keyValue] = [benchmark]
     return res
 
-def createBenchmarks():
-    benchmarks = []
+def transform(line):
+    elems = [int(x) for x in line.strip().split(";") if x != ""]
 
-    for (dirpath, dirnames, filenames) in walk('benchmark/gmm/1K'):
-        for file in filenames:
-            if file.endswith('txt'):
-                path = 'benchmark/gmm/1K/' + file
-                f = open(path, "r")
-                line = f.readline()
-                (d, k, n) = line.split()
-                benchmarks.append(Benchmark(int(d),int(k),int(n), path))
-                f.close()
-    return benchmarks
+    return {
+        "d": elems[0],
+        "k": elems[1],
+        "n": elems[2],
+        "measurements": elems[3:]
+    }
 
-def runBenchmark(command, benchmark):
-    os.system(command + ' ' + benchmark.path + ' > /dev/null')
-
-def runCommands(commands, benchmark, reps = 1):
-    #print(benchmark.path)
-    print("{d};{k};{n};".format(d=benchmark.d, k=benchmark.k, n=benchmark.n), end="")
-    measurements = []
-    for command in commands:
-        timeSum = 0
-        for _ in range(reps):
-            start = time.time()
-            runBenchmark(command, benchmark)
-            end = time.time()
-            millis = (end - start) * 1000
-            timeSum += millis
-        avgTime = int(timeSum / reps)
-        measurements.append(avgTime)
-        print(avgTime, end=";")
-    print()
-    return measurements
 
 def main():
 
-    reps = 5
-
-    benchmarks = createBenchmarks()
-
     commands = [
-        "./build/cpp/main",
-        "./build/cpp/enzyme",
-        "./build/gmm/prog_enzyme"
+        "Cpp Manual",
+        "Cpp Enzyme",
+        "Impala Enzyme"
     ]
 
-    res = groupBy(benchmarks, key=lambda b: b.d)
-    for key in sorted(res.keys()):
-        items = sorted(res[key], key=lambda a: a.k)
+    with open("results/evaluation.csv") as file:
+        lines = [transform(x) for x in file.readlines()]
 
-        runs = []
+        res = groupBy(lines, key=lambda b: b["d"])
+        for key in sorted(res.keys()):
+            items = [x["measurements"] for x in sorted(res[key], key=lambda a: a["k"])]
 
-        for benchmark in items:
-            measurements = runCommands(commands, benchmark, reps)
-            runs.append(measurements)
+            test = np.transpose(np.array(items) / 1000.0)
 
-        test = np.array(runs)
-        test = np.transpose(test)
-
-        for plot in test:
-            plt.plot(plot)
-        plt.show()
+            for i, plot in enumerate(test):
+                plt.plot(plot, label=commands[i])
+            plt.legend()
+            plt.show()
 
 
 

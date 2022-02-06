@@ -18,8 +18,4 @@ extern "C"{
     void printInteger(int i) {
         printf("%d\n", i);
     }
-
-    void* anydsl_alloc(int grid, int size) {
-        return malloc(size);
-    }
 }
