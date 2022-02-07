@@ -1,15 +1,16 @@
 SHELL := /bin/bash
 
 
-
 impala:
 	source ../../project.sh && \
 	mkdir -p ../build/gmm && \
 	impala gmm.impala --emit-llvm -O2 --emit-c-interface -o ../build/gmm/gmm_impala -Othorin && \
 	llvm-as ../build/gmm/gmm_impala.ll && \
-	clang++ -lm ../cpp/lib.cpp ../cpp/read.cpp ../build/gmm/gmm_impala.bc -O3 -o ../build/gmm/gmm_impala
-#-L../../runtime/build/lib -lruntime
+	cp ../../runtime/build/lib/libruntime.so ../build/gmm/ && \
+	clang++ -L../../runtime/build/lib -lruntime -lm ../cpp/lib.cpp ../cpp/read.cpp ../build/gmm/gmm_impala.bc -O3 -o ../build/gmm/gmm_impala
+
 run-impala: impala
+	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(realpath ../../runtime/build/lib) && \
 	../build/gmm/gmm_impala ../benchmark/gmm/1k/gmm_d2_K5.txt
 
 enzyme:
@@ -23,7 +24,7 @@ enzyme:
 	llvm-dis ../build/gmm/bundle.bc -o ../build/gmm/bundle.ll && \
 	/opt/homebrew/Cellar/llvm/13.0.0_2/bin/opt ../build/gmm/bundle.ll -load=/opt/homebrew/Cellar/enzyme/0.0.26/lib/LLVMEnzyme-13.dylib -enzyme -o ../build/gmm/out.ll -S -enable-new-pm=0 && \
 	llvm-as ../build/gmm/out.ll && \
-	clang++ -L../../runtime/build/lib -lruntime -lm ../cpp/lib.cpp ../cpp/read.cpp ../build/gmm/out.bc -O3 -o ../build/gmm/gmm_enzyme
+	clang++ -lm ../cpp/lib.cpp ../cpp/read.cpp ../build/gmm/out.bc -O3 -o ../build/gmm/gmm_enzyme
 
 
 run-enzyme: enzyme
