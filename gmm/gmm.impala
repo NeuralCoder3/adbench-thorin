@@ -69,46 +69,53 @@ fn preprocess_qs(args : [(
 }
 
 fn subtract(args : [(
-        i32,
-        &[f64],
-        &[f64],
-        &mut[f64],
+        i32, //d
+        &[f64], //x
+        i32, //x_offset
+        &[f64], //y
+        i32, //y_offset
+        &mut[f64], //out
     )*2]
 ) -> ()
 {
-
     let arg = args(0);
     let d = arg(0);
     let x = arg(1);
-    let y = arg(2);
-    let out = arg(3);
+    let x_offset = arg(2);
+    let y = arg(3);
+    let y_offset = arg(4);
+    let out = arg(5);
 
     let mut id = 0;
     while id < d {
-        out(id) = x(id) - y(id);
+        out(id) = x(id + x_offset) - y(id + y_offset);
         id++;
     }
 }
 
 fn Qtimesx(args : [(
-        i32,
-        &[f64],
-        &[f64],
-        &[f64],
-        &mut[f64],
+        i32, //d
+        &[f64],//Qdiag
+        i32, //Qdiag_offset
+        &[f64],//ltri
+        i32, //ltri_offset
+        &[f64],//x
+        &mut[f64],//out
     )*2]
 ) -> ()
 {
     let arg = args(0);
     let d = arg(0);
     let Qdiag = arg(1);
-    let ltri = arg(2);
-    let x = arg(3);
-    let out = arg(4);
+    let Qdiag_offset = arg(2);
+    let ltri = arg(3);
+    let ltri_offset = arg(4);
+    let x = arg(5);
+    let out = arg(6);
 
     let mut id = 0;
     while id < d {
-        out(id) = Qdiag(id) * x(id);
+        out(id) = Qdiag(id + Qdiag_offset) * x(id);
         id++;
     }
 
@@ -118,7 +125,7 @@ fn Qtimesx(args : [(
     while i < d {
         let mut j = i + 1;
         while j < d {
-            out(j) = out(j) + ltri(Lparamsidx) * x(i);
+            out(j) = out(j) + ltri(Lparamsidx + ltri_offset) * x(i);
             Lparamsidx++;
             j++;
         }
@@ -129,17 +136,20 @@ fn Qtimesx(args : [(
 fn sqnorm(args : [(
         i32,
         &[f64],
+        i32,
     )*2]
 ) -> f64
 {
     let arg = args(0);
     let d = arg(0);
     let v = arg(1);
+    let offset = arg(2);
 
     let mut sum = 0.0;
     let mut i = 0;
     while i < d{
-        sum += v(i) * v(i);
+        let val = v(i + offset);
+        sum += val * val;
         i++;
     }
 
@@ -242,11 +252,11 @@ fn log_wishart_prior(
 
     let mut ik = 0;
     while ik < k {
-        let currentQdiags : &[f64] =  &Qdiags(ik * p) as &[f64];
-        let currentIfc : &[f64] =  &icf(ik * icf_sz + p) as &[f64];
+        let p_offset = ik * p;
+        let icf_offset = ik * icf_sz + p;
 
-        let sqnorm_tup = (p, currentQdiags);
-        let sqnorm_tup2 = (icf_sz - p, currentIfc);
+        let sqnorm_tup = (p, Qdiags, p_offset);
+        let sqnorm_tup2 = (icf_sz - p, icf, icf_offset);
         let frobenius = sqnorm([sqnorm_tup, sqnorm_tup]) + sqnorm([sqnorm_tup2, sqnorm_tup2]);
         out += 0.5 * wishartGamma * wishartGamma * frobenius - (wishartM as f64) * sum_qs(ik);
         ik++;
@@ -297,18 +307,18 @@ extern fn gmm(args:[(
 
     let mut ix = 0;
     while ix < n {
-        let currentX : &[f64] =  &x(ix * d) as &[f64];
+        let x_offset = ix * d;
         let mut ik = 0;
         while ik < k{
-            let currentQdiags =  &Qdiags(ik * d) as &[f64];
-            let currentMeans =  &means(ik * d) as &[f64];
-            let currentIfc =  &icf(ik * icf_sz + d) as &[f64];
 
-            let subtract_tup = (d, currentX, currentMeans, xcentered);
+            let d_offset = ik * d;
+            let icf_offset = ik * icf_sz + d;
+
+            let subtract_tup = (d, x, x_offset, means, d_offset, xcentered);
             subtract([subtract_tup, subtract_tup]);
-            let qtimesx_tup = (d, currentQdiags, currentIfc, xcentered, Qxcentered);
+            let qtimesx_tup = (d, Qdiags, d_offset, icf, icf_offset, xcentered, Qxcentered);
             Qtimesx([qtimesx_tup, qtimesx_tup]);
-            let sqnorm_tup = (d, Qxcentered);
+            let sqnorm_tup = (d, Qxcentered, 0);
             main_term(ik) = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm([sqnorm_tup, sqnorm_tup]);
             ik++;
         }
@@ -360,7 +370,7 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     let Df = rev_diff(gmm);
 
-    let (y,pb) = Df([tup, tup]);
+    //let (y,pb) = Df([tup, tup]);
     //let Gf = pb(1.0);
     //let arg_deriv=Gf(0);
     //let m1_deriv=arg_deriv(2);

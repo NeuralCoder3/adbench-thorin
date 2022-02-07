@@ -1,5 +1,6 @@
 SHELL := /bin/bash
 
+RUNTIME := $(realpath ../../runtime/build/lib)
 
 impala:
 	source ../../project.sh && \
@@ -7,10 +8,10 @@ impala:
 	impala gmm.impala --emit-llvm -O2 --emit-c-interface -o ../build/gmm/gmm_impala -Othorin && \
 	llvm-as ../build/gmm/gmm_impala.ll && \
 	cp ../../runtime/build/lib/libruntime.so ../build/gmm/ && \
-	clang++ -L../../runtime/build/lib -lruntime -lm ../cpp/lib.cpp ../cpp/read.cpp ../build/gmm/gmm_impala.bc -O3 -o ../build/gmm/gmm_impala
+	clang++ -L${RUNTIME} -lruntime -lm ../cpp/lib.cpp ../cpp/read.cpp ../build/gmm/gmm_impala.bc -O3 -o ../build/gmm/gmm_impala
 
 run-impala: impala
-	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(realpath ../../runtime/build/lib) && \
+	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
 	../build/gmm/gmm_impala ../benchmark/gmm/1k/gmm_d2_K5.txt
 
 enzyme:
