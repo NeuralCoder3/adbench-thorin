@@ -42,7 +42,7 @@ fn preprocess_qs(args : [(
         &mut[f64],
         &mut[f64],
     )*2]
-) -> ()
+) -> f32
 {
     let arg = args(0);
     let d = arg(0);
@@ -66,6 +66,7 @@ fn preprocess_qs(args : [(
         }
         ik++;
     }
+    0f
 }
 
 fn subtract(args : [(
@@ -76,7 +77,7 @@ fn subtract(args : [(
         i32, //y_offset
         &mut[f64], //out
     )*2]
-) -> ()
+) -> f32
 {
     let arg = args(0);
     let d = arg(0);
@@ -91,6 +92,7 @@ fn subtract(args : [(
         out(id) = x(id + x_offset) - y(id + y_offset);
         id++;
     }
+    0f
 }
 
 fn Qtimesx(args : [(
@@ -102,7 +104,7 @@ fn Qtimesx(args : [(
         &[f64],//x
         &mut[f64],//out
     )*2]
-) -> ()
+) -> f32
 {
     let arg = args(0);
     let d = arg(0);
@@ -131,6 +133,7 @@ fn Qtimesx(args : [(
         }
         i++;
     }
+    0f
 }
 
 fn sqnorm(args : [(
