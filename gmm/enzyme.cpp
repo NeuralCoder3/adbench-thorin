@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include "../build/gmm/gmm_impala.h"
+#include "../build/gmm/gmm_enzyme_impala.h"
 #include "../cpp/defs.h"
 #include "../cpp/read.h"
 

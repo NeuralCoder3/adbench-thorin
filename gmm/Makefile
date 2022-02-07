@@ -1,10 +1,10 @@
 
 
 
-thorin:
+impala:
 	source ../../project.sh && \
 	mkdir -p ../build/gmm && \
-	impala gmm.impala --emit-llvm -O2 --emit-c-interface -o ../build/gmm/gmm_impala && \
+	impala gmm.impala --emit-llvm -O2 --emit-c-interface -o ../build/gmm/gmm_impala -Othorin && \
 	llvm-as ../build/gmm/gmm_impala.ll && \
 	clang++ -L../../runtime/build/lib -lruntime -lm ../cpp/lib.cpp ../cpp/read.cpp ../build/gmm/gmm_impala.bc -O3 -o ../build/gmm/gmm_thorin
 
@@ -12,7 +12,7 @@ thorin:
 enzyme:
 	source ../../project.sh && \
 	mkdir -p ../build/gmm && \
-	impala gmm_enzyme.impala --emit-llvm -O0 --emit-c-interface -o ../build/gmm/gmm_enzyme_impala && \
+	impala gmm_enzyme.impala --emit-llvm -O0 --emit-c-interface -o ../build/gmm/gmm_enzyme_impala -Othorin && \
 	clang++ enzyme.cpp -S -emit-llvm -o ../build/gmm/gmm_enzyme.ll -O3 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
 	llvm-as ../build/gmm/gmm_enzyme_impala.ll && \
 	llvm-as ../build/gmm/gmm_enzyme.ll && \

@@ -26,21 +26,7 @@ extern "C" {
         icf: &mut[f64],
         x: &mut[f64],
     ) -> ();
-
-    /*fn gmm_enzyme_diff( f:fn (i32, i32, i32, i32, f64, &[f64], &[f64], &[f64], &[f64]) -> f64,
-        d: i32, k: i32, n: i32,
-        wishartM: i32,
-        wishartGamma: f64,
-        alphas : &[f64], alphas_d : & mut[f64],
-        means : &[f64], means_d : & mut[f64],
-        icf : &[f64], icf_d : & mut[f64],
-        x : &[f64]
-    ) -> ();*/
 }
-
-static mut enzyme_dup: i32;
-static mut enzyme_out: i32;
-static mut enzyme_const: i32;
 
 fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
     while b < e {
