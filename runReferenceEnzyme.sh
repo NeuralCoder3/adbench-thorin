@@ -10,8 +10,8 @@ clang cpp/read.cpp -S -emit-llvm -o build/cpp/read.ll -O2 -fno-vectorize -fno-sl
 llvm-as build/cpp/enzyme_output.ll -o build/cpp/enzyme_output.bc
 llvm-as build/cpp/read.ll -o build/cpp/read.bc
 
-clang++ build/cpp/enzyme_output.bc build/cpp/read.bc -O2 -o build/cpp/enzyme
-./build/cpp/enzyme
+clang++ build/cpp/enzyme_output.bc build/cpp/read.bc -O2 -o build/cpp/gmm_enzyme
+#./build/cpp/enzyme
 #make
 #cd ../../
 #./build/cpp/main

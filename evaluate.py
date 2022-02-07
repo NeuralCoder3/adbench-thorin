@@ -71,7 +71,7 @@ def main():
 
     commands = [
         "./build/cpp/gmm_manual",
-        "./build/cpp/enzyme",
+        "./build/cpp/gmm_enzyme",
         "./build/gmm/gmm_enzyme"
     ]
 
