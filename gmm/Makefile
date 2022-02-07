@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 
 
 
@@ -6,8 +7,10 @@ impala:
 	mkdir -p ../build/gmm && \
 	impala gmm.impala --emit-llvm -O2 --emit-c-interface -o ../build/gmm/gmm_impala -Othorin && \
 	llvm-as ../build/gmm/gmm_impala.ll && \
-	clang++ -L../../runtime/build/lib -lruntime -lm ../cpp/lib.cpp ../cpp/read.cpp ../build/gmm/gmm_impala.bc -O3 -o ../build/gmm/gmm_thorin
-
+	clang++ -lm ../cpp/lib.cpp ../cpp/read.cpp ../build/gmm/gmm_impala.bc -O3 -o ../build/gmm/gmm_impala
+#-L../../runtime/build/lib -lruntime
+run-impala: impala
+	../build/gmm/gmm_impala ../benchmark/gmm/1k/gmm_d2_K5.txt
 
 enzyme:
 	source ../../project.sh && \
