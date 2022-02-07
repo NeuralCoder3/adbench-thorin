@@ -70,7 +70,7 @@ def main():
     benchmarks = createBenchmarks()
 
     commands = [
-        "./build/cpp/main",
+        "./build/cpp/gmm_manual",
         "./build/cpp/enzyme",
         "./build/gmm/gmm_enzyme"
     ]
