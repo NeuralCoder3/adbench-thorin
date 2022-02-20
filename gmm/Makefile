@@ -2,19 +2,18 @@ SHELL := /bin/bash
 
 RUNTIME := $(realpath ../../runtime/build/lib)
 
-impala:
+build-impala:
 	source ../../project.sh && \
 	mkdir -p ../build/gmm && \
-	impala gmm.impala --emit-llvm -O2 --emit-c-interface -o ../build/gmm/gmm_impala -Othorin && \
+	impala gmm.impala --emit-llvm --emit-c-interface -o ../build/gmm/gmm_impala -O0&& \
 	llvm-as ../build/gmm/gmm_impala.ll && \
-	cp ../../runtime/build/lib/libruntime.so ../build/gmm/ && \
 	clang++ -L${RUNTIME} -lruntime -lm ../cpp/lib.cpp ../cpp/read.cpp ../build/gmm/gmm_impala.bc -O3 -o ../build/gmm/gmm_impala
 
-run-impala: impala
+run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
 	../build/gmm/gmm_impala ../benchmark/gmm/1k/gmm_d2_K5.txt
 
-enzyme:
+build-enzyme:
 	source ../../project.sh && \
 	mkdir -p ../build/gmm && \
 	impala gmm_enzyme.impala --emit-llvm -O0 --emit-c-interface -o ../build/gmm/gmm_enzyme_impala -Othorin && \
@@ -23,11 +22,10 @@ enzyme:
 	llvm-as ../build/gmm/gmm_enzyme.ll && \
 	llvm-link ../build/gmm/gmm_enzyme_impala.bc ../build/gmm/gmm_enzyme.bc  -o ../build/gmm/bundle.bc && \
 	llvm-dis ../build/gmm/bundle.bc -o ../build/gmm/bundle.ll && \
-	/opt/homebrew/Cellar/llvm/13.0.0_2/bin/opt ../build/gmm/bundle.ll -load=/opt/homebrew/Cellar/enzyme/0.0.26/lib/LLVMEnzyme-13.dylib -enzyme -o ../build/gmm/out.ll -S -enable-new-pm=0 && \
+	opt ../build/gmm/bundle.ll -load=../../Enzyme/enzyme/build/Enzyme/LLVMEnzyme-12.so -enzyme -o ../build/gmm/out.ll -S -enable-new-pm=0 && \
 	llvm-as ../build/gmm/out.ll && \
 	clang++ -lm ../cpp/lib.cpp ../cpp/read.cpp ../build/gmm/out.bc -O3 -o ../build/gmm/gmm_enzyme
 
 
-run-enzyme: enzyme
-	cd ..
-	./build/gmm/prog_enzyme benchmark/gmm/1k/gmm_d2_K5.txt
+run-enzyme:
+	../build/gmm/gmm_enzyme ../benchmark/gmm/1k/gmm_d2_K5.txt

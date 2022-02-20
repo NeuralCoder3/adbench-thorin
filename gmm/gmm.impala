@@ -212,8 +212,7 @@ fn log_gamma_distrib(args : [(
     let a = arg(0);
     let p = arg(1);
 
-    let PI : f64 = 3.14159;
-    let mut out = 0.25 * ((p * (p - 1)) as f64) * log(PI);
+    let mut out = 0.25 * ((p * (p - 1)) as f64) * log(3.14159265359);
 
     let mut j = 1;
     while j < p+1 {
@@ -293,8 +292,7 @@ extern fn gmm(args:[(
 
     let mut err = 0.0;
 
-    let PI : f64 = 3.14159;
-    let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
+    let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * 3.14159265359);
     let icf_sz = d * (d + 1) / 2;
 
     let Qdiags = ~[d*k:f64];
