@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "defs.h"
+#include "../../cpp/defs.h"
 
 // d: dim
 // k: number of gaussians

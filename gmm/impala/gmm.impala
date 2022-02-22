@@ -170,13 +170,13 @@ fn arr_max(args : [(
     let x = arg(1);
 
     let mut m = x(0);
-    let mut i = 1;
+    /*let mut i = 1;
     while i < n {
         if (m < x(i)){
             m = x(i);
         }
         i++;
-    }
+    }*/
 
     m
 }
@@ -295,22 +295,24 @@ extern fn gmm(args:[(
     let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * 3.14159265359);
     let icf_sz = d * (d + 1) / 2;
 
-    let Qdiags = ~[d*k:f64];
-    let sum_qs = ~[k:f64];
-    let xcentered = ~[d:f64];
-    let Qxcentered = ~[d:f64];
-    let main_term = ~[k:f64];
+    let Qdiags = ~[2*5:f64];
+    let sum_qs = ~[5:f64];
+    let xcentered = ~[2:f64];
+    let Qxcentered = ~[2:f64];
+    let main_term = ~[5:f64];
 
     let preprocess_tup = (d, k, icf, sum_qs, Qdiags);
     preprocess_qs([preprocess_tup, preprocess_tup]);
 
     let mut slse = 0.0;
 
+    main_term(0) = 0.0;
+
     let mut ix = 0;
     while ix < n {
         let x_offset = ix * d;
         let mut ik = 0;
-        while ik < k{
+        /*while ik < k{
 
             let d_offset = ik * d;
             let icf_offset = ik * icf_sz + d;
@@ -325,13 +327,13 @@ extern fn gmm(args:[(
         }
         let lopsum_tup = (k, main_term);
         slse += logsumexp([lopsum_tup, lopsum_tup]);
-        ix++;
+        ix++;*/
     }
 
     let lopsum_tup = (k, alphas);
     let lse_alphas = logsumexp([lopsum_tup, lopsum_tup]);
-    let prior_tup = (d, k, wishartGamma, wishartM, sum_qs, Qdiags, icf);
-    err = CONSTANT + slse - (n as f64) * lse_alphas + log_wishart_prior([prior_tup, prior_tup]);
+    //let prior_tup = (d, k, wishartGamma, wishartM, sum_qs, Qdiags, icf);
+    err = CONSTANT + slse - (n as f64) * lse_alphas;// + log_wishart_prior([prior_tup, prior_tup]);
     err
 }
 
@@ -372,11 +374,13 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let Df = rev_diff(gmm);
 
     let (y,pb) = Df([tup, tup]);
-    //let Gf = pb(1.0);
-    //let arg_deriv=Gf(0);
-    //let m1_deriv=arg_deriv(2);
-    //let m2_deriv=arg_deriv(3);
+    /*let Gf = pb(1.0);
+    let arg_deriv=Gf(0);
+    let alphas_d=arg_deriv(5);
+    let means_d=arg_deriv(6);
+    let icf_d=arg_deriv(7);*/
 
+    printDouble(y);
     printDouble(result);
 }
 
@@ -394,22 +398,3 @@ fn main(argc: i32,argv :&[&[u8]]) -> i32 {
 }
 
 
-
-
-/*
-    let J : &mut[f64] = ~[size:f64];
-
-    let alphas_d  =  J;
-    let means_d =  &J(k) as &mut[f64];
-    let icf_d =  &J(k + d * k) as &mut[f64];
-
-    gmm_enzyme_diff(
-        gmm,
-        d, k, n,
-        wishartM,
-        wishartGamma,
-        alphas, alphas_d,
-        means, means_d,
-        icf, icf_d,
-        x )
-*/

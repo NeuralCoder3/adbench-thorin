@@ -6,8 +6,8 @@
 #include <cmath>
 #include <vector>
 using std::vector;
-#include "defs.h"
-#include "matrix.h"
+#include "../../cpp/defs.h"
+#include "../../cpp/matrix.h"
 
 ////////////////////////////////////////////////////////////
 //////////////////// Declarations //////////////////////////

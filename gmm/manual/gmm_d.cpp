@@ -7,8 +7,8 @@
 #include <vector>
 #include <algorithm>
 
-#include "defs.h"
-#include "matrix.h"
+#include "../../cpp/defs.h"
+#include "../../cpp/matrix.h"
 
 using std::vector;
 

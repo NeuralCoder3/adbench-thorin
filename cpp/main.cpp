@@ -1,5 +1,5 @@
-#include "gmm.h"
-#include "gmm_d.h"
+#include "../gmm/manual/gmm.h"
+#include "../gmm/manual/gmm_d.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdbool.h>

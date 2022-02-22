@@ -2,7 +2,11 @@ SHELL := /bin/bash
 
 RUNTIME := $(realpath ../../runtime/build/lib)
 
+setup-ubuntu:
+	sudo ldconfig ${RUNTIME}
+
 build-impala:
+	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
 	source ../../project.sh && \
 	mkdir -p ../build/gmm && \
 	impala gmm.impala --emit-llvm --emit-c-interface -o ../build/gmm/gmm_impala -O0&& \
@@ -12,6 +16,8 @@ build-impala:
 run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
 	../build/gmm/gmm_impala ../benchmark/gmm/1k/gmm_d2_K5.txt
+
+impala: build-impala run-impala
 
 build-enzyme:
 	source ../../project.sh && \
@@ -29,3 +35,5 @@ build-enzyme:
 
 run-enzyme:
 	../build/gmm/gmm_enzyme ../benchmark/gmm/1k/gmm_d2_K5.txt
+
+enzyme: build-enzyme run-enzyme

@@ -1,10 +1,10 @@
-#include "gmm.h"
-#include "gmm_d.h"
+#include "../manual/gmm.h"
+#include "../manual/gmm_d.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "read.h"
-#include "defs.h"
+#include "../../cpp/read.h"
+#include "../../cpp/defs.h"
 #include <string>
 #include <iostream>
 
