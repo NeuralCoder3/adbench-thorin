@@ -1,12 +1,12 @@
+#include "../../shared/gmm.h"
+#include "../../shared/gmm_d.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include "../../../cpp/read.h"
+#include "../../../cpp/defs.h"
 #include <string>
 #include <iostream>
-#include <vector>
-#include "../build/gmm/gmm_enzyme_impala.h"
-#include "../cpp/defs.h"
-#include "../cpp/read.h"
 
 extern double __enzyme_autodiff(void*, ...);
 
@@ -20,8 +20,7 @@ void gmm_d(int d, int k, int n,
            const double *means,
            const double *icf,
            const double *x,
-           const double wishart_gamma,
-           const int wishart_m,
+           const Wishart wishart,
            double *err,
            double *J){
 
@@ -29,19 +28,18 @@ void gmm_d(int d, int k, int n,
     double *means_d = &J[k];
     double *icf_d = &J[k + d * k];
 
-    double err_d = 1.0;
+    double d_err = 1.0;
 
-    __enzyme_autodiff((void*)gmm,
-                        enzyme_const, d,
-                        enzyme_const, k,
-                        enzyme_const, n,
-                        enzyme_const, wishart_gamma,
-                        enzyme_const, wishart_m,
-                        enzyme_dup,   alphas, alphas_d,
-                        enzyme_dup,   means, means_d,
-                        enzyme_dup,   icf, icf_d,
-                        enzyme_const, x,
-                        enzyme_dup, err, &err_d);
+    __enzyme_autodiff((void*)gmm_objective<double>,
+                      enzyme_const, d,
+                      enzyme_const, k,
+                      enzyme_const, n,
+                      enzyme_dup,   alphas, alphas_d,
+                      enzyme_dup,   means, means_d,
+                      enzyme_dup,   icf, icf_d,
+                      enzyme_const, x,
+                      enzyme_const, wishart,
+                      enzyme_dup, err, &d_err);
 }
 
 int main(int argc, const char** argv){
@@ -53,13 +51,13 @@ int main(int argc, const char** argv){
     int d = 1;
     int k = 1;
     int n = 1;
-    std::vector<double> alphas;
-    std::vector<double> means;
-    std::vector<double> icf;
-    std::vector<double> x;
+    vector<double> alphas;
+    vector<double> means;
+    vector<double> icf;
+    vector<double> x;
     Wishart wishart;
 
-    std::string benchmark = argv[1];
+    std::string benchmark = argv[1];//"benchmark/gmm_d2_K5.txt";
     read_gmm_instance(benchmark, &d, &k, &n, alphas, means, icf, x, wishart, false);
 
     //cpp : -5240.590563
@@ -72,11 +70,12 @@ int main(int argc, const char** argv){
     //printf("error\n");
     //
 
-    std::vector<double> J;
+    vector<double> J;
+
 
     int icf_sz = d * (d + 1) / 2;
     J.resize(k + d * k + icf_sz * k);
-    gmm_d(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart.gamma, wishart.m, &error, &J[0]);
+    gmm_d(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart, &error, &J[0]);
 
     printf("%.20lf\n", error);
 
