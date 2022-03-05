@@ -31,10 +31,10 @@ def groupBy(list, key):
 def createBenchmarks():
     benchmarks = []
 
-    for (dirpath, dirnames, filenames) in walk('benchmark/gmm/1K'):
+    for (dirpath, dirnames, filenames) in walk('benchmark/gmm/1k'):
         for file in filenames:
             if file.endswith('txt'):
-                path = 'benchmark/gmm/1K/' + file
+                path = 'benchmark/gmm/1k/' + file
                 f = open(path, "r")
                 line = f.readline()
                 (d, k, n) = line.split()
@@ -49,44 +49,62 @@ def runCommands(commands, benchmark, reps = 1):
     #print(benchmark.path)
     print("{d};{k};{n};".format(d=benchmark.d, k=benchmark.k, n=benchmark.n), end="")
     measurements = []
-    for command in commands:
-        timeSum = 0
-        for _ in range(reps):
-            start = time.time()
-            runBenchmark(command, benchmark)
-            end = time.time()
-            millis = (end - start) * 1000
-            timeSum += millis
-        avgTime = int(timeSum / reps)
-        measurements.append(avgTime)
-        print(avgTime, end=";")
+    if benchmark.d < 10 or True:
+        measurements.append(benchmark.d)
+        measurements.append(benchmark.k)
+        measurements.append(benchmark.n)
+        for command in commands:
+            timeSum = 0
+            for _ in range(reps):
+                start = time.time()
+                runBenchmark(command, benchmark)
+                end = time.time()
+                millis = (end - start) * 1000
+                timeSum += millis
+            avgTime = int(timeSum / reps)
+            measurements.append(avgTime)
+            print(avgTime, end=";")
     print()
     return measurements
 
 def main():
-
     reps = 5
 
     benchmarks = createBenchmarks()
 
     commands = [
-        "./build/cpp/gmm_manual",
-        "./build/cpp/gmm_enzyme",
-        "./build/gmm/gmm_enzyme"
+        "./build/gmm/manual/gmm_manual",
+        #"./build/gmm/impala/native/gmm_enzyme",
+        "./build/gmm/impala/enzyme/gmm_enzyme",
+        "./build/gmm/enzyme/gmm_enzyme",
+    ]
+
+    labels = [
+        "manual",
+        "enzyme-impala",
+        "enzyme-native"
     ]
 
     res = groupBy(benchmarks, key=lambda b: b.d)
     runs = []
 
+    f = open("results/evaluation.csv", "w")
+
+
     for key in sorted(res.keys()):
+
         items = sorted(res[key], key=lambda a: a.k)
 
         for benchmark in items:
             measurements = runCommands(commands, benchmark, reps)
             runs.append(measurements)
 
+    f.write(";".join(labels) + "\n")
 
+    for run in runs:
+        f.write(";".join([str(element) for element in run]) + "\n")
 
+    f.close()
 
 
 if __name__ == '__main__':

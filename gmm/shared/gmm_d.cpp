@@ -92,8 +92,8 @@ extern "C"{
                          const double *means,
                          const double *icf,
                          const double *x,
-                         const int wishart_m,
                          const double wishart_gamma,
+                         const int wishart_m,
                          double *err,
                          double *J)
     {
@@ -173,6 +173,6 @@ extern "C"{
        }
 
        *err = CONSTANT + slse - n * lse_alphas;
-       *err += log_wishart_prior(d, k, wishart, sum_qs.data(), Qdiags.data(), icf);
+       *err += log_wishart_prior(d, k, wishart.gamma, wishart.m, sum_qs.data(), Qdiags.data(), icf);
     }
 }

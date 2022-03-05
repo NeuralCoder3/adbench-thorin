@@ -1,8 +1,8 @@
-#include "../../shared/gmm.h"
-#include "../../shared/gmm_d.h"
+#include "../../../build/gmm/impala/enzyme/gmm_enzyme_impala.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <vector>
 #include "../../../cpp/read.h"
 #include "../../../cpp/defs.h"
 #include <string>
@@ -14,6 +14,8 @@ int enzyme_dup;
 int enzyme_dupnoneed;
 int enzyme_out;
 int enzyme_const;
+
+using namespace std;
 
 void gmm_d(int d, int k, int n,
            const double *alphas,
@@ -30,15 +32,16 @@ void gmm_d(int d, int k, int n,
 
     double d_err = 1.0;
 
-    __enzyme_autodiff((void*)gmm_objective<double>,
+    __enzyme_autodiff((void*) gmm,
                       enzyme_const, d,
                       enzyme_const, k,
                       enzyme_const, n,
+                      enzyme_const, wishart.gamma,
+                      enzyme_const, wishart.m,
                       enzyme_dup,   alphas, alphas_d,
                       enzyme_dup,   means, means_d,
                       enzyme_dup,   icf, icf_d,
                       enzyme_const, x,
-                      enzyme_const, wishart,
                       enzyme_dup, err, &d_err);
 }
 

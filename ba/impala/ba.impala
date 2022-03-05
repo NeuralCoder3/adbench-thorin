@@ -297,16 +297,8 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     printDouble(w_err(0));
 
-    ba_objective(n, m, p, cams, X, w, obs, feats, reproj_err, w_err);
+    //ba_objective(n, m, p, cams, X, w, obs, feats, reproj_err, w_err);
 
-    printDouble(w_err(0));
-
-
-    /*for i in range(0, p) {
-        printDouble(w_err(i));
-    }*/
-
-/*
 
     let J = ~[2 * (nCamParams + 3):f64];
 
@@ -332,20 +324,7 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
         printDouble(w_err);
         printDouble(w_d);
-    }*/
-
-
-
-    /*
-    let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x );
-
-    let diff = rev_diff(gmm);
-
-    let value = diff(0);
-    let _, _, _, _, _, alphas_d, means_d, icf_d, _ = diff(1)(1.0);
-
-    printDouble(result);
-    */
+    }
 
 }
 

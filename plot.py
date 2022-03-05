@@ -29,7 +29,11 @@ def groupBy(list, key):
     return res
 
 def transform(line):
-    elems = [int(x) for x in line.strip().split(";") if x != ""]
+    line = line.strip()
+
+    print("---" + line)
+
+    elems = [int(x) for x in line.split(";") if x != ""]
 
     return {
         "d": elems[0],
@@ -40,24 +44,20 @@ def transform(line):
 
 
 def main():
-
-    commands = [
-        "Cpp Manual",
-        "Cpp Enzyme",
-        "Impala Enzyme"
-    ]
-
     with open("results/evaluation.csv") as file:
-        lines = [transform(x) for x in file.readlines()]
+        lines = file.readlines()
 
-        res = groupBy(lines, key=lambda b: b["d"])
+        labels = lines[0].split(";")
+        data = [transform(x) for x in lines[1:] if len(x.strip()) != 0]
+
+        res = groupBy(data, key=lambda b: b["d"])
         for key in sorted(res.keys()):
             items = [x["measurements"] for x in sorted(res[key], key=lambda a: a["k"])]
 
             test = np.transpose(np.array(items) / 1000.0)
 
             for i, plot in enumerate(test):
-                plt.plot(plot, label=commands[i])
+                plt.plot(plot, label=labels[i])
             plt.legend()
             plt.show()
 

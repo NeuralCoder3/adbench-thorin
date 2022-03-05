@@ -28,8 +28,8 @@ extern "C" {
                          const double *means,
                          const double *icf,
                          const double *x,
-                         const int wishart_m,
                          const double wishart_gamma,
+                         const int wishart_m,
                          double *err,
                          double *J);
 }

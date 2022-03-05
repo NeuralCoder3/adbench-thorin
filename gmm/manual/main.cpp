@@ -1,12 +1,8 @@
 #include "../shared/gmm.h"
 #include "../shared/gmm_d.h"
-#include <math.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include "../../cpp/read.h"
-#include "../../cpp/defs.h"
 #include <string>
-
 
 int main(int argc, const char** argv){
     if(argc < 2){
@@ -31,17 +27,16 @@ int main(int argc, const char** argv){
     //diff: 0.000843
 
     double error = 0;
-    gmm_objective<double>(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart, &error);
+    gmm_objective(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart.gamma, wishart.m, &error);
 
     printf("error\n");
     printf("%.20lf\n", error);
 
     vector<double> J;
 
-
     int icf_sz = d * (d + 1) / 2;
     J.resize(k + d * k + icf_sz * k);
-    gmm_objective_d(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart.m, wishart.gamma, &error, &J[0]);
+    gmm_objective_d(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart.gamma, wishart.m, &error, &J[0]);
 
     double *alphas_d = &J[0];
     double *means_d = &J[k];
