@@ -211,7 +211,81 @@ extern "C"{
 
         fclose(fid);
     }
+
+
+  void read_lstm_instance(const char* fn,
+                          int* l, int* c, int* b,
+                          double **main_params_p,
+                          double **extra_params_p,
+                          double **state_p,
+                          double **sequence_p)
+  {
+    FILE* fid = fopen(fn, "r");
+
+    if (!fid) {
+      throw "oiks";
+    }
+
+    fscanf(fid, "%i %i %i", l, c, b);
+
+    int l_ = *l, c_ = *c, b_ = *b;
+
+    int main_sz = 2 * l_ * 4 * b_;
+    int extra_sz = 3 * b_;
+    int state_sz = 2 * l_ * b_;
+    int seq_sz = c_ * b_;
+
+    double *main_params = new double[main_sz]{0.0};
+    double *extra_params = new double[extra_sz]{0.0};
+    double *state = new double[state_sz]{0.0};
+    double *sequence = new double[seq_sz]{0.0};
+
+    *main_params_p = main_params;
+    *extra_params_p = extra_params;
+    *state_p = state;
+    *sequence_p = sequence;
+
+    for (int i = 0; i < main_sz; i++) {
+      fscanf(fid, "%lf", &main_params[i]);
+    }
+
+    for (int i = 0; i < extra_sz; i++) {
+      fscanf(fid, "%lf", &extra_params[i]);
+    }
+
+    for (int i = 0; i < state_sz; i++) {
+      fscanf(fid, "%lf", &state[i]);
+    }
+
+    for (int i = 0; i < c_ * b_; i++) {
+      fscanf(fid, "%lf", &sequence[i]);
+    }
+
+    /*char ch;
+    fscanf(fid, "%c", &ch);
+    fscanf(fid, "%c", &ch);
+
+    for (int i = 0; i < c_; i++) {
+        unsigned char ch;
+        fscanf(fid, "%c", &ch);
+        int cb = ch;
+        for (int j = b_ - 1; j >= 0; j--) {
+            int p = pow(2, j);
+            if (cb >= p) {
+                sequence[(i + 1) * b_ - j - 1] = 1;
+                cb -= p;
+            }
+            else {
+                sequence[(i + 1) * b_ - j - 1] = 0;
+            }
+        }
+    }*/
+
+    fclose(fid);
+  }
 }
+
+
 
 
 

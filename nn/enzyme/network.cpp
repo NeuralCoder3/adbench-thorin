@@ -25,6 +25,20 @@ using namespace std;
 
 extern double __enzyme_autodiff(void*, ...);
 
+int size_x = 28;
+int size_y = 28;
+int kernel_size = 5;
+
+int kernel_size_sqr = kernel_size * kernel_size;
+
+int convolution_size_1 = kernel_size_sqr * 8;
+int convolution_size_2 = kernel_size_sqr * 8 * 16;
+
+int fully_connected_size_1 = convolution_size_2 * 256;
+int fully_connected_size_2 = 256 * 10;
+
+int weight_size = convolution_size_1 +convolution_size_2 + fully_connected_size_1 + fully_connected_size_2;
+
 int number_of_digits(double n) {
   int m;
   ostringstream strs;
@@ -66,17 +80,8 @@ double random(double fMin, double fMax)
   return fMin + f * (fMax - fMin);
 }
 
-#include <iostream>
-#include <vector>
-
-
 
 double cross_entropy(double *output, int target){
-  /*double value = 0.0;
-  for(int i = 0 ; i < 10 ; i++ ){
-    double test = target == i ? (1 - output[i]): output[i];
-    value += test * test;
-  }*/
   return -log(output[target]);
 }
 
@@ -156,13 +161,14 @@ void conv_layer(double *input, double *output, double *weights, int kernel_size,
 
 
 void propagate(
-    double *conv_weights_1,
-    double *conv_weights_2,
-    double *fully_connected_weights_1,
-    double *fully_connected_weights_2,
+    double *weights,
     double *input,
     double *output){
 
+  double *conv_weights_1 = weights;
+  double *conv_weights_2 = conv_weights_1 + convolution_size_1;
+  double *fully_connected_weights_1 = conv_weights_2 + convolution_size_2;
+  double *fully_connected_weights_2 = fully_connected_weights_1 + fully_connected_size_1;
 
   const int features1 = 8;
   const int features2 = 2;
@@ -197,26 +203,20 @@ int argmax(double *output, int size){
 }
 
 void loss_f(
-              double *conv_weights_1,
-              double *conv_weights_2,
-              double *fully_connected_weights_1,
-              double *fully_connected_weights_2,
+              double *weights,
               double *input,
               int target,
               double *err){
   double output[10];
-  propagate(conv_weights_1, conv_weights_2, fully_connected_weights_1, fully_connected_weights_2, input, output);
+  propagate(weights, input, output);
   *err = cross_entropy(output, target);
 }
 
 int predict(
-    double *conv_weights_1,
-    double *conv_weights_2,
-    double *fully_connected_weights_1,
-    double *fully_connected_weights_2,
+    double *weights,
     double *input){
   double output[10];
-  propagate(conv_weights_1, conv_weights_2, fully_connected_weights_1, fully_connected_weights_2, input, output);
+  propagate(weights, input, output);
   return argmax(output, 10);
 }
 
@@ -224,27 +224,18 @@ int predict(
 
 #ifdef BACKPROPAGATE
 void backpropagate(
-      double *conv_weights_1,
-      double *conv_weights_2,
-      double *fully_connected_weights_1,
-      double *fully_connected_weights_2,
+      double *weights,
       double *input,
       int target,
       double *err,
-      double *conv_weights_1_d,
-      double *conv_weights_2_d,
-      double *fully_connected_weights_1_d,
-      double *fully_connected_weights_2_d){
+      double *derivates){
 
     double err_d = 1.0;
     __enzyme_autodiff((void*) loss_f,
-                    enzyme_dup,   conv_weights_1, conv_weights_1_d,
-                    enzyme_dup,   conv_weights_2, conv_weights_2_d,
-                    enzyme_dup,   fully_connected_weights_1, fully_connected_weights_1_d,
-                    enzyme_dup,   fully_connected_weights_2, fully_connected_weights_2_d,
+                    enzyme_dup,   weights, derivates,
                     enzyme_const, input,
                     enzyme_const, target,
-                    enzyme_dup,   err, &err_d);
+                    enzyme_dupnoneed,   err, &err_d);
 }
 #endif
 
@@ -265,24 +256,28 @@ void adamOptimizer(int epoch, int size, double *weights, double *J, double lr, d
   }
 }
 
-int main(){
-  int size_x = 28;
-  int size_y = 28;
-  int kernel_size = 5;
+double calcAccuracy(double *weights,int offset, int len, std::vector<std::vector<double>> &data, std::vector<int> &labels){
+  int match = 0;
+  int non_match = 0;
+  for(int j = offset ; j < offset + len ; j++){
+    int index = predict(weights,
+                        &data[j][0]);
+
+    if(index ==  labels[j]){
+      match++;
+    }else{
+      non_match++;
+    }
+  }
+
+  return (double)match / (match + non_match);
+}
+
+void train(){
 
   vector<vector<double>> train_data;
   vector<int> labels_data;
   readMNIST(10000, 784, train_data, labels_data);
-
-  int kernel_size_sqr = kernel_size * kernel_size;
-
-  int convolution_size_1 = kernel_size_sqr * 8;
-  int convolution_size_2 = kernel_size_sqr * 8 * 16;
-
-  int fully_connected_size_1 = convolution_size_2 * 256;
-  int fully_connected_size_2 = 256 * 10;
-
-  int weight_size = convolution_size_1 +convolution_size_2 + fully_connected_size_1 + fully_connected_size_2;
 
   double *weights = new double[weight_size];
   double *derivatives = new double[weight_size]{0.0};
@@ -293,16 +288,6 @@ int main(){
     weights[i] = random(-0.1, 0.1);
   }
 
-  double *conv_weights_1 = weights;
-  double *conv_weights_2 = conv_weights_1 + convolution_size_1;
-  double *fully_connected_weights_1 = conv_weights_2 + convolution_size_2;
-  double *fully_connected_weights_2 = fully_connected_weights_1 + fully_connected_size_1;
-
-  double *conv_weights_1_d = derivatives;
-  double *conv_weights_2_d = conv_weights_1_d + convolution_size_1;
-  double *fully_connected_weights_1_d = conv_weights_2_d + convolution_size_2;
-  double *fully_connected_weights_2_d = fully_connected_weights_1_d + fully_connected_size_1;
-
   double lr = 1e-4;
 
   double loss1;
@@ -311,10 +296,7 @@ int main(){
 
   int test_i = 3;
 
-  loss_f(conv_weights_1,
-         conv_weights_2,
-         fully_connected_weights_1,
-         fully_connected_weights_2,
+  loss_f(weights,
          &train_data[test_i][0],
          labels_data[test_i],
          &err);
@@ -331,17 +313,11 @@ int main(){
 
 #ifdef BACKPROPAGATE
       backpropagate(
-          conv_weights_1,
-          conv_weights_2,
-          fully_connected_weights_1,
-          fully_connected_weights_2,
+          weights,
           input,
           label,
           &loss1,
-          conv_weights_1_d,
-          conv_weights_2_d,
-          fully_connected_weights_1_d,
-          fully_connected_weights_2_d);
+          derivatives);
 #endif
 
       adamOptimizer(epoch + 1, weight_size, weights, derivatives, lr, 0.9, 0.999, m, v);
@@ -351,24 +327,7 @@ int main(){
       }
     }
 
-
-    int match = 0;
-    int non_match = 0;
-    for(int j = 9000 ; j < 9000 + 100 ; j++){
-      int index = predict(conv_weights_1,
-                          conv_weights_2,
-                          fully_connected_weights_1,
-                          fully_connected_weights_2,
-                          &train_data[j][0]);
-
-      if(index ==  labels_data[j]){
-        match++;
-      }else{
-        non_match++;
-      }
-    }
-
-    double accuracy = (double)match / (match + non_match);
+    double accuracy = calcAccuracy(weights, 9000, 1000, train_data, labels_data);
     std::cout << accuracy << std::endl;
 
     if(best < accuracy){
@@ -389,14 +348,64 @@ int main(){
     std::cout << "######" << std::endl;
     std::cout << labels_data[j] << std::endl;
     std::cout << " " << std::endl;
-    propagate(conv_weights_1, conv_weights_2, fully_connected_weights_1, fully_connected_weights_2, &train_data[j][0], output);
+    propagate(weights, &train_data[j][0], output);
 
     for(int i = 0 ; i < 10 ; i++){
       std::cout << output[i] << std::endl;
     }
   }
 
+}
 
+void eval(){
+  double *weights = new double [weight_size];
+  std::ifstream file("weights.bin", std::ios::binary);
+  file.read((char*)weights, weight_size * sizeof(double));
+  file.close();
+
+  vector<vector<double>> train_data;
+  vector<int> labels_data;
+  readMNIST(10000, 784, train_data, labels_data);
+  double accuracy = calcAccuracy(weights, 0, 10000, train_data, labels_data);
+  std::cout << accuracy << std::endl;
+}
+
+void test(int nr){
+  double *weights = new double [weight_size];
+  std::ifstream file("weights.bin", std::ios::binary);
+  file.read((char*)weights, weight_size * sizeof(double));
+  file.close();
+
+  vector<vector<double>> train_data;
+  vector<int> labels_data;
+  readMNIST(10000, 784, train_data, labels_data);
+
+  double *input = &train_data[nr][0];
+  int label = labels_data[nr];
+
+  print_mnist(input);
+  double output[10];
+
+  propagate(weights, input, output);
+
+  std::cout << "solution: " << label << std::endl;
+  std::cout << "prediction: " << argmax(output, 10) << std::endl;
+
+  std::cout << std::endl;
+
+  for(int i = 0 ; i < 10 ; i++){
+    std::cout << output[i] << std::endl;
+  }
+}
+
+int main(int argc, const char** argv){
+
+  //train();
+  int number = (int) strtol(argv[1], (char **)NULL, 10);
+
+  std::cout << number << std::endl;
+
+  test(number);
 
   return 0;
 }

@@ -1,0 +1,227 @@
+extern "C" {
+    fn printString(&[u8]) -> ();
+    fn printFloat(f32) -> ();
+    fn printDouble(f64) -> ();
+    fn printInteger(i32) -> ();
+    fn log(f64) -> (f64);
+    fn exp(f64) -> (f64);
+    fn sqrt(f64) -> (f64);
+    fn sin(f64) -> (f64);
+    fn cos(f64) -> (f64);
+    fn tanh(f64) -> (f64);
+    fn logf(f32) -> (f32);
+    fn lgamma(f64) -> (f64);
+    fn read_ba_size(
+        file: &[u8],
+        n: &mut i32,
+        m: &mut i32,
+        p: &mut i32
+    ) -> ();
+    fn read_ba_instance(
+        file: &[u8],
+        n: i32,
+        m: i32,
+        p: i32,
+        cams: &mut[f64],
+        X: &mut[f64],
+        w: &mut[f64],
+        obs: &mut[i32],
+        feats: &mut[f64]
+    ) -> ();
+
+    fn read_lstm_instance(file: &[u8],
+                              l: &mut i32,
+                              c: &mut i32,
+                              b: &mut i32,
+                              main_params_p: &&mut[f64],
+                              extra_params_p: &&mut[f64],
+                              state_p: &&mut[f64],
+                              sequence_p: &&mut[f64]) -> ();
+}
+
+fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
+    while b < e {
+        body(b++)
+    }
+}
+
+
+
+fn sigmoid( x: f64) -> (f64)
+{
+    1.0 / (1.0 + exp(-x))
+}
+
+// log(sum(exp(x), 2))
+fn logsumexp( vect: &[f64], sz: i32) -> (f64)
+{
+    let mut sum = 0.0;
+    let mut i = 0;
+
+    while ( i < sz)
+    {
+        sum += exp(vect(i));
+        i++;
+    }
+
+    sum += 2.0;
+    log(sum)
+}
+
+// LSTM OBJECTIVE
+// The LSTM model
+fn lstm_model(
+    hsize: i32,
+    weight: &[f64],
+    bias: &[f64],
+    hidden: &mut[f64],
+    cell: &mut[f64],
+    input: &[f64]
+) -> ()
+{
+    let forget = ~[ hsize: f64];
+    let ingate = ~[ hsize: f64];
+    let outgate = ~[ hsize: f64];
+    let change = ~[ hsize: f64];
+
+    let mut i = 0;
+    while ( i < hsize)
+    {
+        forget(i) = sigmoid(input(i) * weight(i) + bias(i));
+        ingate(i) = sigmoid(hidden(i) * weight(hsize + i) + bias(hsize + i));
+        outgate(i) = sigmoid(input(i) * weight(2 * hsize + i) + bias(2 * hsize + i));
+        change(i) = tanh(hidden(i) * weight(3 * hsize + i) + bias(3 * hsize + i));
+        i++;
+    }
+
+    i = 0;
+    while (i < hsize)
+    {
+        cell(i) = cell(i)  * forget(i) + ingate(i) * change(i);
+        i++;
+    }
+
+    i = 0;
+    while (i < hsize)
+    {
+        hidden(i) = outgate(i) * tanh(cell(i));
+        i++;
+    }
+}
+
+// Predict LSTM output given an input
+fn lstm_predict(
+    l: i32,
+    b: i32,
+    w: &[f64],
+    w2: &[f64],
+    s: &[f64],
+    x: &[f64],
+    x2: &mut[f64]
+) -> ()
+{
+    let mut i = 0;
+    while ( i < b)
+    {
+        x2(i) = x(i) * w2(i);
+        i++;
+    }
+
+    let mut xp: &[f64] = x2;
+    i = 0;
+    while (i <= 2 * l * b - 1)
+    {
+        lstm_model(b, &(w(i * 4))  as &mut[f64], &(w((i + b) * 4)) as &mut[f64], &(s(i)) as &mut[f64], &(s(i + b)) as &mut[f64], xp);
+        xp = &(s(i)) as &[f64];
+        i += 2 * b;
+    }
+
+    i = 0;
+    while ( i < b )
+    {
+        x2(i) = xp(i) * w2(b + i) + w2(2 * b + i);
+        i++;
+    }
+}
+
+// LSTM objective (loss function)
+fn lstm(
+    l: i32,
+    c: i32,
+    b: i32,
+    main_params: &mut[f64],
+    extra_params: &mut[f64],
+    state: &[f64],
+    sequence: &[f64],
+    loss: &mut f64
+) -> ()
+{
+    let mut i = 0;
+    let mut t = 0;
+    let mut total = 0.0;
+    let mut count = 0;
+    let mut input = sequence;
+    let ypred =  ~[b: f64];
+    let ynorm = ~[b: f64];
+
+    while (t <= (c - 1) * b - 1)
+    {
+        lstm_predict(l, b, main_params, extra_params, state, input, ypred);
+        let lse = logsumexp(ypred, b);
+        i = 0;
+        while (i < b)
+        {
+            ynorm(i) = ypred(i) - lse;
+            i++;
+        }
+
+        let ygold = &sequence(t + b) as &[f64];
+        i = 0;
+        while ( i < b )
+        {
+            total += ygold(i) * ynorm(i);
+            i++;
+        }
+
+        count += b;
+        input = ygold;
+        t += b;
+    }
+
+    *loss = -total / ( count as f64);
+}
+
+
+fn runGmmBenchmark(file: &[u8]) -> (){
+
+    let mut l: i32;
+    let mut c: i32;
+    let mut b: i32;
+
+    let mut main_params: &mut[f64];
+    let mut extra_params: &mut[f64];
+    let mut state: &mut[f64];
+    let mut sequence: &mut[f64];
+
+    read_lstm_instance(file, &mut l, &mut c, &mut b, &mut main_params, &mut extra_params, &mut state, &mut sequence);
+
+    //let mut J = ~[2 * l * 4 * b + 3 * b:i32];
+    let mut loss = 0.0;
+
+    lstm(l, c, b, main_params, extra_params, state, sequence, &mut loss);
+
+    printDouble(loss);
+}
+
+fn main(argc: i32,argv :&[&[u8]]) -> i32 {
+    if argc < 2{
+        printString("No Benchmark specified");
+    }else{
+        let file = argv(1);
+        printString(file);
+        runGmmBenchmark(file);
+    }
+
+    0
+}
+

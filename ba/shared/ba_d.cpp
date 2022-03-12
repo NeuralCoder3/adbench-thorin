@@ -6,8 +6,15 @@
 #include <cmath>
 #include <cfloat>
 
-#include "matrix.h"
+#include "../../cpp/matrix.h"
 #include "ba_d.h"
+
+#define BA_NCAMPARAMS 11
+#define BA_ROT_IDX 0
+#define BA_C_IDX 3
+#define BA_F_IDX 6
+#define BA_X0_IDX 7
+#define BA_RAD_IDX 9
 
 void compute_zach_weight_error_d(double w, double* err, double* J)
 {

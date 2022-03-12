@@ -20,6 +20,18 @@ NATIVE_MANUAL_BUILD := ${BUILD_ba}/manual
 setup-ubuntu:
 	sudo ldconfig ${RUNTIME}
 
+build:
+	mkdir -p ${ENZYME_NATIVE_BUILD} && \
+	source ../../project.sh && \
+	clang++ ${ENZYME_NATIVE}/enzyme.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/enzyme_input.ll -O0 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
+	opt ${ENZYME_NATIVE_BUILD}/enzyme_input.ll -load=../../Enzyme/enzyme/build/Enzyme/LLVMEnzyme-12.so -enzyme -o ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -S -enable-new-pm=0 && \
+	llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -o ${ENZYME_NATIVE_BUILD}/enzyme_output.bc && \
+	clang++  ${SHARED_ALL}/read.cpp  ${ENZYME_NATIVE_BUILD}/enzyme_output.bc -O0 -o ${ENZYME_NATIVE_BUILD}/ba_enzyme
+
+run:
+	${ENZYME_NATIVE_BUILD}/ba_enzyme ../benchmark/ba/ba1_n49_m7776_p31843.txt
+
+
 build-native:
 	source ../../project.sh && \
 	mkdir -p ${NATIVE_MANUAL_BUILD} && \

@@ -240,7 +240,7 @@ fn computeZachWeightError(w: f64, err: &mut f64) -> ()
 }
 
 
-fn ba(n: i32, m: i32, p: i32, cams: &[f64], X: &[f64], w: &[f64], obs: &[i32], feats: &[f64], reproj_err: &[f64], w_err: &mut[f64]) -> (){
+fn ba(n: i32, m: i32, p: i32, cams: &[f64], X: &[f64], w: &[f64], obs: &[i32], feats: &[f64], reproj_err: &mut[f64], w_err: &mut[f64]) -> (){
 
     for i in range(0, p)
     {
