@@ -1,11 +1,11 @@
 
-There are 4 differentiation tests.
+There are 4 differentiation tests:
 * Gaussian Mixture Models (GMM)
 * Bundle Assignment (BA)
 * Natural Language Processing (LSTM)
 * Neuronal Network for MNIST (NN)
 
-Tests are written for 
+For each tests are different implementations present: 
 
 * **Hand crafted cpp**
 * **Enzyme**
@@ -16,7 +16,7 @@ Tests are written for
 * **Impala** \
   Code written and differentiated in Impala
 
-
+In each folder (gmm, ba, lstm, nn) are these make targets:
 ```
 build-native #Build manual implementation
 run-native #Run manual with first test instance
