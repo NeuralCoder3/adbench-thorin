@@ -16,6 +16,16 @@ For each tests are different implementations present:
 * **Impala** \
   Code written and differentiated in Impala
 
+Setup:
+
+Clone impala-adbench project to anydsl folder.
+https://github.com/AnyDSL/anydsl
+
+According to the README setup and build anydsl environment.
+
+Additional for using enzyme clone enzyme inside anydsl folder and build it.
+https://github.com/EnzymeAD/Enzyme
+
 In each folder (gmm, ba, lstm, nn) are these make targets:
 ```
 build-native #Build manual implementation
