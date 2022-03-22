@@ -41,7 +41,7 @@ build-enzyme-native #Build enzyme implementation
 run-enzyme-native #Run enzyme with first test instance
 ```
 
-Using Neuronal Network Benchmark:
+#Using Neuronal Network Benchmark:
 
 ###Train
 Each epoch weights are saved to given weight file.
