@@ -41,16 +41,16 @@ build-enzyme-native #Build enzyme implementation
 run-enzyme-native #Run enzyme with first test instance
 ```
 
-#Using Neuronal Network Benchmark:
+# Using Neuronal Network Benchmark:
 
-###Train
+### Train
 Each epoch weights are saved to given weight file.
 Training stops if max epochs are reached or 3 times a row no improvement in test acurracy is reached.
 
-###Eval 
+### Eval 
 Calculates accuracy of given weights file.
 
-###Test
+### Test
 Classify one sample with weights of given file.
 Use --sample to pick one sample of 10000
 
