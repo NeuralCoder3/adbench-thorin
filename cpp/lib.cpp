@@ -19,6 +19,10 @@ extern "C"{
         printf("%d\n", i);
     }
 
+    void printLong(unsigned long i) {
+        printf("%lu\n", i);
+    }
+
     double randomDouble(double fMin, double fMax)
     {
       double f = (double)rand() / RAND_MAX;
