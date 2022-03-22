@@ -273,7 +273,7 @@ double calcAccuracy(double *weights,int offset, int len, std::vector<std::vector
   return (double)match / (match + non_match);
 }
 
-void train(){
+void train(const std::string& weightSource, int maxEpoch, int trainSamples, int testSamples){
 
   vector<vector<double>> train_data;
   vector<int> labels_data;
@@ -305,9 +305,9 @@ void train(){
   double best = 0.0;
   int failed = 0;
 
-  for(int epoch = 0; epoch < 70 ; epoch++){
+  for(int epoch = 0; epoch < maxEpoch ; epoch++){
     std::cout << "epoch" << epoch << std::endl;
-    for(int j = 0 ; j < 9000 ; j++){
+    for(int j = 0 ; j < trainSamples ; j++){
       double *input = &train_data[j][0];
       int label = labels_data[j];
 
@@ -327,11 +327,11 @@ void train(){
       }
     }
 
-    double accuracy = calcAccuracy(weights, 9000, 1000, train_data, labels_data);
+    double accuracy = calcAccuracy(weights, trainSamples, testSamples, train_data, labels_data);
     std::cout << accuracy << std::endl;
 
     if(best < accuracy){
-      std::ofstream file("weights2.bin", std::ios::binary);
+      std::ofstream file(weightSource, std::ios::binary);
       file.write((char*) weights, weight_size * sizeof(double));
       file.close();
       failed = 0;
@@ -357,9 +357,9 @@ void train(){
 
 }
 
-void eval(){
+void eval(const std::string&  weightSource){
   double *weights = new double [weight_size];
-  std::ifstream file("weights.bin", std::ios::binary);
+  std::ifstream file(weightSource, std::ios::binary);
   file.read((char*)weights, weight_size * sizeof(double));
   file.close();
 
@@ -367,12 +367,12 @@ void eval(){
   vector<int> labels_data;
   readMNIST(10000, 784, train_data, labels_data);
   double accuracy = calcAccuracy(weights, 0, 10000, train_data, labels_data);
-  std::cout << accuracy << std::endl;
+  std::cout << "accuracy: " << accuracy << std::endl;
 }
 
-void test(int nr){
+void test(int nr, const std::string& weightSource){
   double *weights = new double [weight_size];
-  std::ifstream file("weights.bin", std::ios::binary);
+  std::ifstream file(weightSource, std::ios::binary);
   file.read((char*)weights, weight_size * sizeof(double));
   file.close();
 
@@ -394,18 +394,53 @@ void test(int nr){
   std::cout << std::endl;
 
   for(int i = 0 ; i < 10 ; i++){
-    std::cout << output[i] << std::endl;
+    std::cout << i << ": " << output[i] << std::endl;
   }
 }
 
+enum Mode{
+    Train, Eval, Test
+};
+
+const char* defaultSource = "weights.bin";
+
 int main(int argc, const char** argv){
+    std::string weightSource = defaultSource;
+    int sampleIndex = 0;
+    Mode mode = Mode::Test;
+    int epochs = 70;
+    int trainSamples = 9000;
+    int testSamples = 1000;
 
-  //train();
-  int number = (int) strtol(argv[1], (char **)NULL, 10);
+    for(int i = 0 ; i < argc ; i++){
+        if(strcmp(argv[i], "--file") == 0 || strcmp(argv[i], "-f") == 0){
+            weightSource = argv[++i];
+        }else if(strcmp(argv[i], "--sample") == 0){
+            sampleIndex = (int) strtol(argv[i], (char **)NULL, 10);
+        }else if(strcmp(argv[i], "--train") == 0){
+            mode = Mode::Train;
+        }else if(strcmp(argv[i], "--eval") == 0 || strcmp(argv[i], "-e") == 0){
+            mode = Mode::Eval;
+        }else if(strcmp(argv[i], "--test") == 0 || strcmp(argv[i], "-t") == 0){
+            mode = Mode::Test;
+        }else if(strcmp(argv[i], "--epoch") == 0 || strcmp(argv[i], "-e") == 0){
+            epochs = (int) strtol(argv[i], (char **)NULL, 10);
+        }else if(strcmp(argv[i], "--train-size") == 0){
+            trainSamples = (int) strtol(argv[i], (char **)NULL, 10);
+        }else if(strcmp(argv[i], "--test-size") == 0){
+            testSamples = (int) strtol(argv[i], (char **)NULL, 10);
+        }
+    }
 
-  std::cout << number << std::endl;
+    std::cout << "weights: " << weightSource << std::endl;
 
-  test(number);
+    if(mode == Mode::Eval){
+        eval(weightSource);
+    }else if(mode == Mode::Test){
+        test(sampleIndex, weightSource);
+    }else  if(mode == Mode::Train){
+        train(weightSource, epochs, trainSamples, testSamples);
+    }
 
   return 0;
 }
