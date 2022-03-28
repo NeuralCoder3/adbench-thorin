@@ -3,35 +3,28 @@ extern "C" {
     fn printDouble(f64) -> ();
     fn printInteger(i32) -> ();
     fn printLong(u64) -> ();
+    fn lgamma(f64) -> (f64);
+    fn sin(f64) -> (f64);
+    fn cos(f64) -> (f64);
+    fn hypot(f64, f64) -> (f64);
 }
 
-fn f(x: &[f32], dummy:i32) -> f32 {
-    let x0 = x(0);
-    let x1 = x(1);
-    let x2 = x(2);
-    let z = x0 + 2f* x2;
-    z*z
+fn f(x: f64, y: f64) -> f64 {
+    hypot(x, y)
 }
 
 fn main() -> i32 {
     let Df = rev_diff(f);
-    let x: & mut[f32] = ~[3: f32];
-    x(0) = 5f;
-    x(1) = 2f;
-    x(2) = 2f;
-    let yp = Df((3 as u64, x), 2);
+
+    let yp = Df(2.2, 2.2);
     let y  = yp(0);
-    let yP = yp(1)(1f);
-    //42
-    let r = y as i32;
-    let q0 = yP(0);
-    let q1 = yP(1);
+    let derivatives  = yp(1)(1.0);
+    let xd  = derivatives(0);
+    let yd  = derivatives(1);
 
-    printLong(q0(0));
-    printFloat(q0(1)(0));
-    printFloat(q0(1)(1));
-    printFloat(q0(1)(2));
-    printDouble(q1);
 
+    printDouble(y);
+    printDouble(xd);
+    printDouble(yd);
     0
 }
