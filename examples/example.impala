@@ -6,6 +6,7 @@ extern "C" {
     fn lgamma(f64) -> (f64);
     fn sin(f64) -> (f64);
     fn cos(f64) -> (f64);
+    fn sqrt(f64) -> (f64);
     fn hypot(f64, f64) -> (f64);
 }
 
@@ -16,15 +17,27 @@ fn f(x: f64, y: f64) -> f64 {
 fn main() -> i32 {
     let Df = rev_diff(f);
 
-    let yp = Df(2.2, 2.2);
-    let y  = yp(0);
+    let x = 1.2;
+    let y = 3.4;
+
+    let yp = Df(x, y);
+    let fx  = yp(0);
     let derivatives  = yp(1)(1.0);
     let xd  = derivatives(0);
     let yd  = derivatives(1);
 
-
-    printDouble(y);
+    printDouble(fx);
     printDouble(xd);
     printDouble(yd);
+
+
+
+    let fx2 = sqrt( x*x + y*y );
+    let testXd = x / fx;
+    let testYd = y / fx;
+
+    printDouble(fx2);
+    printDouble(testXd);
+    printDouble(testYd);
     0
 }
