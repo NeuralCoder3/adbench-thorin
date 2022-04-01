@@ -266,7 +266,7 @@ fn gmm(d: i32, k: i32, n: i32,
         icf : &[f64],
         x : &[f64]) -> f64{
 
-
+/*
     let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * 3.14159265359);
     let icf_sz = d * (d + 1) / 2;
 
@@ -274,17 +274,17 @@ fn gmm(d: i32, k: i32, n: i32,
     let sum_qs : &mut[f64] = ~[5:f64];
     let xcentered : &mut[f64] = ~[2:f64];
     let Qxcentered : &mut[f64] = ~[2:f64];
-    let main_term : &mut[f64] = ~[5:f64];
+    let main_term : &mut[f64] = ~[5:f64];*/
 
     //preprocess_qs(d, k/*, icf,*/, sum_qs, Qdiags);
 
 
     /*let mut err = 0.0;
-    let mut slse = 0.0;
+    //let mut slse = 0.0;
 */
-    main_term(0) = 0.0;
+    //main_term(0) = 0.0;
 
-    let mut ix = 0;
+    //let mut ix = 0;
     //while ix < n {
         //let x_offset = ix * d;
         //let mut ik = 0;
@@ -308,9 +308,10 @@ fn gmm(d: i32, k: i32, n: i32,
 /*
     let lopsum_tup = (k, alphas);
     let lse_alphas = logsumexp([lopsum_tup, lopsum_tup]);
-    //let prior_tup = (d, k, wishartGamma, wishartM, sum_qs, Qdiags, icf);
+    let prior_tup = (d, k, wishartGamma, wishartM, sum_qs, Qdiags, icf);
     err = CONSTANT + slse - (n as f64) * lse_alphas;// + log_wishart_prior([prior_tup, prior_tup]);*/
-    alphas(0)
+
+    wishartGamma * alphas(0)
 }
 
 fn runGmmBenchmark(file: &[u8]) -> (){
@@ -350,7 +351,22 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     let Df = rev_diff(gmm);
 
-    let (y,pb) = Df(d, k, n, wishartGamma, wishartM, (alphas_size, alphas), (means_size, means), (icf_size, icf), (x_size, x));
+    wishartGamma = 1.23;
+    alphas(0) = 0.12;
+
+    let (y, diff) = Df(d, k, n, wishartGamma, wishartM, (alphas_size, alphas), (means_size, means), (icf_size, icf), (x_size, x));
+
+    let gradients  = diff(1.0);
+
+    let gamma_gradient = gradients(3);
+    let (alpha_gradient_size, alpha_gradients) = gradients(5);
+    let (mean_gradient_size, mean_gradients) = gradients(6);
+    let (icf_gradient_size, icf_gradients) = gradients(7);
+
+    printDouble(y);
+    printDouble(gamma_gradient);  // should be 0.12
+    printDouble(alpha_gradients(0)); // schould be 1.23 but is 2.45
+
     //let er = Df((alphas_size, alphas));
   /*  let Gf = pb(1.0);
     let arg_deriv=Gf(0);
