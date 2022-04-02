@@ -4,19 +4,20 @@ extern "C" {
     fn printInteger(i32) -> ();
     fn printLong(u64) -> ();
     fn lgamma(f64) -> (f64);
+    fn lgamma2(f64, i32) -> (f64);
     fn sin(f64) -> (f64);
     fn cos(f64) -> (f64);
-    fn hypot(f64, f64) -> (f64);
+    fn testFunction(f64, f32) -> (f64);
 }
 
-fn f(x: f64, y: f64) -> f64 {
-    hypot(x, y)
+fn f(x: f64, y: f32) -> f64 {
+    testFunction(x , y)
 }
 
 fn main() -> i32 {
     let Df = rev_diff(f);
 
-    let yp = Df(2.2, 6.6);
+    let yp = Df(2.2, 6.6f);
     let y  = yp(0);
     let derivatives  = yp(1)(1.0);
     let xd  = derivatives(0);
@@ -24,6 +25,6 @@ fn main() -> i32 {
 
     printDouble(y);
     printDouble(xd);
-    printDouble(yd);
+    printFloat(yd);
     0
 }

@@ -17,7 +17,7 @@ build-impala:
 	source ../../project.sh && \
 	impala example.impala --emit-llvm -o example -O0&& \
 	llvm-as example.ll && \
-	clang++ ${SHARED_ALL}/lib.cpp example.bc -O3 -o example
+	clang++ lib.cpp example.bc -O3 -o example
 
 run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
