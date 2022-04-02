@@ -35,12 +35,12 @@ build-impala:
 	source ../../project.sh && \
 	mkdir -p ${NATIVE_IMPALA_BUILD} && \
 	impala ${NATIVE_IMPALA}/gmm.impala --emit-llvm --emit-c-interface -o ${NATIVE_IMPALA_BUILD}/gmm_impala -O0&& \
-	llvm-as ${NATIVE_IMPALA_BUILD}/gmm_impala.ll && \
+	llvm-as ${NATIVE_IMPALA_BUILD}/gmm_impala.ll
 	clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/gmm_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/gmm_impala
 
 run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
-	${ENZYME_IMPALA_BUILD}/gmm_impala ../benchmark/gmm/1k/gmm_d2_K5.txt
+	${NATIVE_IMPALA_BUILD}/gmm_impala ../benchmark/gmm/1k/gmm_d2_K5.txt
 
 impala: build-impala run-impala
 
