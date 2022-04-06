@@ -235,10 +235,10 @@ extern "C"{
     int state_sz = 2 * l_ * b_;
     int seq_sz = c_ * b_;
 
-    double *main_params = new double[main_sz]{0.0};
-    double *extra_params = new double[extra_sz]{0.0};
-    double *state = new double[state_sz]{0.0};
-    double *sequence = new double[seq_sz]{0.0};
+    double *main_params = new double[main_sz];//{0.0};
+    double *extra_params = new double[extra_sz];//{0.0};
+    double *state = new double[state_sz];//{0.0};
+    double *sequence = new double[seq_sz];//{0.0};
 
     *main_params_p = main_params;
     *extra_params_p = extra_params;

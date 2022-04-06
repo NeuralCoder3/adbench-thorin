@@ -17,12 +17,13 @@ fn f(x: f64, y: i64) -> f64 {
 }
 
 fn main() -> i32 {
-    let Df = rev_diff(f);
 
     let x = 1.2;
     let y = 3 as i64;
 
-    let yp = Df(x, y);
+    let gradient = rev_diff(f);
+
+    let yp = gradient(x, y);
     let fx  = yp(0);
     let derivatives  = yp(1)(1.0);
     let xd  = derivatives(0);
@@ -31,7 +32,6 @@ fn main() -> i32 {
     printDouble(fx);
     printDouble(xd);
     printDouble(yd);
-
 
 /*
     let fx2 = sqrt( x*x + y*y );

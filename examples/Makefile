@@ -8,6 +8,7 @@ BUILD := ../build
 
 BUILD_GMM := ${BUILD}/gmm
 
+FILE := example2
 
 setup-ubuntu:
 	sudo ldconfig ${RUNTIME}
@@ -15,12 +16,12 @@ setup-ubuntu:
 build-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
 	source ../../project.sh && \
-	impala example.impala --emit-llvm -o example -O0&& \
-	llvm-as example.ll && \
-	clang++ lib.cpp example.bc -O3 -o example
+	impala ${FILE}.impala --emit-llvm -o ${FILE}&& \
+	llvm-as ${FILE}.ll && \
+	clang++ lib.cpp ${FILE}.bc -O3 -o ${FILE}
 
 run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
-	./example
+	./${FILE}
 
 all: build-impala run-impala

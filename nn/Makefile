@@ -1,4 +1,4 @@
-SHELL := /bin/bash
+makeSHELL := /bin/bash
 
 RUNTIME := $(realpath ../../runtime/build/lib)
 

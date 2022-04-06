@@ -91,32 +91,21 @@ fn sqnorm(d: i32, v : &[f64], offset: i32) -> (f64){
     sum
 }
 
-fn arr_max(args : [(
-        i32,
-        &[f64],
-    )*2]
-) -> f64
+fn arr_max(n: i32,x : &[f64] ) -> f64
 {
-    let arg = args(0);
-    let n = arg(0);
-    let x = arg(1);
-
     let mut m = x(0);
-    /*let mut i = 1;
-    while i < n {
+    for i in range(1, n) {
         if (m < x(i)){
             m = x(i);
         }
-        i++;
-    }*/
+    }
 
     m
 }
 
 fn logsumexp( n: i32, x : &[f64] ) -> f64
 {
-    let max_tup = (n, x);
-    let mx = arr_max([max_tup, max_tup]);
+    let mx = arr_max(n, x);
     let mut semx = 0.0;
     let mut i = 0;
     while i < n {
@@ -210,19 +199,31 @@ fn gmm(d: i32, k: i32, n: i32,
         icf : &[f64],
         x : &[f64]) -> f64{
 
-
-    let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * 3.14159265359);
+    let mut err = 0.0;
+    let PI : f64 = 3.14159265359;
+    let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
     let icf_sz = d * (d + 1) / 2;
 
-    let Qdiags : &mut[f64] = ~[2*5:f64];
-    let sum_qs : &mut[f64] = ~[5:f64];
-    let xcentered : &mut[f64] = ~[2:f64];
-    let Qxcentered : &mut[f64] = ~[2:f64];
-    let main_term : &mut[f64] = ~[5:f64];
+    let Qdiags = ~[2*5:f64];
+    let sum_qs = ~[5:f64];
+    let xcentered = ~[2:f64];
+    let Qxcentered = ~[2:f64];
+    let main_term = ~[5:f64];
 
-    //preprocess_qs(d, k, icf, sum_qs, Qdiags);
+    let mut ik = 0;
+    while ik < k {
+        sum_qs(ik) = 0.0;
 
-    let mut err = 0.0;
+        let mut id = 0;
+        while id < d {
+            let q = icf(ik * icf_sz + id);
+            sum_qs(ik) = sum_qs(ik) + q;
+            Qdiags(ik * d + id) = exp(q);
+            id++;
+        }
+        ik++;
+    }
+
     let mut slse = 0.0;
 
     main_term(0) = 0.0;
@@ -238,16 +239,17 @@ fn gmm(d: i32, k: i32, n: i32,
 
             subtract(d, x, x_offset, means, d_offset, xcentered);
             Qtimesx(d, Qdiags, d_offset, icf, icf_offset, xcentered, Qxcentered);
-            let main_therm_result = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm(d, Qxcentered, 0);
-            //main_term(ik) = main_therm_result;
+            main_term(ik) = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm(d, Qxcentered, 0);
             ik++;
         }*/
-        b  += logsumexp(k, main_term);
+
+        //b += logsumexp(k, main_term);
         ix++;
     }
 
     //let lse_alphas = logsumexp(k, alphas);
-    //err = CONSTANT + slse - (n as f64) * lse_alphas + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
+
+    err = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI) + slse - (n as f64);// * lse_alphas;// + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
     err
 }
 
@@ -272,9 +274,9 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     let size = alphas_size + means_size + icf_size;
 
-    let alphas: &mut[f64] = ~[k:f64];
-    let means: &mut[f64] = ~[d*k:f64];
-    let icf: &mut[f64] = ~[k * ( d + d * ( d - 1 ) / 2 ):f64];
+    let alphas: &mut[f64] = ~[alphas_size:f64];
+    let means: &mut[f64] = ~[means_size:f64];
+    let icf: &mut[f64] = ~[icf_size:f64];
     let x: &mut[f64] = ~[x_size:f64];
 
     let wishartMp = &mut wishartM;
@@ -286,18 +288,16 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let result = gmm(d, k, n, wishartGamma, wishartM, alphas, means, icf, x);
     //let result = gmm( alphas);
 
-    let Df = rev_diff(gmm);
+    let diff = rev_diff(gmm);
 
-    let (y,pb) = Df(d, k, n, wishartGamma, wishartM, (alphas_size, alphas), (means_size, means), (icf_size, icf), (x_size, x));
-    //let er = Df((alphas_size, alphas));
-  /*  let Gf = pb(1.0);
-    let arg_deriv=Gf(0);
-    let alphas_d=arg_deriv(5);
-    let means_d=arg_deriv(6);
-    let icf_d=arg_deriv(7);
-        printDouble(y);
+    let (y,gradient) = diff(d, k, n, wishartGamma, wishartM, (alphas_size, alphas), (means_size, means), (icf_size, icf), (x_size, x));
+    let tangents = gradient(1.0);
+    let (alphas_d_size, alphas_d) = tangents(5);
+    let (means_d_size, means_d) = tangents(6);
+    let (icf_d_size, icf_d) = tangents(7);
+    printDouble(y);
+    printDouble(alphas_d(0));
 
-    */
 
     //printDouble(result);
 }
