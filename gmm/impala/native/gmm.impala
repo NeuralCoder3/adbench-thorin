@@ -247,9 +247,26 @@ fn gmm(d: i32, k: i32, n: i32,
         ix++;
     }
 
-    //let lse_alphas = logsumexp(k, alphas);
+/*
+    let mut mx = alphas(0);
+    let mut i = 0;
+    while i < n {
+        if (mx < alphas(i)){
+            mx = alphas(i);
+        }
+    }
 
-    err = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI) + slse - (n as f64);// * lse_alphas;// + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
+    let mut semx = 0.0;
+    i = 0;
+    while i < k {
+        semx += exp(alphas(i) - mx);
+        i++;
+    }
+
+    let lse_alphas = log(semx) + mx;*/
+
+
+    err = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI) + slse - (n as f64) * mx ;// * lse_alphas;// + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
     err
 }
 

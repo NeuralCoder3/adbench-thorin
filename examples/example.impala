@@ -2,44 +2,67 @@ extern "C" {
     fn printFloat(f32) -> ();
     fn printDouble(f64) -> ();
     fn printInteger(i32) -> ();
-    fn printLong(u64) -> ();
-    fn lgamma(f64) -> (f64);
-    fn sin(f64) -> (f64);
-    fn cos(f64) -> (f64);
-    fn log(f64) -> (f64);
-    fn sqrt(f64) -> (f64);
-    fn hypot(f64, f64) -> (f64);
-    fn testFunction(f64, i64) -> (f64);
 }
 
-fn f(x: f64, y: i64) -> f64 {
-    log(x) * (2.0f as f64)
+/*
+fn arr_max( x : &[f64], n: i32 ) -> f64
+{
+    let mut m = x(0);
+    let mut i = 0;
+    while i < n {
+        if (m < x(i)){
+            m = x(i);
+        }
+        i++;
+    }
+
+    m
+}*/
+
+/*
+fn f(x: &[f64], y: i32) -> f64 {
+    if x(0) > x(1){
+        x(0)
+    }else{
+        x(1)
+    }
+}*/
+
+fn f(x: f64, y: i32) -> f64 {
+    if x > 0.0{
+        x
+    }else{
+        0.0
+    }
 }
 
 fn main() -> i32 {
+    let x : &mut[f64] = ~[4:f64];
+    x(0) = 1.2;
+    x(1) = 1.3;
+    x(2) = 1.4;
+    x(3) = 1.5;
 
-    let x = 1.2;
-    let y = 3 as i64;
+    //printDouble(arr_max(x, 4));
 
-    let gradient = rev_diff(f);
 
-    let yp = gradient(x, y);
-    let fx  = yp(0);
-    let derivatives  = yp(1)(1.0);
-    let xd  = derivatives(0);
-    let yd  = derivatives(1);
+    let diff = rev_diff(f);
 
+
+    let (fx, gradient) = diff(x(0), 1);
+    let tangents  = gradient(1.0);
+    let xd = tangents(0);
     printDouble(fx);
     printDouble(xd);
-    printDouble(yd);
-
 /*
-    let fx2 = sqrt( x*x + y*y );
-    let testXd = x / fx2;
-    let testYd = y / fx2;
+    let (fx, gradient) = diff((4 as u64, x), 1);
+    let tangents  = gradient(1.0);
+    let (size, xd)  = tangents(0);
 
-    printDouble(fx2);
-    printDouble(testXd);
-    printDouble(testYd);*/
+    printDouble(fx);
+    printDouble(xd(0));
+    printDouble(xd(1));
+    printDouble(xd(2));
+    printDouble(xd(3));*/
     0
 }
