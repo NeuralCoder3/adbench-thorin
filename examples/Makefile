@@ -16,7 +16,7 @@ setup-ubuntu:
 build-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
 	source ../../project.sh && \
-	impala ${FILE}.impala --emit-llvm -o ${FILE}&& \
+	impala ${FILE}.impala --emit-llvm --emit-llvm -o ${FILE}&& \
 	llvm-as ${FILE}.ll && \
 	clang++ lib.cpp ${FILE}.bc -O3 -o ${FILE}
 

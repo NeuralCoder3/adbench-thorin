@@ -203,7 +203,7 @@ fn gmm(d: i32, k: i32, n: i32,
     let PI : f64 = 3.14159265359;
     let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
     let icf_sz = d * (d + 1) / 2;
-
+/*
     let Qdiags = ~[2*5:f64];
     let sum_qs = ~[5:f64];
     let xcentered = ~[2:f64];
@@ -223,16 +223,17 @@ fn gmm(d: i32, k: i32, n: i32,
         }
         ik++;
     }
+*/
 
     let mut slse = 0.0;
-
+/*
     main_term(0) = 0.0;
 
     let mut ix = 0;
     while ix < n {
         let x_offset = ix * d;
         let mut ik = 0;
-        /*while ik < k {
+      while ik < k {
 
             let d_offset = ik * d;
             let icf_offset = ik * icf_sz + d;
@@ -241,13 +242,13 @@ fn gmm(d: i32, k: i32, n: i32,
             Qtimesx(d, Qdiags, d_offset, icf, icf_offset, xcentered, Qxcentered);
             main_term(ik) = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm(d, Qxcentered, 0);
             ik++;
-        }*/
+        }
 
-        //b += logsumexp(k, main_term);
+        b += logsumexp(k, main_term);
         ix++;
-    }
+    }*/
 
-/*
+
     let mut mx = alphas(0);
     let mut i = 0;
     while i < n {
@@ -256,18 +257,7 @@ fn gmm(d: i32, k: i32, n: i32,
         }
     }
 
-    let mut semx = 0.0;
-    i = 0;
-    while i < k {
-        semx += exp(alphas(i) - mx);
-        i++;
-    }
-
-    let lse_alphas = log(semx) + mx;*/
-
-
-    err = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI) + slse - (n as f64) * mx ;// * lse_alphas;// + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
-    err
+    mx
 }
 
 fn runGmmBenchmark(file: &[u8]) -> (){

@@ -183,7 +183,7 @@ fn propagate(
   softmax(fully_connected_2_out, output, 10);
 }
 
-fn runGmmBenchmark(file: &[u8]) -> (){
+fn runNnBenchmark(file: &[u8]) -> (){
 
     let size_x = 28;
     let size_y = 28;
@@ -230,7 +230,7 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     let label: i32 = 0;
 
-    let Df = rev_diff(loss);
+    //let Df = rev_diff(loss);
     //let (y,pb) = Df(conv_weights_1, conv_weights_2, fully_connected_weights_1, fully_connected_weights_2, input, label);
 
     for i in range(0, 10){
@@ -261,7 +261,7 @@ fn main(argc: i32,argv :&[&[u8]]) -> i32 {
     }else{
         let file = argv(1);
         printString(file);
-        runGmmBenchmark(file);
+        runNnBenchmark(file);
     }
 
     0
