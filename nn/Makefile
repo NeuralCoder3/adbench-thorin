@@ -34,7 +34,7 @@ build-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
 	source ../../project.sh && \
 	mkdir -p ${NATIVE_IMPALA_BUILD} && \
-	impala ${NATIVE_IMPALA}/nn.impala --emit-llvm --emit-c-interface -o ${NATIVE_IMPALA_BUILD}/nn_impala&& \
+	impala ${NATIVE_IMPALA}/nn.impala  -log-level error -emit-llvm -emit-c-interface -o ${NATIVE_IMPALA_BUILD}/nn_impala&& \
 	llvm-as ${NATIVE_IMPALA_BUILD}/nn_impala.ll && \
 	clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/nn_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/nn_impala
 

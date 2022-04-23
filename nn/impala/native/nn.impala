@@ -121,38 +121,35 @@ fn conv_layer(input: &[f64], output: &mut[f64], weights: &[f64], kernel_size: i3
 
   let offset: i32 = 2;
 
-  let mut z_i: i32 = 0;
-  while(z_i < output_features){
-    let mut x_i: i32 = 0;
-    while(x_i < size_x - kernel_size){
-      let mut y_i: i32 = 0;
-      while( y_i < size_y - kernel_size){
-        let mut value = 0.0;
-        let mut feature_i: i32 = 0;
-        while(feature_i < input_features) {
-          let mut offset_x: i32 = 0;
-          while (offset_x < kernel_size) {
-            let mut offset_y: i32 = 0;
-            while (offset_y < kernel_size) {
-              let data_index: i32 = feature_i * size_y * size_x + (y_i + offset_y) * size_x + x_i + offset_x;
-              let weight_index: i32 = offset_x + (offset_y + feature_i * kernel_size) * kernel_size;
-              value += input(data_index) * weights(weight_index);
-              offset_y++;
-            }
+  let x_out_size = size_x - kernel_size;
+  let y_out_size = size_y - kernel_size;
 
-            offset_x++;
-          }
-          feature_i++;
-        }
 
-        output((z_i * size_y + y_i + offset) * size_x + x_i + offset) = relu(value);
-        y_i++;
-      }
+  let mut index = 0;
+  while(index < output_features * x_out_size * y_out_size){
+    let y_i = index % y_out_size;
+    let xz_index = index / y_out_size;
+    let x_i = xz_index % x_out_size;
+    let z_i = xz_index / x_out_size;
+    let mut value = 0.0;
+    let mut kernel_index = 0;
 
-      x_i++;
+    while (kernel_index < (input_features * kernel_size * kernel_size)) {
+        let offset_x = offset % kernel_size;
+        let feature_y_index = offset / kernel_size;
+
+        let offset_y = feature_y_index % kernel_size;
+        let feature_i = feature_y_index / kernel_size;
+
+        let data_index = feature_i * size_y * size_x + (y_i + offset_y) * size_x + x_i + offset_x;
+        let weight_index = offset_x + (offset_y + feature_i * kernel_size) * kernel_size;
+        value += input(data_index) * weights(weight_index);
+        kernel_index++;
     }
 
-    z_i++;
+    output((z_i * size_y + y_i + offset) * size_x + x_i + offset) = relu(value);
+
+    index++;
   }
 }
 
@@ -197,7 +194,7 @@ fn runNnBenchmark(file: &[u8]) -> (){
     let fully_connected_size_1 = convolution_size_2 * 256;
     let fully_connected_size_2 = 256 * 10;
     
-    let weight_size = convolution_size_1 +convolution_size_2 + fully_connected_size_1 + fully_connected_size_2;
+    let weight_size = convolution_size_1 + convolution_size_2 + fully_connected_size_1 + fully_connected_size_2;
 
 
     let weights = ~[weight_size:f64];
@@ -220,18 +217,17 @@ fn runNnBenchmark(file: &[u8]) -> (){
         input(i) = randomDouble(0.0, 1.0);
     }
 
-    loss(
-        conv_weights_1,
-        conv_weights_2,
-        fully_connected_weights_1,
-        fully_connected_weights_2,
-        input,
-        0);
+
+    propagate(conv_weights_1, conv_weights_2, fully_connected_weights_1, fully_connected_weights_2, input, output);
 
     let label: i32 = 0;
 
-    //let Df = rev_diff(loss);
-    //let (y,pb) = Df(conv_weights_1, conv_weights_2, fully_connected_weights_1, fully_connected_weights_2, input, label);
+    let Df = rev_diff(loss);
+    let (y,pb) = Df((convolution_size_1 as u64, conv_weights_1),
+                (convolution_size_2 as u64,conv_weights_2),
+                (fully_connected_size_1 as u64, fully_connected_weights_1),
+                (fully_connected_size_2 as u64, fully_connected_weights_2),
+                ((28*28) as u64, input), label);
 
     for i in range(0, 10){
         printDouble(output(i));
