@@ -10,7 +10,6 @@ extern "C" {
     fn randomDouble(f64, f64) -> (f64);
 }
 
-
 fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
     while b < e {
         body(b++)
@@ -63,15 +62,15 @@ fn @(true) softmax(input: &[f64], output: &mut[f64], size: i32) -> (f64){
   0.0
 }
 
-fn @(true) fully_connected(input: &[f64], output: &mut[f64], weights: &[f64], input_size: i32, output_size: i32) -> (f64){
+fn @(true) fully_connected(input: &[f64], output: &mut[f64], weights: &[f64], offset: i32, input_size: i32, output_size: i32) -> (f64){
   for i in range_filter(0, output_size){
     let mut value = 0.0;
 
     for j in range_filter(0,  input_size){
-      value += input(j) * weights(j + i * output_size);
+      value += input(j) * weights(j + i * output_size + offset);
     }
 
-    output(i) = relu(value);
+    output(i + offset) = relu(value);
   }
   0.0
 }
@@ -147,65 +146,26 @@ fn @(true) conv_layer(input: &[f64], output: &mut[f64], weights: &[f64], kernel_
   0.0
 }
 
-fn @(true) propagate(
-    conv_weights_1: &[f64],
-    conv_weights_2: &[f64],
-    fully_connected_weights_1: &[f64],
-    fully_connected_weights_2: &[f64],
-    input: &[f64],
-    output: &mut[f64])-> (f64){
-
-    let conv_out_1 = ~[28*28*8:f64];
-    let max_out_1 = ~[14*14*8:f64];
-    let conv_out_2 = ~[14*14*16:f64];
-    let max_out_2 = ~[7*7*16:f64];
-    let fully_connected_out = ~[256:f64];
-    let fully_connected_2_out = ~[10:f64];
-
-    conv_layer(input, conv_out_1, conv_weights_1, 5, 28, 28, 1, 8);
-    max_pooling(conv_out_1, max_out_1, 28, 28, 8);
-
-    conv_layer(max_out_1, conv_out_2, conv_weights_2, 5, 14, 14, 8, 16);
-    max_pooling(conv_out_2, max_out_2, 14, 14, 16);
-
-    fully_connected(max_out_2, fully_connected_out, fully_connected_weights_1, 7 * 7 * 16, 256);
-    fully_connected(fully_connected_out, fully_connected_2_out, fully_connected_weights_2, 256, 10);
-
-    softmax(fully_connected_2_out, output, 10);
-
-  0.0
-}
 
 fn runNnBenchmark(file: &[u8]) -> (){
-
     let size_x = 28;
     let size_y = 28;
-    let kernel_size = 5;
 
-    let kernel_size_sqr = kernel_size * kernel_size;
-    
-    let convolution_size_1 = kernel_size_sqr * 8;
-    let convolution_size_2 = kernel_size_sqr * 16;
-    
-    let fully_connected_size_1 = convolution_size_2 * 256;
-    let fully_connected_size_2 = 256 * 10;
-    
-    let weight_size = convolution_size_1 + convolution_size_2 + fully_connected_size_1 + fully_connected_size_2;
+    let first_weight_size = size_x*size_y*32;
+    let first_weights = ~[first_weight_size:f64];
 
+    let second_weight_size = 32*10;
+    let second_weights = ~[second_weight_size:f64];
 
-    let weights = ~[weight_size:f64];
-
-    for i in range(0, weight_size){
-        weights(i) = randomDouble(-0.1, 0.1);
+    for i in range(0, first_weight_size){
+        first_weights(i) = randomDouble(-0.1, 0.1);
     }
 
+    for i in range(0, second_weight_size){
+        second_weights(i) = randomDouble(-0.1, 0.1);
+    }
 
-    let conv_weights_1 =  weights;
-    let conv_weights_2 =  &weights(convolution_size_1) as &mut[f64];
-    let fully_connected_weights_1 =  &weights(convolution_size_1 + convolution_size_2) as &mut[f64];
-    let fully_connected_weights_2 =  &weights(convolution_size_1 + convolution_size_2 + fully_connected_size_1) as &mut[f64];
-
-    let input = ~[28*28:f64];
+    let input = ~[size_x*size_y:f64];
     let output = ~[10:f64];
 
     for i in range(0, 28*28){
@@ -215,35 +175,26 @@ fn runNnBenchmark(file: &[u8]) -> (){
     let label: i32 = 1;
 
     let Df = rev_diff(loss);
-    let (y,pb) = Df((convolution_size_1 as u64, conv_weights_1),
-                (convolution_size_2 as u64,conv_weights_2),
-                (fully_connected_size_1 as u64, fully_connected_weights_1),
-                (fully_connected_size_2 as u64, fully_connected_weights_2),
+    let (y,pb) = Df(
+                (first_weight_size as u64, first_weights),
+                (second_weight_size as u64, second_weights),
                 ((28*28) as u64, input), label);
 
     let gradients = pb(1.0);
-    let (conv_weights_d_size, conv_weights_d) = gradients(0);
-    let (conv_weights_2_d_size, conv_weights_2_d) = gradients(1);
-    let (fully_connected_weights_d_size, fully_connected_weights_d) = gradients(2);
-    let (fully_connected_weights_2_d_size, fully_connected_weights_2_d) = gradients(3);
-    let (input_d_size, input_d) = gradients(3);
+    let (weights_d_size, weights_d) = gradients(0);
+    let (weights_d_2_size, weights_d_2) = gradients(0);
 
-    printString("conv weights 1");
-    for i in range(0, conv_weights_d_size as i32){
-        printDouble(conv_weights_d(i));
+    printString("weights 1");
+    for i in range(0, weights_d_size as i32){
+        printDouble(weights_d(i));
     }
 
-    printString("fully_connected_weights_2_d");
-    for i in range(0, fully_connected_weights_2_d_size as i32){
-        printDouble(fully_connected_weights_2_d(i));
+    for i in range(0, weights_d_2_size as i32){
+        printDouble(weights_d_2(i));
     }
 
-    printString("fully_connected_weights_2_d");
-    for i in range(0, input_d_size as i32){
-        printDouble(input_d(i));
-    }
-
-
+    printString("loss");
+    printDouble(y);
 }
 
 fn @(true) cross_entropy(output: &[f64], target: i32) -> (f64){
@@ -251,16 +202,18 @@ fn @(true) cross_entropy(output: &[f64], target: i32) -> (f64){
 }
 
 fn loss(
-    conv_weights_1: &[f64],
-    conv_weights_2: &[f64],
-    fully_connected_weights_1: &[f64],
-    fully_connected_weights_2: &[f64],
+    first_weights: &[f64],
+    second_weights: &[f64],
     input: &[f64],
     target: i32 ) -> (f64){
 
+  let hidden = ~[32:f64];
   let output = ~[10:f64];
-  propagate(conv_weights_1, conv_weights_2, fully_connected_weights_1, fully_connected_weights_2, input, output);
-  cross_entropy(output, target)
+  let output_softmax = ~[10:f64];
+  fully_connected(input, hidden, first_weights, 0,  28*28, 32);
+  fully_connected(hidden, output, second_weights, 28*28*10, 32, 10);
+  softmax(output, output_softmax, 10);
+  cross_entropy(output_softmax, target)
 }
 
 fn main(argc: i32,argv :&[&[u8]]) -> i32 {
