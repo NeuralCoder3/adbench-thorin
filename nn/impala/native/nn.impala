@@ -7,26 +7,7 @@ extern "C" {
     fn exp(f64) -> (f64);
     fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
-    fn malloc(i64) -> (&mut[f64]);
     fn randomDouble(f64, f64) -> (f64);
-    fn read_gmm_size(
-        file: &[u8],
-        d: &mut i32,
-        k: &mut i32,
-        n: &mut i32
-    ) -> ();
-    fn read_gmm(
-        file: &[u8],
-        d: &mut i32,
-        k: &mut i32,
-        n: &mut i32,
-        wishartM: &mut i32,
-        wishartGamma: &mut f64,
-        alphas: &mut[f64],
-        means: &mut[f64],
-        icf: &mut[f64],
-        x: &mut[f64],
-    ) -> ();
 }
 
 
@@ -52,7 +33,7 @@ fn @(true) relu( x: f64 ) -> (f64){
     }
 }
 
-fn @(true) softmax(input: &[f64], output: &mut[f64], size: i32) -> (){
+fn @(true) softmax(input: &[f64], output: &mut[f64], size: i32) -> (f64){
   let mut sum = 0.0;
   let mut i = 0;
 
@@ -68,9 +49,11 @@ fn @(true) softmax(input: &[f64], output: &mut[f64], size: i32) -> (){
     output(i) = output(i) / sum;
     i++;
   }
+
+  0.0
 }
 
-fn @(true) fully_connected(input: &[f64], output: &mut[f64], weights: &[f64], input_size: i32, output_size: i32) -> (){
+fn @(true) fully_connected(input: &[f64], output: &mut[f64], weights: &[f64], input_size: i32, output_size: i32) -> (f64){
   let mut i = 0;
   while(i < output_size){
     let mut value = 0.0;
@@ -84,9 +67,10 @@ fn @(true) fully_connected(input: &[f64], output: &mut[f64], weights: &[f64], in
     output(i) = relu(value);
     i++;
   }
+  0.0
 }
 
-fn @(true) max_pooling(input: &[f64], output: &mut[f64], size_x:i32, size_y:i32, size_z:i32) -> (){
+fn @(true) max_pooling(input: &[f64], output: &mut[f64], size_x:i32, size_y:i32, size_z:i32) -> (f64){
   let mut z_i = 0;
   while( z_i < size_z) {
     let feature_offset = z_i * size_y * size_x;
@@ -115,9 +99,11 @@ fn @(true) max_pooling(input: &[f64], output: &mut[f64], size_x:i32, size_y:i32,
 
     z_i++;
   }
+
+  0.0
 }
 
-fn @(true) conv_layer(input: &[f64], output: &mut[f64], weights: &[f64], kernel_size: i32, size_x: i32, size_y: i32, input_features: i32, output_features: i32) -> (){
+fn @(true) conv_layer(input: &[f64], output: &mut[f64], weights: &[f64], kernel_size: i32, size_x: i32, size_y: i32, input_features: i32, output_features: i32) -> (f64){
 
   let offset: i32 = 2;
 
@@ -151,6 +137,8 @@ fn @(true) conv_layer(input: &[f64], output: &mut[f64], weights: &[f64], kernel_
 
     index++;
   }
+
+  0.0
 }
 
 fn @(true) propagate(
@@ -159,25 +147,27 @@ fn @(true) propagate(
     fully_connected_weights_1: &[f64],
     fully_connected_weights_2: &[f64],
     input: &[f64],
-    output: &mut[f64])-> (){
+    output: &mut[f64])-> (f64){
 
-  let conv_out_1 = ~[28*28*8:f64];
-  let max_out_1 = ~[14*14*8:f64];
-  let conv_out_2 = ~[14*14*16:f64];
-  let max_out_2 = ~[7*7*16:f64];
-  let fully_connected_out = ~[256:f64];
-  let fully_connected_2_out = ~[10:f64];
+    let conv_out_1 = ~[28*28*8:f64];
+    let max_out_1 = ~[14*14*8:f64];
+    let conv_out_2 = ~[14*14*16:f64];
+    let max_out_2 = ~[7*7*16:f64];
+    let fully_connected_out = ~[256:f64];
+    let fully_connected_2_out = ~[10:f64];
 
-  conv_layer(input, conv_out_1, conv_weights_1, 5, 28, 28, 1, 8);
-  max_pooling(conv_out_1, max_out_1, 28, 28, 8);
+    conv_layer(input, conv_out_1, conv_weights_1, 5, 28, 28, 1, 8);
+    max_pooling(conv_out_1, max_out_1, 28, 28, 8);
 
-  conv_layer(max_out_1, conv_out_2, conv_weights_2, 5, 14, 14, 8, 16);
-  max_pooling(conv_out_2, max_out_2, 14, 14, 16);
+    conv_layer(max_out_1, conv_out_2, conv_weights_2, 5, 14, 14, 8, 16);
+    max_pooling(conv_out_2, max_out_2, 14, 14, 16);
 
-  fully_connected(max_out_2, fully_connected_out, fully_connected_weights_1, 7 * 7 * 16, 256);
-  fully_connected(fully_connected_out, fully_connected_2_out, fully_connected_weights_2, 256, 10);
+    fully_connected(max_out_2, fully_connected_out, fully_connected_weights_1, 7 * 7 * 16, 256);
+    fully_connected(fully_connected_out, fully_connected_2_out, fully_connected_weights_2, 256, 10);
 
-  softmax(fully_connected_2_out, output, 10);
+    softmax(fully_connected_2_out, output, 10);
+
+  0.0
 }
 
 fn runNnBenchmark(file: &[u8]) -> (){
