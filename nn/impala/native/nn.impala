@@ -62,15 +62,15 @@ fn @(true) softmax(input: &[f64], output: &mut[f64], size: i32) -> (f64){
   0.0
 }
 
-fn @(true) fully_connected(input: &[f64], output: &mut[f64], weights: &[f64], offset: i32, input_size: i32, output_size: i32) -> (f64){
+fn @(true) fully_connected(input: &[f64], output: &mut[f64], weights: &[f64], input_size: i32, output_size: i32) -> (f64){
   for i in range_filter(0, output_size){
     let mut value = 0.0;
 
     for j in range_filter(0,  input_size){
-      value += input(j) * weights(j + i * output_size + offset);
+      value += input(j) * weights(j + i * output_size);
     }
 
-    output(i + offset) = relu(value);
+    output(i) = relu(value);
   }
   0.0
 }
@@ -210,8 +210,8 @@ fn loss(
   let hidden = ~[32:f64];
   let output = ~[10:f64];
   let output_softmax = ~[10:f64];
-  fully_connected(input, hidden, first_weights, 0,  28*28, 32);
-  fully_connected(hidden, output, second_weights, 28*28*10, 32, 10);
+  fully_connected(input, hidden, first_weights,  28*28, 32);
+  fully_connected(hidden, output, second_weights,32, 10);
   softmax(output, output_softmax, 10);
   cross_entropy(output_softmax, target)
 }
