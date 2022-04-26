@@ -182,7 +182,7 @@ fn runNnBenchmark(file: &[u8]) -> (){
 
     let gradients = pb(1.0);
     let (weights_d_size, weights_d) = gradients(0);
-    let (weights_d_2_size, weights_d_2) = gradients(0);
+    let (weights_d_2_size, weights_d_2) = gradients(1);
 
     printString("weights 1");
     for i in range(0, weights_d_size as i32){
