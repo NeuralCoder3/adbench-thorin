@@ -63,18 +63,14 @@ fn @(true) softmax(input: &[f64], output: &mut[f64], size: i32) -> (f64){
 }
 
 fn @(true) fully_connected(input: &[f64], output: &mut[f64], weights: &[f64], input_size: i32, output_size: i32) -> (f64){
-    let mut i = 0;
-    while i < output_size{
+    for i in range(0, output_size){
         let mut value = 0.0;
-        let mut j = 0;
 
-        while j < input_size{
+        for j in range(0, input_size){
           value += input(j) * weights(j + i * output_size);
-          j++;
         }
 
         output(i) = relu(value);
-        i++;
     }
     0.0
 }
