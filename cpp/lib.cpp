@@ -4,6 +4,10 @@
 
 extern "C"{
     void printString(const char* str){
+        printf("%s", str);
+    }
+
+    void printLine(const char* str){
         printf("%s\n", str);
     }
 
@@ -12,6 +16,10 @@ extern "C"{
     }
 
     void printDouble(double i) {
+        printf("%lf", i);
+    }
+
+    void printDoubleLine(double i) {
         printf("%lf\n", i);
     }
 
@@ -28,4 +36,9 @@ extern "C"{
       double f = (double)rand() / RAND_MAX;
       return fMin + f * (fMax - fMin);
     }
+
+    double test(double* x, double* y, int z){
+        return x[0] * y[0];
+    }
+
 }

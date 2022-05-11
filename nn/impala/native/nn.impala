@@ -16,6 +16,21 @@ fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
     }
 }
 
+fn iter( m: m64, body: fn((u64, u64,  &mut f64)) -> ()) -> () {
+    let mut row = 0 as u64;
+    let mut col = 0 as u64;
+    let rows = m(0);
+    let cols = m(1);
+    let arr = m(2);
+    while row < rows {
+        while col < cols {
+            body((row, col, arr as &mut f64));
+            col++;
+        }
+        row++;
+    }
+}
+
 
 fn @(?e) range_filter( b: i32, e: i32, body: fn(i32) -> ()) -> (f64) {
     if b < e{
@@ -82,25 +97,32 @@ fn runNnBenchmark(file: &[u8]) -> (){
     let size_x = 28;
     let size_y = 28;
 
-    let first_weight_size = size_x*size_y*32;
-    let first_weights = ~[first_weight_size:f64];
+    let first_weights = matrix64(size_x, size_y);
+    let second_weights = matrix64(32, 10);
 
-    let second_weight_size = 32*10;
-    let second_weights = ~[second_weight_size:f64];
-
-    for i in range(0, first_weight_size){
-        first_weights(i) = randomDouble(-0.1, 0.1);
+    for cell in iter( first_weights ){
+        let (row, col, ptr) = cell;
+        *ptr = randomDouble(-0.1, 0.1);
     }
 
-    for i in range(0, second_weight_size){
-        second_weights(i) = randomDouble(-0.1, 0.1);
+    for cell in iter( second_weights ){
+        let (row, col, ptr) = cell;
+        *ptr = randomDouble(-0.1, 0.1);
     }
 
-    let input = ~[size_x*size_y:f64];
+    printDouble(first_weights(1,1));
 
-    for i in range(0, 28*28){
-        input(i) = randomDouble(0.0, 1.0);
+
+
+    let input = matrix64(size_x, size_y);
+
+    for cell in iter( input ){
+        let (row, col, ptr) = cell;
+        *ptr = randomDouble(-0.1, 0.1);
     }
+
+
+/*
 
     let label: i32 = 1;
 
@@ -133,34 +155,35 @@ fn runNnBenchmark(file: &[u8]) -> (){
 
     for i in range(0, 10){
         printDouble(output(i));
-    }
+    }*/
 }
 
-fn @(true) cross_entropy(output: &[f64], target: i32) -> (f64){
-  -log(output(target))
+fn @(true) cross_entropy(output: m64, target: i32) -> (f64){
+  -log(output(target, 0))
 }
 
-fn @(true) propagate(first_weights: &[f64],
-                 second_weights: &[f64],
-                 input: &[f64],
-                 output: &mut[f64]) -> (f64){
+fn @(true) propagate(first_weights: m64,
+                 second_weights: m64,
+                 input: m64) -> m64{
 
-    let hidden = ~[32:f64];
-    let output_fully = ~[10:f64];
-    fully_connected(input, hidden, first_weights,  28*28, 32);
-    fully_connected(hidden, output_fully, second_weights,32, 10);
-    softmax(output_fully, output, 10);
-    0.0
+    let hidden = first_weights * input;
+    let output_fully = second_weights * hidden;
+
+
+    //fully_connected(input, hidden, first_weights);
+    //fully_connected(hidden, output_fully, second_weights,32, 10);
+    //softmax(output_fully, output, 10);
+
+    output_fully
 }
 
 fn loss(
-    first_weights: &[f64],
-    second_weights: &[f64],
-    input: &[f64],
+    first_weights: m64,
+    second_weights: m64,
+    input: m64,
     target: i32 ) -> (f64){
 
-  let output = ~[10:f64];
-  propagate(first_weights, second_weights, input, output);
+  let output = propagate(first_weights, second_weights, input);
   cross_entropy(output, target)
 }
 

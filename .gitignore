@@ -1,3 +1,5 @@
+.DS_Store
+
 build
 results
 # Created by https://www.toptal.com/developers/gitignore/api/cmake,clion,c++,git,jetbrains
