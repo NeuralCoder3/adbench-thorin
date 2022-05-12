@@ -1,28 +1,32 @@
 extern "C" {
-    fn exp(x:f64) -> (f64);
-    fn log(x:f64) -> (f64);
-    fn sqrt(x:f64) -> (f64);
     fn printString(&[u8]) -> ();
     fn printLine(&[u8]) -> ();
     fn printFloat(f32) -> ();
     fn printDouble(f64) -> ();
     fn printInteger(i32) -> ();
+    fn log(f64) -> (f64);
+    fn exp(f64) -> (f64);
+    fn logf(f32) -> (f32);
+    fn lgamma(f64) -> (f64);
+    fn randomDouble(f64, f64) -> (f64);
 }
 
-fn f(x: f64, a: i32) -> f64 {
-    x
-}
-
-fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
+fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
     while b < e {
         body(b++)
     }
 }
 
-fn print_matrix(m : m64) -> (){
+fn rangeU64(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
+    while b < e {
+        body(b++)
+    }
+}
+
+fn print_matrix(m : mat[f64]) -> (){
     printLine("----");
-    for row in range(0 as u64, m(0)){
-        for col in range(0 as u64, m(1)){
+    for row in rangeU64(0 as u64, m(0)){
+        for col in rangeU64(0 as u64, m(1)){
             printDouble(m(row,col));
             printString(", ");
         }
@@ -32,56 +36,208 @@ fn print_matrix(m : m64) -> (){
     printLine("----");
 }
 
-fn main() -> i32 {
-    let test: m64 = matrix64(2, 2);
-    let test2: m64 = matrix64(2, 2);
-    let vector: m64 = matrix64(2, 1);
+fn iter( m: mat[f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
+    let mut row = 0 as u64;
+    let rows = m(0);
+    let cols = m(1);
+    while row < rows {
+        let mut col = 0 as u64;
+        while col < cols {
+            body((row, col, (&(m(row, col))) as &mut f64));
+            col++;
+        }
+        row++;
+    }
+}
 
-    vector(0, 0) = 1.0;
-    vector(1, 0) = 2.0;
 
-    //1.0, 2.0
-    //3.0, 4.0
-    test(0,0) = 1.0;
-    test(0,1) = 2.0;
-    test(1,0) = 3.0;
-    test(1,1) = 4.0;
-    print_matrix(test);
+fn @(?e) range_filter( b: i32, e: i32, body: fn(i32) -> ()) -> (f64) {
+    if b < e{
+        body(b);
+        range_filter(b + 1, e, body);
+    }
+    0.0
+}
 
-    //2.0, 3.0
-    //4.0, 5.0
-    test2(0,0) = 2.0;
-    test2(0,1) = 3.0;
-    test2(1,0) = 4.0;
-    test2(1,1) = 5.0;
 
-    print_matrix(test2);
+fn @(true) max(a: f64, b: f64) -> (f64){
+    if a > b{
+        a
+    }else{
+        b
+    }
+}
 
-    //1*2 + 2*4 = 10
-    //10.0, 13.0
-    //22.0, 29.0
+fn @(true) relu( x: f64 ) -> (f64){
+    if(x>=0.0){
+        x
+    }else{
+        0.1 * x
+    }
+}
 
-    let vec_mul = test * vector;
+fn @(true) reluMatrix( x: mat[f64] ) -> ( mat[f64] ){
+    for cell in iter( x ){
+        let (row, col, ptr) = cell;
+        *ptr = relu(*ptr);
+    }
+    x
+}
 
-    let mul = test * test2;
-    let add = test + test2;
-    let sub = test - test2;
+fn @(true) softmax(inputMatrix: mat[f64]) -> (mat[f64]){
+  let mut sum = 0.0;
+  let mut i = 0 as u64;
 
-    //get rows of matrix
-    let rows = mul(0);
+  let size = inputMatrix(0);
+  let output = mat[f64](size, 1);
 
-    //get rows of matrix
-    let cols = mul(1);
+  //let expMat = apply[exp](inputMatrix)
 
-    printInteger(rows as i32);
-    printInteger(cols as i32);
+  //sum(inputMatrix)
 
-    //get array of matrix
-    let test3 : &mut[f64] = mul(2);
+  while(i < size){
+    let e = exp(inputMatrix(i,0));
+    sum += e;
+    output(i,0) = e;
+    i++;
+  }
 
-    print_matrix(vec_mul);
-    print_matrix(mul);
-    print_matrix(add);
-    print_matrix(test * (1.0 / 8.0));
+  output / sum
+}
+
+fn @(true) fully_connected(input: &[f64], output: &mut[f64], weights: &[f64], input_size: i32, output_size: i32) -> (f64){
+    let mut i = 0;
+    while i < output_size{
+        let mut value = 0.0;
+        let mut j = 0;
+        while j < input_size{
+          value += input(j) * weights(j + i * output_size);
+          j++;
+        }
+
+        output(i) = relu(value);
+        i++;
+    }
+    0.0
+}
+
+fn runNnBenchmark(file: &[u8]) -> (){
+    let size_x = 28;
+    let size_y = 28;
+
+    let first_weights = mat[f64](32, size_x*size_y);
+
+    let second_weights = mat[f64](10, 32);
+    let input = mat[f64](size_x*size_y, 1);
+
+    first_weights(0, 0) = 1.9;
+    for cell in iter( first_weights ){
+        let (row, col, ptr) = cell;
+        *ptr = randomDouble(-0.1, 0.1);
+    }
+
+    first_weights(2, 2) = 0.1;
+    printDouble(first_weights(2, 2));
+    print_matrix(first_weights);
+
+
+    for cell in iter( second_weights ){
+        let (row, col, ptr) = cell;
+        *ptr = randomDouble(-0.1, 0.1);
+    }
+
+
+
+    for cell in iter( input ){
+        let (row, col, ptr) = cell;
+        *ptr = randomDouble(-0.1, 0.1);
+    }
+
+    let matrix = propagate(first_weights, second_weights, input);
+    //let matrix = loss(first_weights, second_weights, input, 0);
+
+    printInteger(matrix(0) as i32);
+    printInteger(matrix(1) as i32);
+    printLine("");
+    print_matrix(matrix);
+
+/*
+
+    let label: i32 = 1;
+
+    let Df = rev_diff(loss);
+    let (y,pb) = Df(
+                (first_weight_size as u64, first_weights),
+                (second_weight_size as u64, second_weights),
+                ((28*28) as u64, input), label);
+
+    let gradients = pb(1.0);
+    let (weights_d_size, weights_d) = gradients(0);
+    let (weights_d_2_size, weights_d_2) = gradients(1);
+
+    printString("weights 1");
+    for i in range(0, weights_d_size as i32){
+        printDouble(weights_d(i));
+    }
+
+    for i in range(0, weights_d_2_size as i32){
+        printDouble(weights_d_2(i));
+    }
+
+    printString("loss");
+    printDouble(y);
+    let output = ~[10:f64];
+
+    propagate(first_weights, second_weights, input, output);
+
+    printString("prediction");
+
+    for i in range(0, 10){
+        printDouble(output(i));
+    }*/
+}
+
+fn @(true) cross_entropy(output: mat[f64], target: i32) -> (f64){
+  //-log(output(target, 0))
+  output(target, 0)
+}
+
+fn @(true) propagate(first_weights: mat[f64],
+                 second_weights: mat[f64],
+                 input: mat[f64]) -> mat[f64]{
+
+    let hidden = reluMatrix(first_weights * input);
+    let output_fully = reluMatrix(second_weights * hidden);
+
+
+
+    //fully_connected(input, hidden, first_weights);
+    //fully_connected(hidden, output_fully, second_weights,32, 10);
+    let out = softmax(output_fully);
+
+    out
+}
+
+fn loss(
+    first_weights: mat[f64],
+    second_weights: mat[f64],
+    input: mat[f64],
+    target: i32 ) -> (f64){
+
+  let output = propagate(first_weights, second_weights, input);
+  cross_entropy(output, target)
+}
+
+fn main(argc: i32,argv :&[&[u8]]) -> i32 {
+    if argc < 2{
+        printString("No Benchmark specified");
+    }else{
+        let file = argv(1);
+        printString(file);
+        runNnBenchmark(file);
+    }
+
     0
 }
+
+

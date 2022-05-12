@@ -4,7 +4,7 @@
 
 extern "C"{
     void printString(const char* str){
-        printf("%s", str);
+        printf("%s ", str);
     }
 
     void printLine(const char* str){
@@ -16,7 +16,7 @@ extern "C"{
     }
 
     void printDouble(double i) {
-        printf("%lf", i);
+        printf("%lf ", i);
     }
 
     void printDoubleLine(double i) {
@@ -24,6 +24,10 @@ extern "C"{
     }
 
     void printInteger(int i) {
+        printf("%d ", i);
+    }
+
+    void printIntegerLine(int i) {
         printf("%d\n", i);
     }
 
