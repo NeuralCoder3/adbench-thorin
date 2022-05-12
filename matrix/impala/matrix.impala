@@ -1,0 +1,112 @@
+extern "C" {
+    fn printString(&[u8]) -> ();
+    fn printLine(&[u8]) -> ();
+    fn printFloat(f32) -> ();
+    fn printDouble(f64) -> ();
+    fn printInteger(i32) -> ();
+    fn log(f64) -> (f64);
+    fn exp(f64) -> (f64);
+    fn logf(f32) -> (f32);
+    fn lgamma(f64) -> (f64);
+    fn randomDouble(f64, f64) -> (f64);
+}
+
+fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
+    while b < e {
+        body(b++)
+    }
+}
+
+fn print_matrix(m : mat[f64]) -> (){
+    printLine("----");
+    for row in range(0 as u64, m(0)){
+        for col in range(0 as u64, m(1)){
+            printDouble(m(row,col));
+            printString(", ");
+        }
+
+        printLine("");
+    }
+    printLine("----");
+}
+
+fn iter( m: mat[f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
+    let mut row = 0 as u64;
+    let rows = m(0);
+    let cols = m(1);
+    while row < rows {
+        let mut col = 0 as u64;
+        while col < cols {
+            body((row, col, (&(m(row, col))) as &mut f64));
+            col++;
+        }
+        row++;
+    }
+}
+
+fn matrix_init(x : mat[f64], offset: f64) -> (){
+    let cols = x(1);
+    for cell in iter( x ){
+        let (row, col, ptr) = cell;
+        *ptr = (row * cols + col) as f64 + offset;
+    }
+}
+
+fn main() -> i32 {
+    //mat[type](rows,cols);
+    let a : mat[f64] = mat[f64](2,2);
+    let b : mat[f64] = mat[f64](2,2);
+    let c : mat[f64] = mat[f64](2,3);
+
+    matrix_init(a, 1.0);
+    matrix_init(b, 2.0);
+    matrix_init(c, 1.0);
+
+    let rows = a(0);
+    let cols = a(1);
+    let ptr =  a(2);
+
+    printInteger(rows as i32);
+    printLine("");
+    printInteger(cols as i32);
+    printLine("");
+    printLine("----");
+
+    printLine("a");
+    print_matrix(a);
+    printLine("b");
+    print_matrix(b);
+
+    //matrix operations
+    printLine("a * c");
+    print_matrix(a * c);
+    printLine("(a * c) * a");
+    print_matrix((a * c) * a);
+    printLine("a * (c * a)");
+    print_matrix(a * (c * a));
+    printLine("a + b");
+    print_matrix(a + b);
+    printLine("a - b");
+    print_matrix(a - b);
+
+    //scalar operations
+    printLine("2.0 * b");
+    print_matrix(2.0 * b);
+    printLine("2.0 + b");
+    print_matrix(2.0 + b);
+    printLine("2.0 - b");
+    print_matrix(2.0 - b);
+
+    printLine("b * 2.0");
+    print_matrix(b * 2.0);
+    printLine("b + 2.0");
+    print_matrix(b + 2.0);
+    printLine("b - 2.0");
+    print_matrix(b - 2.0);
+    printLine("b / 2.0");
+    print_matrix(b / 2.0);
+
+
+
+    0
+}

@@ -50,6 +50,13 @@ fn iter( m: mat[f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
     }
 }
 
+fn matrix_init(x : mat[f64]){
+    for cell in iter( x ){
+        let (row, col, ptr) = cell;
+        *ptr = relu(*ptr);
+    }
+}
+
 
 fn @(?e) range_filter( b: i32, e: i32, body: fn(i32) -> ()) -> (f64) {
     if b < e{
