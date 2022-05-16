@@ -3,6 +3,10 @@
 #include <stdbool.h>
 extern "C"{
     void printString(const char* str){
+        printf("%s ", str);
+    }
+
+    void printLine(const char* str){
         printf("%s\n", str);
     }
 
@@ -11,10 +15,18 @@ extern "C"{
     }
 
     void printDouble(double i) {
+        printf("%lf ", i);
+    }
+
+    void printDoubleLine(double i) {
         printf("%lf\n", i);
     }
 
     void printInteger(int i) {
+        printf("%d ", i);
+    }
+
+    void printIntegerLine(int i) {
         printf("%d\n", i);
     }
 
@@ -26,11 +38,6 @@ extern "C"{
     {
         double f = (double)rand() / RAND_MAX;
         return fMin + f * (fMax - fMin);
-    }
-
-
-    double testFunction(double a, long b){
-        return a + b;
     }
 }
 

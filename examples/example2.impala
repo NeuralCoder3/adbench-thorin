@@ -1,89 +1,93 @@
 extern "C" {
-    fn exp(x:f64) -> (f64);
-    fn log(x:f64) -> (f64);
-    fn sqrt(x:f64) -> (f64);
+    fn printString(&[u8]) -> ();
+    fn printLine(&[u8]) -> ();
     fn printFloat(f32) -> ();
     fn printDouble(f64) -> ();
     fn printInteger(i32) -> ();
+    fn randomDouble(f64, f64) -> (f64);
 }
 
-
-fn test(x: f64) -> (f64){
-    x
+fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
+    while b < e {
+        body(b++)
+    }
 }
 
-fn f(x: f64) -> f64 {
-    test(x)
+fn relu(x: f64) -> f64{
+    if x > 0.0 {
+        x
+    }else{
+        0.1 * x
+    }
 }
+
+fn print_matrix(m : mat[2:f64]) -> (){
+    printLine("----");
+    for row in range(0 as u64, m.shape(0)){
+        printString("|");
+        for col in range(0 as u64, m.shape(1)){
+            printDouble(m(row,col));
+        }
+
+        printLine("|");
+    }
+    printLine("----");
+}
+
+fn iter( m: mat[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
+    let mut row = 0 as u64;
+    let rows = m.shape(0);
+    let cols = m.shape(1);
+    while row < rows {
+        let mut col = 0 as u64;
+        while col < cols {
+            body((row, col, (&(m(row, col))) as &mut f64));
+            col++;
+        }
+        row++;
+    }
+}
+
+fn matrix_init(x : mat[2:f64], offset: f64) -> (){
+    let cols = x.shape(1);
+    for cell in iter( x ){
+        let (row, col, ptr) = cell;
+        *ptr = (row * cols + col) as f64 + offset;
+    }
+}
+
+fn g(x: mat[2:f64], y : mat[2:f64]) -> (mat[2:f64]){
+    x * x
+}
+
 
 fn main() -> i32 {
-    let input : &mut[f64] = ~[3:f64];
-    let weights : &mut[f64] = ~[3:f64];
-    input(0) = 1.1;
+    let x = mat[f64](2, 2);
+    let y = mat[f64](2, 2);
 
-    input(0) = 2.0;
-    input(1) = 3.0;
-    input(2) = 4.0;
-    weights(0) = 1.0;
-    weights(1) = 2.0;
-    weights(2) = 3.0;
+    let s = mat[f64](2, 2);
 
+    matrix_init(x, 1.0);
+    matrix_init(y, 2.0);
 
-    let diff = rev_diff(f);
+    print_matrix(x);
+    print_matrix(y);
 
-    let (fx, pb) = diff(input(0), 3);
-    let gradients  = pb(1.0);
-    let (size, xd) = gradients(0);
-    printDouble(fx);
-    printDouble(xd(0));
-    printDouble(xd(1));
-    printDouble(xd(2));
+    s(0, 0) = 1.0;
+    s(0, 1) = 0.0;
+    s(1, 0) = 0.0;
+    s(1, 1) = 0.0;
 
-    0
-}
+    print_matrix(s);
 
+    let Df = rev_diff(g);
+    let (fx,pb) = Df(x, y);
+    let gradients = pb(s);
+    let x_d = gradients(0);
+    let y_d = gradients(1);
 
-extern "C" {
-    fn printDouble(f64) -> ();
-    fn test(&[f64], &[f64], i32) -> (f64);
-}
-
-fn f(x: &[f64], y: &[f64], i : i32) -> f64{
-    test(x, y, i)
-}
-
-fn main() -> i32 {
-    let matrix1 : m64 = matrix64(2,2);
-
-
-    let test =  (matrix1 * matrix1)(1,1);
-    test as i32
-}
-
-
-
-extern "C" {
-    fn exp(x:f64) -> (f64);
-    fn log(x:f64) -> (f64);
-    fn sqrt(x:f64) -> (f64);
-    fn printFloat(f32) -> ();
-    fn printDouble(f64) -> ();
-    fn printInteger(i32) -> ();
-}
-
-fn f(x: f64, a: i32) -> f64 {
-    x
-}
-
-fn main() -> i32 {
-
-    let diff = rev_diff(f);
-
-    let (fx, pb) = diff(1.1, 2);
-    let gradients  = pb(1.0);
-    let xd = gradients(0);
-    printDouble(fx);
-    printDouble(xd);
+    print_matrix(x_d);
+    print_matrix(y_d);
 
     0
 }
