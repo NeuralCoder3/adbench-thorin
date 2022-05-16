@@ -13,14 +13,6 @@ fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
     }
 }
 
-fn relu(x: f64) -> f64{
-    if x > 0.0 {
-        x
-    }else{
-        0.1 * x
-    }
-}
-
 fn print_matrix(m : mat[2:f64]) -> (){
     printLine("----");
     for row in range(0 as u64, m.shape(0)){
@@ -48,6 +40,8 @@ fn iter( m: mat[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
     }
 }
 
+//(ptr, f64, ...)
+
 fn matrix_init(x : mat[2:f64], offset: f64) -> (){
     let cols = x.shape(1);
     for cell in iter( x ){
@@ -56,10 +50,17 @@ fn matrix_init(x : mat[2:f64], offset: f64) -> (){
     }
 }
 
-fn g(x: mat[2:f64], y : mat[2:f64]) -> (mat[2:f64]){
-    x * x
+fn relu(x: f64) -> f64{
+    if x > 0.0 {
+        x
+    }else{
+        0.1 * x
+    }
 }
 
+fn g(x: mat[2:f64], y : mat[2:f64]) -> (mat[2:f64]){
+    x * (x + y)
+}
 
 fn main() -> i32 {
     let x = mat[f64](2, 2);
@@ -77,6 +78,8 @@ fn main() -> i32 {
     s(0, 1) = 0.0;
     s(1, 0) = 0.0;
     s(1, 1) = 0.0;
+
+    g(x,y);
 
     print_matrix(s);
 
