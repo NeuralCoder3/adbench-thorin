@@ -111,9 +111,16 @@ fn logsumexp( n: i32, x : &[f64] ) -> f64
         semx += exp(x(i) - mx);
     }
     log(semx) + mx
+
+
+    let (max, index) = max_with_index(x)
+
+
+    let max_x = max(x);
+    log(sum(exp(x - max_x))) + max_x;
 }
 
-fn log_gamma_distrib( a: f64, p: i32) -> f64
+fn log_gamma_distrib( a: f64, p: i32 ) -> f64
 {
     let PI : f64 = 3.14159265359;
     let mut out = 0.25 * ((p * (p - 1)) as f64) * log(PI);

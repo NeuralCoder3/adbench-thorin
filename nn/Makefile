@@ -28,7 +28,7 @@ build:
 run:
 	${ENZYME_NATIVE_BUILD}/nn_enzyme
 
-
+all: build-impala run-impala
 
 build-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
