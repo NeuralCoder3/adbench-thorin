@@ -7,6 +7,7 @@ extern "C" {
     fn randomDouble(f64, f64) -> (f64);
 }
 
+
 fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
     while b < e {
         body(b++)
@@ -51,25 +52,27 @@ fn matrix_init(x : mat[2:f64], offset: f64) -> (){
 }
 
 fn relu(x: f64) -> f64{
-    if x > 0.0 {
+    if x > 0.0{
         x
     }else{
         0.1 * x
     }
 }
 
+
 fn g(x: mat[2:f64], y : mat[2:f64]) -> (mat[2:f64]){
-    x * (x + y)
+    (x * y).map(relu)
 }
 
 fn main() -> i32 {
+
     let x = mat[f64](2, 2);
     let y = mat[f64](2, 2);
 
     let s = mat[f64](2, 2);
 
-    matrix_init(x, 1.0);
-    matrix_init(y, 2.0);
+    matrix_init(x, -2.2);
+    matrix_init(y, -2.2);
 
     print_matrix(x);
     print_matrix(y);
@@ -79,8 +82,6 @@ fn main() -> i32 {
     s(1, 0) = 0.0;
     s(1, 1) = 0.0;
 
-    g(x,y);
-
     print_matrix(s);
 
     let Df = rev_diff(g);
@@ -89,8 +90,9 @@ fn main() -> i32 {
     let x_d = gradients(0);
     let y_d = gradients(1);
 
+    print_matrix(fx);
     print_matrix(x_d);
-    print_matrix(y_d);
+    print_matrix(y_d);*/
 
     0
 }
