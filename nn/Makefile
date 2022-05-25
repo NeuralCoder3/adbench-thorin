@@ -25,6 +25,12 @@ build:
 	llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -o ${ENZYME_NATIVE_BUILD}/enzyme_output.bc && \
 	clang++ ${SHARED}/mnist.cpp ${ENZYME_NATIVE_BUILD}/enzyme_output.bc -O0 -o ${ENZYME_NATIVE_BUILD}/nn_enzyme
 
+build-enzyme-impala:
+	mkdir -p ${ENZYME_IMPALA_BUILD} && \
+	source ../../project.sh && \
+	impala ${ENZYME_IMPALA}/nn.impala -emit-c-interface -emit-thorin  -log-level error -emit-llvm -emit-c-interface -o ${ENZYME_IMPALA_BUILD}/nn_impala
+
+
 run:
 	${ENZYME_NATIVE_BUILD}/nn_enzyme
 
@@ -36,7 +42,7 @@ build-impala:
 	mkdir -p ${NATIVE_IMPALA_BUILD} && \
 	impala ${NATIVE_IMPALA}/nn.impala -emit-c-interface -emit-thorin  -log-level error -emit-llvm -emit-c-interface -o ${NATIVE_IMPALA_BUILD}/nn_impala&& \
 	llvm-as ${NATIVE_IMPALA_BUILD}/nn_impala.ll && \
-	clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/nn_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/nn_impala
+	clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${SHARED}/mnist.cpp ${NATIVE_IMPALA_BUILD}/nn_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/nn_impala
 
 run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \

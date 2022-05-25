@@ -15,7 +15,6 @@ extern "C" {
     fn initMnist() -> ();
     fn readInput(i32) -> (&[f64]);
     fn readLabel(i32) -> (i32);
-    fn print_digit(i32) -> ();
 }
 
 fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
@@ -86,6 +85,11 @@ fn relu( x: f64 ) -> (f64){
     }
 }
 
+extern fn test(x: (f64, f64)) -> f64{
+    0.0
+}
+
+
 fn predict(input: mat[2:f64], first_weights: mat[2:f64], second_weights: mat[2:f64]) -> mat[2:f64]{
     let first_layer = (first_weights * input).map(relu);
     let second_layer = (second_weights * first_layer).map(relu);
@@ -113,42 +117,4 @@ fn adamOptimizer( epoch: i32, size: i32, weights: mat[2:f64], J: mat[2:f64], lr:
   (offset, new_m, new_v)
 }
 
-fn main() -> i32 {
-    let dim = 10;
 
-    initMnist();
-
-    let mut first_weights : mat[2:f64] = mat[f64](32, 28*28);
-    let mut second_weights : mat[2:f64] = mat[f64](10, 32);
-
-    matrix_init_random(first_weights, -0.1, 0.1);
-    matrix_init_random(second_weights, -0.1, 0.1);
-    let diff = rev_diff(loss);
-
-    let mut epoch = 0;
-    while epoch < 10{
-        let mut instance = 0;
-        while instance < 2000{
-            let input = mat(readInput(instance), 28*28, 1);
-            let label = readLabel(instance);
-
-            let (fx,pb) = diff(input, first_weights, second_weights, label as u64);
-            let gradients = pb(1.0);
-            let input_d = gradients(0);
-            let first_weights_d = gradients(1);
-            let second_weights_d = gradients(2);
-
-            first_weights = first_weights - 0.01 * first_weights_d;
-            second_weights = second_weights - 0.01 * second_weights_d;
-            instance++;
-        }
-        epoch++;
-    }
-
-    let input = mat(readInput(0), 28*28, 1);
-    print_digit(0);
-    let prediction = predict(input, first_weights, second_weights);
-    print_matrix(prediction);
-
-    0
-}
