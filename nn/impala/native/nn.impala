@@ -65,110 +65,6 @@ fn matrix_init_random(x : mat[2:f64], min: f64, max: f64) -> (){
         *ptr = randomDouble(min, max);
     }
 }
-/*
-fn @(?e) range_filter( b: i32, e: i32, body: fn(i32) -> ()) -> (f64) {
-    if b < e{
-        body(b);
-        range_filter(b + 1, e, body);
-    }
-    0.0
-}
-
-
-fn @(true) max(a: f64, b: f64) -> (f64){
-    if a > b{
-        a
-    }else{
-        b
-    }
-}
-
-fn @(true) softmax(input: mat[2:f64]) -> (mat[2:f64]){
-  let mut sum = 0.0;
-  let mut i = 0 as u64;
-
-  let output = mat[f64](input(0), input(1));
-
-  while(i < input(0)){
-    let e = exp(input(i,0));
-    sum += e;
-    output(i,0) = e;
-    i++;
-  }
-
-    //let e = exp(input)
-    //e / sum(e)
-
-    output / sum
-}
-
-
-  input
-}
-
-fn randomInit(m : mat[2:f64], min: f64, max: f64) -> (){
-    for cell in iter( m ){
-        let (row, col, ptr) = cell;
-        m(row, col) = randomDouble(min, max);
-    }
-}
-
-fn runNnBenchmark(file: &[u8]) -> (){
-    let size_x = 28;
-    let size_y = 28;
-
-    let first_weights =  mat[f64](size_x, size_y);
-    let second_weights =  mat[f64](32, 10);
-
-    for cell in iter( first_weights ){
-        let (row, col, ptr) = cell;
-        *ptr = randomDouble(-0.1, 0.1);
-    }
-}
-
-fn @(true) propagate(input: mat[2:f64], first_weights: mat[2:f64]) -> (mat[2:f64]){
-     let first_layer = (first_weights * input).map(relu);
-
-     first_layer
-}
-
-
-
-*/
-
-
-/*
-
-fn @(true) cross_entropy(output: mat[2:f64], target: i32) -> (f64){
-  -log(output(target, 0))
-}
-
-fn @(true) propagate(first_weights: mat[2:f64],
-                 second_weights: mat[2:f64],
-                 input: mat[2:f64]) -> mat[2:f64]{
-
-    let hidden = first_weights * input;
-    let output_fully = second_weights * hidden;
-
-
-    //fully_connected(input, hidden, first_weights);
-    //fully_connected(hidden, output_fully, second_weights,32, 10);
-    //softmax(output_fully, output, 10);
-
-    output_fully
-}
-
-fn loss(
-    first_weights: mat[2:f64],
-    second_weights: mat[2:f64],
-    input: mat[2:f64],
-    target: i32 ) -> (f64){
-
-  let output = propagate(first_weights, second_weights, input);
-  cross_entropy(output, target)
-}
-
-*/
 
 fn @(true) softmax(input: mat[2:f64]) -> (mat[2:f64]){
   let e = input.map(exp);
@@ -183,67 +79,48 @@ fn relu( x: f64 ) -> (f64){
     }
 }
 
-fn relu_hack( x: f64 ) -> (f64){
-    if(x>=0.0){
-        x
-    }else{
-        0.1 * x
-    }
+fn predict(input: mat[2:f64], first_weights: mat[2:f64], second_weights: mat[2:f64]) -> mat[2:f64]{
+    let first_layer = (first_weights * input).map(relu);
+    let second_layer = (second_weights * first_layer).map(relu);
+    let classification = softmax(second_layer);
+    classification
 }
 
-fn loss(input: mat[2:f64], first_weights: mat[2:f64], y: u64) -> f64{
-    let first_layer = (input * first_weights).map(relu);
-    let second_layer = (first_layer * first_weights).map(relu_hack);
-    let classification = softmax(second_layer);
+fn loss(input: mat[2:f64], first_weights: mat[2:f64], second_weights: mat[2:f64], y: u64) -> f64{
+    let classification = predict(input, first_weights, second_weights);
     -log(classification(0,y))
 }
 
 fn main() -> i32 {
+    let dim = 10;
 
-    let hack = ~[2:u64];
-    hack(0) = (10) as u64;
-    hack(1) = 10 as u64;
-    let dim = hack(0);
-    let dim2 = hack(1);
+    let input : mat[2:f64] = mat[f64](28*28, 1);
+    let mut first_weights : mat[2:f64] = mat[f64](32, 28*28);
+    let mut second_weights : mat[2:f64] = mat[f64](10, 32);
 
-    randomDouble(0.0, 1.0);
+    matrix_init_random(input, 0.0, 1.0);
+    matrix_init_random(first_weights, -0.1, 0.1);
+    matrix_init_random(second_weights, -0.1, 0.1);
 
-    let input : mat[2:f64] = mat[f64](dim, dim2);
-    let first_weights : mat[2:f64] = mat[f64](dim2, dim);
+    let mut i = 0;
+    while i < 5{
+        let Df = rev_diff(loss);
+        let (fx,pb) = Df(input, first_weights, second_weights, 4 as u64);
+        let gradients = pb(1.0);
+        let input_d = gradients(0);
+        let first_weights_d = gradients(1);
+        let second_weights_d = gradients(2);
 
-    if true{
-        matrix_init_random(input, 0.0, 1.0);
-        matrix_init_random(first_weights, -0.1, 0.1);
-    }else{
-        input(0,0) = -1.0;
-        input(0,1) = -1.0;
-        input(1,0) = 2.0;
-        input(1,1) = 0.0;
+        first_weights = first_weights - 0.1 * first_weights_d;
+        second_weights = second_weights - 0.1 * second_weights_d;
 
-        first_weights(0,0) = 2.0;
-        first_weights(0,1) = 2.0;
-        first_weights(1,0) = 1.0;
-        first_weights(1,1) = 0.0;
+        printDouble(fx);
+        printLine("");
+        i++;
     }
 
-    print_matrix(input);
-    print_matrix(first_weights);
-
-    let Df = rev_diff(loss);
-    let (fx,pb) = Df(input, first_weights,  1 as u64);
-    let gradients = pb(1.0);
-    let input_d = gradients(0);
-    let first_weights_d = gradients(1);
-    let second_weights_d = gradients(1);
-
-    printDouble(fx);
-
-    print_matrix(input_d);
-    print_matrix(first_weights_d);
-
-
-   // printDouble(loss(input));
-
+    let prediction = predict(input, first_weights, second_weights);
+    print_matrix(prediction);
 
     0
 }
