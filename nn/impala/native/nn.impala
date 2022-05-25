@@ -101,10 +101,10 @@ fn main() -> i32 {
     matrix_init_random(input, 0.0, 1.0);
     matrix_init_random(first_weights, -0.1, 0.1);
     matrix_init_random(second_weights, -0.1, 0.1);
+    let Df = rev_diff(loss);
 
     let mut i = 0;
-    while i < 5{
-        let Df = rev_diff(loss);
+    while i < 20{
         let (fx,pb) = Df(input, first_weights, second_weights, 4 as u64);
         let gradients = pb(1.0);
         let input_d = gradients(0);
