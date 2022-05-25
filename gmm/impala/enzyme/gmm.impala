@@ -91,7 +91,8 @@ fn sqnorm(d: i32, v : &[f64]) -> (f64){
     sum
 }
 
-fn arr_max(n: i32,x : &[f64] ) -> f64
+/*
+fn arr_max(n: i32,x : mat[f64] ) -> f64
 {
     let mut m = x(0);
     for i in range(1, n) {
@@ -101,19 +102,15 @@ fn arr_max(n: i32,x : &[f64] ) -> f64
     }
 
     m
-}
+}*/
 
-fn logsumexp( n: i32, x : &[f64] ) -> f64
+fn logsumexp( x : mat[f64] ) -> f64
 {
-    let mx = arr_max(n, x);
-    let mut semx = 0.0;
-    for i in range(0, n) {
-        semx += exp(x(i) - mx);
-    }
-    log(semx) + mx
+    let mx = x.max;
+    (x.map(exp) - mx).map(log) + mx
 }
 
-fn log_gamma_distrib( a: f64, p: i32) -> f64
+fn log_gamma_distrib( a: f64, p: i32 ) -> f64
 {
     let PI : f64 = 3.14159265359;
     let mut out = 0.25 * ((p * (p - 1)) as f64) * log(PI);
@@ -143,7 +140,11 @@ fn log_wishart_prior( p: i32, k: i32,
     for ik in range(0, k) {
         let currentQdiags : &[f64] =  &Qdiags(ik * p) as &[f64];
         let currentIfc : &[f64] =  &icf(ik * icf_sz + p) as &[f64];
-    
+
+        Qdiags.split(p)
+        icf.split(p)
+
+
         let frobenius = sqnorm(p, currentQdiags) + sqnorm(icf_sz - p, currentIfc);
         out += 0.5 * wishartGamma * wishartGamma * frobenius - (wishartM as f64) * sum_qs(ik);
     }

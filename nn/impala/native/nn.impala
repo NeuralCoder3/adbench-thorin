@@ -22,7 +22,11 @@ fn print_matrix(m : mat[2:f64]) -> (){
     for row in range(0 as u64, m.shape(0)){
         printString("|");
         for col in range(0 as u64, m.shape(1)){
-            printDouble(m(row,col));
+            let value = m(row,col);
+            if value >= 0.0{
+                printString("");
+            }
+            printDouble(value);
         }
 
         printLine("|");
@@ -51,6 +55,14 @@ fn matrix_init(x : mat[2:f64], offset: f64) -> (){
     for cell in iter( x ){
         let (row, col, ptr) = cell;
         *ptr = (row * cols + col) as f64 + offset;
+    }
+}
+
+fn matrix_init_random(x : mat[2:f64], min: f64, max: f64) -> (){
+    let cols = x.shape(1);
+    for cell in iter( x ){
+        let (row, col, ptr) = cell;
+        *ptr = randomDouble(min, max);
     }
 }
 /*
@@ -171,42 +183,58 @@ fn relu( x: f64 ) -> (f64){
     }
 }
 
+fn relu_hack( x: f64 ) -> (f64){
+    if(x>=0.0){
+        x
+    }else{
+        0.1 * x
+    }
+}
 
-fn loss(input: mat[2:f64], first_weights: mat[2:f64]) -> f64{
+fn loss(input: mat[2:f64], first_weights: mat[2:f64], y: u64) -> f64{
     let first_layer = (input * first_weights).map(relu);
-    let second_layer = (first_layer * first_weights).map(relu);
-
-    //let classification = softmax(first_layer);
-    //classification.sum
-
-    second_layer.sum
+    let second_layer = (first_layer * first_weights).map(relu_hack);
+    let classification = softmax(second_layer);
+    -log(classification(0,y))
 }
 
 fn main() -> i32 {
+
     let hack = ~[2:u64];
-    hack(0) = 2 as u64;
+    hack(0) = (10) as u64;
+    hack(1) = 10 as u64;
     let dim = hack(0);
+    let dim2 = hack(1);
 
-    let input : mat[2:f64] = mat[f64](dim, dim);
-    let first_weights : mat[2:f64] = mat[f64](dim, dim);
+    randomDouble(0.0, 1.0);
 
+    let input : mat[2:f64] = mat[f64](dim, dim2);
+    let first_weights : mat[2:f64] = mat[f64](dim2, dim);
 
+    if true{
+        matrix_init_random(input, 0.0, 1.0);
+        matrix_init_random(first_weights, -0.1, 0.1);
+    }else{
+        input(0,0) = -1.0;
+        input(0,1) = -1.0;
+        input(1,0) = 2.0;
+        input(1,1) = 0.0;
 
-    input(0,0) = 1.0;
-    input(0,1) = 1.0;
-    input(1,0) = 2.0;
-    input(1,1) = 0.0;
+        first_weights(0,0) = 2.0;
+        first_weights(0,1) = 2.0;
+        first_weights(1,0) = 1.0;
+        first_weights(1,1) = 0.0;
+    }
 
-    first_weights(0,0) = 2.0;
-    first_weights(0,1) = 2.0;
-    first_weights(1,0) = 1.0;
-    first_weights(1,1) = 0.0;
+    print_matrix(input);
+    print_matrix(first_weights);
 
     let Df = rev_diff(loss);
-    let (fx,pb) = Df(input, first_weights);
+    let (fx,pb) = Df(input, first_weights,  1 as u64);
     let gradients = pb(1.0);
     let input_d = gradients(0);
     let first_weights_d = gradients(1);
+    let second_weights_d = gradients(1);
 
     printDouble(fx);
 

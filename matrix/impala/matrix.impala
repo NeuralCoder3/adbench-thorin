@@ -52,9 +52,33 @@ fn matrix_init(x : mat[2:f64], offset: f64) -> (){
     }
 }
 
-fn main() -> i32 {
-    //mat[type](rows,cols);
+fn relu( x: f64 ) -> (f64){
+    if(x>=0.0){
+        x
+    }else{
+        0.1 * x
+    }
+}
 
+fn f(input: mat[2:f64], first_weights: mat[2:f64]) -> f64{
+    let first_layer = (input * first_weights).map(relu);
+    first_layer.sum
+}
+
+fn main() -> i32 {
+
+    let mut test = mat[f64](2,2);
+
+    matrix_init(test, 1.0);
+
+    if(randomDouble(0.0, 1.0) > 0.0){
+        test = test * test;
+    }
+
+    print_matrix(test);
+
+
+/*
 
     let a : mat[2:f64] = mat[f64](2,2);
     let b : mat[2:f64] = mat[f64](2,2);
@@ -104,6 +128,33 @@ fn main() -> i32 {
     print_matrix(b - 2.0);
     printLine("b / 2.0");
     print_matrix(b / 2.0);
+
+    let input : mat[2:f64] = mat[f64](2, 2);
+    let first_weights : mat[2:f64] = mat[f64](2, 2);
+
+    input(0,0) = -1.0;
+    input(0,1) = -1.0;
+    input(1,0) = 2.0;
+    input(1,1) = 0.0;
+
+    first_weights(0,0) = 2.0;
+    first_weights(0,1) = 2.0;
+    first_weights(1,0) = 1.0;
+    first_weights(1,1) = 0.0;
+
+    print_matrix(input);
+    print_matrix(first_weights);
+
+    let Df = rev_diff(f);
+    let (fx,pb) = Df(input, first_weights);
+    let gradients = pb(1.0);
+    let input_d = gradients(0);
+    let first_weights_d = gradients(1);
+
+    printDouble(fx);
+
+    print_matrix(input_d);
+    print_matrix(first_weights_d);*/
 
 
 
