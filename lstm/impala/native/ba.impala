@@ -52,20 +52,9 @@ fn sigmoid( x: f64) -> (f64)
     1.0 / (1.0 + exp(-x))
 }
 
-// log(sum(exp(x), 2))
-fn logsumexp( vect: &[f64], sz: i32) -> (f64)
+fn logsumexp( vect: tn[2:f64] ) -> (f64)
 {
-    let mut sum = 0.0;
-    let mut i = 0;
-
-    while ( i < sz)
-    {
-        sum += exp(vect(i));
-        i++;
-    }
-
-    sum += 2.0;
-    log(sum)
+    log(vect.map(exp).sum + 2)
 }
 
 // LSTM OBJECTIVE
@@ -225,3 +214,22 @@ fn main(argc: i32,argv :&[&[u8]]) -> i32 {
     0
 }
 
+
+
+
+
+// log(sum(exp(x), 2))/*
+fn logsumexp( vect: &[f64], sz: i32) -> (f64)
+{
+    let mut sum = 0.0;
+    let mut i = 0;
+
+    while ( i < sz)
+    {
+        sum += exp(vect(i));
+        i++;
+    }
+
+    sum += 2.0;
+    log(sum)
+}*/

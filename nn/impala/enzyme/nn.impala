@@ -12,9 +12,16 @@ extern "C" {
     fn lgamma(f64) -> (f64);
     fn randomDouble(f64, f64) -> (f64);
 
+    fn parseInt(&[u8]) -> (i32);
+
+    fn loss_d_c(hidden_size: i32, input_c: &[f64], input_d_c: &[f64],
+                first_weights_c: &[f64], first_weights_d_c: &[f64],
+                second_weights_c: &[f64], second_weights_d_c: &[f64], y: u64) -> (f64);
+
     fn initMnist() -> ();
     fn readInput(i32) -> (&[f64]);
     fn readLabel(i32) -> (i32);
+    fn print_digit(i32) -> ();
 }
 
 fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
@@ -23,7 +30,7 @@ fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
     }
 }
 
-fn print_matrix(m : mat[2:f64]) -> (){
+fn print_matrix(m : tn[2:f64]) -> (){
     printLine("----");
     for row in range(0 as u64, m.shape(0)){
         printString("|");
@@ -40,7 +47,7 @@ fn print_matrix(m : mat[2:f64]) -> (){
     printLine("----");
 }
 
-fn iter( m: mat[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
+fn iter( m: tn[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
     let mut row = 0 as u64;
     let rows = m.shape(0);
     let cols = m.shape(1);
@@ -56,15 +63,15 @@ fn iter( m: mat[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
 
 //(ptr, f64, ...)
 
-fn matrix_init(x : mat[2:f64], offset: f64) -> (){
+fn matrix_init(x : tn[2:f64], value: f64) -> (){
     let cols = x.shape(1);
     for cell in iter( x ){
         let (row, col, ptr) = cell;
-        *ptr = (row * cols + col) as f64 + offset;
+        *ptr = value;
     }
 }
 
-fn matrix_init_random(x : mat[2:f64], min: f64, max: f64) -> (){
+fn matrix_init_random(x : tn[2:f64], min: f64, max: f64) -> (){
     let cols = x.shape(1);
     for cell in iter( x ){
         let (row, col, ptr) = cell;
@@ -72,7 +79,7 @@ fn matrix_init_random(x : mat[2:f64], min: f64, max: f64) -> (){
     }
 }
 
-fn @(true) softmax(input: mat[2:f64]) -> (mat[2:f64]){
+fn @(true) softmax(input: tn[2:f64]) -> (tn[2:f64]){
   let e = input.map(exp);
   e / e.sum
 }
@@ -85,24 +92,27 @@ fn relu( x: f64 ) -> (f64){
     }
 }
 
-extern fn test(x: (f64, f64)) -> f64{
-    0.0
-}
-
-
-fn predict(input: mat[2:f64], first_weights: mat[2:f64], second_weights: mat[2:f64]) -> mat[2:f64]{
+fn predict(input: tn[2:f64], first_weights: tn[2:f64], second_weights: tn[2:f64]) -> tn[2:f64]{
     let first_layer = (first_weights * input).map(relu);
     let second_layer = (second_weights * first_layer).map(relu);
     let classification = softmax(second_layer);
     classification
 }
 
-fn loss(input: mat[2:f64], first_weights: mat[2:f64], second_weights: mat[2:f64], y: u64) -> f64{
+fn loss(input: tn[2:f64], first_weights: tn[2:f64], second_weights: tn[2:f64], y: u64) -> f64{
     let classification = predict(input, first_weights, second_weights);
     -log(classification(0,y))
 }
 
-fn adamOptimizer( epoch: i32, size: i32, weights: mat[2:f64], J: mat[2:f64], lr: f64, beta1: f64, beta2: f64, m: mat[2:f64], v: mat[2:f64] ) -> (mat[2:f64], mat[2:f64], mat[2:f64]) {
+extern fn loss_c(hidden_size: i32, input_c: &[f64], first_weights_c: &[f64], second_weights_c: &[f64], y: u64, loss_value: &mut f64) -> (){
+    let input = tn(input_c, 28*28, 1);
+    let first_weights = tn(first_weights_c, hidden_size, 28*28);
+    let second_weights = tn(second_weights_c, 10, hidden_size);
+
+    *loss_value = loss(input, first_weights, second_weights, y);
+}
+
+fn adamOptimizer( epoch: i32, size: i32, weights: tn[2:f64], J: tn[2:f64], lr: f64, beta1: f64, beta2: f64, m: tn[2:f64], v: tn[2:f64] ) -> (tn[2:f64], tn[2:f64], tn[2:f64]) {
   let beta1Pow = pow(beta1, epoch as f64);
   let beta2Pow = pow(beta2, epoch as f64);
 
@@ -117,4 +127,110 @@ fn adamOptimizer( epoch: i32, size: i32, weights: mat[2:f64], J: mat[2:f64], lr:
   (offset, new_m, new_v)
 }
 
+fn accuracy(offset : i32, len: i32, predictor: fn(i32) -> (i32)) -> (f64){
+  let mut has_match = 0;
+  let mut non_match = 0;
+  for j in range(offset as u64, ( offset + len) as u64){
+    let output = predictor(j as i32);
+    let label = readLabel(j as i32);
 
+    if(output == label){
+      has_match++;
+    }else{
+      non_match++;
+    }
+  }
+
+  printInteger(has_match);
+  printString("/");
+  printInteger(has_match + non_match);
+  printLine("");
+
+  (has_match as f64) / ( (has_match + non_match)  as f64)
+}
+
+fn argmax(x: tn[2:f64]) -> (u64, u64){
+    let mut maxIndices = (0 as u64, 0 as u64);
+    let mut max = x(0,0);
+    for cell in iter( x ){
+        let (row, col, ptr) = cell;
+        let value = *ptr;
+        if( max < value ){
+            max = value;
+            maxIndices = (row, col);
+        }
+    }
+
+    maxIndices
+}
+
+
+fn main( argc : i32, argv : &[&[u8]]) -> i32 {
+    let dim = 10;
+
+    initMnist();
+
+    let hidden_size = parseInt(argv(1));
+    let epochs = parseInt(argv(2));
+
+    printInteger(hidden_size);
+    printInteger(epochs);
+
+    let mut first_weights = tn[f64](hidden_size, 28*28);
+    let mut second_weights = tn[f64](10, hidden_size);
+
+
+    matrix_init_random(first_weights, -0.1, 0.1);
+    matrix_init_random(second_weights, -0.1, 0.1);
+    let mut epoch = 0;
+
+
+
+    while epoch < epochs{
+        let mut sum = 0.0;
+        let mut instance = 0;
+        while instance < 2000{
+            let input = tn(readInput(instance), 28*28, 1);
+            let label = readLabel(instance);
+
+
+            let mut input_d = tn[f64](28*28, 1);
+            let mut first_weights_d = tn[f64](hidden_size, 28*28);
+            let mut second_weights_d = tn[f64](10, hidden_size);
+
+            matrix_init(input_d, 0.0);
+            matrix_init(first_weights_d, 0.0);
+            matrix_init(second_weights_d, 0.0);
+
+            let loss = loss_d_c(
+                hidden_size,
+                &input(0,0) as &[f64], &input_d(0,0) as &[f64],
+                &first_weights(0,0) as &[f64], &first_weights_d(0,0) as &[f64],
+                &second_weights(0,0) as &[f64], &second_weights_d(0,0) as &[f64], label as u64);
+
+            sum += loss;
+
+            first_weights = first_weights - 0.01 * first_weights_d;
+            second_weights = second_weights - 0.01 * second_weights_d;
+            instance++;
+        }
+
+        printDouble(sum / (2000 as f64));
+        printLine("");
+        epoch++;
+    }
+
+    let predictor = |instance: i32| -> i32{
+        let input = tn(readInput(instance), 28*28, 1);
+        let prediction = predict(input, first_weights, second_weights);
+        argmax(prediction)(0) as i32
+    };
+
+    let testInstance = 9000;
+    print_digit(testInstance);
+    printInteger(predictor(testInstance));
+
+    printDouble(accuracy(9000, 1000, predictor));
+
+    0
+}

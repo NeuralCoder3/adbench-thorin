@@ -5,8 +5,11 @@ extern "C" {
     fn printDouble(f64) -> ();
     fn printInteger(i32) -> ();
     fn randomDouble(f64, f64) -> (f64);
-}
+    fn dgemm(a_rows: i32, a_cols: i32, b_rows: i32,
+            a : &f64, b : &f64, c : &f64) -> ();
 
+    //fn parallel(i32, fn(i32, i32) -> ()) -> ();
+}
 
 fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
     while b < e {
@@ -14,7 +17,7 @@ fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
     }
 }
 
-fn print_matrix(m : mat[2:f64]) -> (){
+fn print_matrix(m : tn[2:f64]) -> (){
     printLine("----");
     for row in range(0 as u64, m.shape(0)){
         printString("|");
@@ -27,7 +30,18 @@ fn print_matrix(m : mat[2:f64]) -> (){
     printLine("----");
 }
 
-fn iter( m: mat[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
+fn print_vector(m : tn[1:f64]) -> (){
+    printLine("----");
+    for row in range(0 as u64, m.shape){
+        printString("|");
+        printDouble(m(row));
+
+        printLine("|");
+    }
+    printLine("----");
+}
+
+fn iter( m: tn[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
     let mut row = 0 as u64;
     let rows = m.shape(0);
     let cols = m.shape(1);
@@ -41,9 +55,7 @@ fn iter( m: mat[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
     }
 }
 
-//(ptr, f64, ...)
-
-fn matrix_init(x : mat[2:f64], offset: f64) -> (){
+fn matrix_init(x : tn[2:f64], offset: f64) -> (){
     let cols = x.shape(1);
     for cell in iter( x ){
         let (row, col, ptr) = cell;
@@ -51,48 +63,193 @@ fn matrix_init(x : mat[2:f64], offset: f64) -> (){
     }
 }
 
-fn relu(x: f64) -> f64{
-    if x > 0.0{
-        x
-    }else{
-        0.1 * x
+fn matrix_zero(x : tn[2:f64]) -> (){
+    let cols = x.shape(1);
+    for cell in iter( x ){
+        let (row, col, ptr) = cell;
+        *ptr = 0.0;
     }
 }
 
-
-fn g(x: mat[2:f64], y : mat[2:f64]) -> (mat[2:f64]){
-    (x * y).map(relu)
+fn f(a : tn[2:f64], b : tn[2:f64]) -> tn[2:f64]{
+     //let c = tn.formula("{ij},{jk}->{ik}",  a, b);
+//c
+   a * b
 }
+
+    //let c = tn.formula("{ik} * {kj}->{ij}", a,b);
+
 
 fn main() -> i32 {
 
-    let x = mat[f64](2, 2);
-    let y = mat[f64](2, 2);
+    let dim = 4096;
+    let a = tn[f64](2, 2);
+    let b = tn[f64](2, 2);
 
-    let s = mat[f64](2, 2);
+    matrix_init(a, 1.0);
+    matrix_init(b, 2.0);
 
-    matrix_init(x, -2.2);
-    matrix_init(y, -2.2);
+    print_matrix(a);
+    print_matrix(b);
 
-    print_matrix(x);
-    print_matrix(y);
 
-    s(0, 0) = 1.0;
-    s(0, 1) = 0.0;
-    s(1, 0) = 0.0;
-    s(1, 1) = 0.0;
+    let s = tn[f64](2, 2);
+    matrix_zero(s);
+    s(0,0) = 1.0;
+    s(0,1) = 0.0;
+    s(1,0) = 0.0;
+    s(1,1) = 0.0;
 
-    print_matrix(s);
+    let diff = rev_diff(f);
 
-    let Df = rev_diff(g);
-    let (fx,pb) = Df(x, y);
-    let gradients = pb(s);
-    let x_d = gradients(0);
-    let y_d = gradients(1);
+        printLine("---");
+    let mut i = 0;
+    let mut mat = a;
+    while( i < 3 ){
+        let (fx,pb) = diff(a, b);
+        let gradient = pb(s);
 
+        let a_d = gradient(0);
+        let b_d = gradient(1);
+
+        print_matrix(a_d);
+
+
+        mat = mat * a_d;
+        i++;
+    }
+
+    print_matrix(mat);
+
+
+
+
+
+/*
+
+2000
+1000
+200
+1
+200
+1000
+0
+1000
+
+
+
+    let c = tn.formula("{ijk}->{ik}, m j", a,  b );
+
+
+    let c = tn.formula("{ik}, j, one(j, {ik})->{ijk}", a,  b );
+
+
+*/
+
+
+
+    //print_matrix(c);
+
+    //printDouble(c);
+
+/*
+    parallel(9 , |a,b|{
+        printInteger(a );
+    });*/
+
+/*
+    let s = tn[f64](2048, 2048);
+    matrix_zero(s);
+    s(0,0) = 0.0;
+    s(0,1) = 1.0;
+    s(1,0) = 0.0;
+    s(1,1) = 0.0;
+
+    let diff = rev_diff(f);
+    let (fx,pb) = diff(a, b);
+    let gradient = pb(s);
+
+    let a_d = gradient(0);
+    let b_d = gradient(1);
+    //print_matrix(a);
+    //print_matrix(b);
+    //print_matrix(fx);
+    //print_matrix(a_d);
+    //print_matrix(b_d);*/
+
+
+
+    //print_matrix(b_d);
+
+
+
+
+    //print_matrix(a);
+   // print_matrix(c);
+
+    //printDouble(c);
+
+/*
+    b_v(0) = 1.0;
+    b_v(1) = 4.1;
+
+    matrix_init(a, 1.0);
+    matrix_init(b, 2.0);
+
+    let c : tn[1: f64] = tn.formula("ij*i->i", b_v);
+
+    print_matrix(a);
+    print_matrix(b);
+    print_vector(c);
+
+
+    let s = tn[f64](2, 2);
+    matrix_zero(s);
+    s(0,0) = 1.0;
+
+    let diff = rev_diff(f);
+    let (fx,pb) = diff(a, b);
+    let gradient = pb(s);
+
+    let a_d = gradient(0);
+    let b_d = gradient(1);
+    print_matrix(a);
+    print_matrix(b);
     print_matrix(fx);
-    print_matrix(x_d);
-    print_matrix(y_d);*/
+    print_matrix(a_d);
+    print_matrix(b_d);
+
+    */
+
+
+/*
+    let a = tn[f64](2048, 2048);
+    let b = tn[f64](2048, 2048);
+    let s = tn[f64](2048, 2048);
+
+    matrix_init(a, 1.0);
+    matrix_init(b, 2.0);
+
+    matrix_zero(s);
+
+    s(0,0) = 1.0;*/
+
+
+    //printDouble(f(a,b)(0,0));
+
+
+   /* matrix_init(a, 1.0);
+    matrix_init(b, 2.0);
+
+    print_matrix(a);
+    print_matrix(b);
+
+
+    //let c : tn[2: f64] = tn.formula("ij*jk->ik", a, b);
+    //let c : tn[2: f64] = tn.formula("ij->ji", a);
+    print_matrix(c);*/
+
+
 
     0
 }

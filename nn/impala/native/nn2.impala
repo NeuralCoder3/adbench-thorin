@@ -12,8 +12,6 @@ extern "C" {
     fn lgamma(f64) -> (f64);
     fn randomDouble(f64, f64) -> (f64);
 
-    fn parseInt(&[u8]) -> (i32);
-
     fn initMnist() -> ();
     fn readInput(i32) -> (&[f64]);
     fn readLabel(i32) -> (i32);
@@ -102,11 +100,6 @@ fn accuracy(offset : i32, len: i32, predictor: fn(i32) -> (i32)) -> (f64){
     }
   }
 
-  printInteger(has_match);
-  printString("/");
-  printInteger(has_match + non_match);
-  printLine("");
-
   (has_match as f64) / ( (has_match + non_match)  as f64)
 }
 
@@ -138,77 +131,73 @@ fn relu( x: f64 ) -> (f64){
     }
 }
 
-fn predict(input: tn[2:f64], first_weights: tn[2:f64], second_weights: tn[2:f64]) -> tn[2:f64]{
+fn predict(input: tn[2:f64], first_weights: tn[2:f64]) -> tn[2:f64]{
     let first_layer = (first_weights * input).map(relu);
-    let second_layer = (second_weights * first_layer).map(relu);
-    let classification = softmax(second_layer);
+    let classification = softmax(first_layer);
     classification
 }
 
-fn loss(input: tn[2:f64], first_weights: tn[2:f64], second_weights: tn[2:f64], y: u64) -> f64{
+fn loss(input: tn[2:f64], first_weights: tn[2:f64], y: u64) -> f64{
     let first_layer = (first_weights * input).map(relu);
-    let second_layer = (second_weights * first_layer).map(relu);
-    let classification = softmax(second_layer);
-    -log(classification(0,y))
+    let classification = softmax(first_layer);
+    -log(classification(0,y) + 0.0001)
 }
 
 
-fn main( argc : i32, argv : &[&[u8]]) -> i32 {
+fn main() -> i32 {
     initMnist();
 
-    let hidden_size = parseInt(argv(1));
-    let epochs = parseInt(argv(2));
-
-    printInteger(hidden_size);
-    printInteger(epochs);
-
-    let mut first_weights = tn[f64](hidden_size, 28*28);
-    let mut second_weights = tn[f64](10, hidden_size);
+    let mut first_weights = tn[f64](10, 28*28);
 
     matrix_init_random(first_weights, -0.1, 0.1);
-    matrix_init_random(second_weights, -0.1, 0.1);
 
-    let instances = 2000;
+    let epochs = 200;
+    let instances = 20;
 
     let diff = rev_diff(loss);
 
-    let mut sum = 0.0;
-    let mut last = 0;
+    let predictor = |instance: i32| -> i32{
+        let input = tn(readInput(instance), 28*28, 1);
+        let prediction = predict(input, first_weights);
+        argmax(prediction)(0) as i32
+    };
+
     let mut i = 0;
-    while i < (epochs * instances){
+    while i < epochs * instances{
         let instance = i % instances;
-        let epoch = i / instances;
-        if(epoch != last){
-            printDouble(sum / (instances as f64));
-            sum = 0.0;
-            last = epoch;
-            printLine("");
-        }
 
         let input = tn(readInput(instance), 28*28, 1);
         let label = readLabel(instance);
 
-        let (fx,pb) = diff(input, first_weights, second_weights, label as u64);
+        let inputSum : f64 = input.sum;
+
+
+        let (fx,pb) = diff(input, first_weights, label as u64);
+
+        if(i == 2767){
+            printDouble(fx);
+
+            let first_layer = (first_weights * input).map(relu);
+            let classification = softmax(first_layer);
+
+            printDouble(first_layer.sum / (first_layer.shape(0) * first_layer.shape(1)) as f64);
+
+            print_matrix(first_layer);
+            print_matrix(classification);
+
+        }
+
+
         let gradients = pb(1.0);
         let first_weights_d = gradients(1);
-        let second_weights_d = gradients(2);
 
-        sum += fx;
+        let scaled_first_weights_d = 0.001 * first_weights_d;
 
-        first_weights = first_weights - 0.01 * first_weights_d;
-        second_weights = second_weights - 0.01 * second_weights_d;
+        first_weights = first_weights - scaled_first_weights_d;
+
+
         i++;
     }
-
-    let input = tn(readInput(0), 28*28, 1);
-    let fx2 = loss(input, first_weights, second_weights, readLabel(0) as u64);
-    printDouble(fx2);
-
-    let predictor = |instance: i32| -> i32{
-        let input = tn(readInput(instance), 28*28, 1);
-        let prediction = predict(input, first_weights, second_weights);
-        argmax(prediction)(0) as i32
-    };
 
 
     let testInstance = 9000;

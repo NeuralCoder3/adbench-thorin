@@ -17,7 +17,7 @@ fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
     }
 }
 
-fn print_matrix(m : mat[2:f64]) -> (){
+fn print_matrix(m : tn[2:f64]) -> (){
     printLine("----");
     for row in range(0 as u64, m.shape(0)){
         printString("|");
@@ -30,7 +30,7 @@ fn print_matrix(m : mat[2:f64]) -> (){
     printLine("----");
 }
 
-fn iter( m: mat[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
+fn iter( m: tn[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
     let mut row = 0 as u64;
     let rows = m.shape(0);
     let cols = m.shape(1);
@@ -44,7 +44,7 @@ fn iter( m: mat[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
     }
 }
 
-fn matrix_init(x : mat[2:f64], offset: f64) -> (){
+fn matrix_init(x : tn[2:f64], offset: f64) -> (){
     let cols = x.shape(1);
     for cell in iter( x ){
         let (row, col, ptr) = cell;
@@ -60,103 +60,34 @@ fn relu( x: f64 ) -> (f64){
     }
 }
 
-fn f(input: mat[2:f64], first_weights: mat[2:f64]) -> f64{
-    let first_layer = (input * first_weights).map(relu);
-    first_layer.sum
+fn @(true) softmax(input: tn[2:f64]) -> (tn[2:f64]){
+  let e = input.map(exp);
+  e / e.sum
+}
+
+fn f(input: tn[2:f64], first_weights: tn[2:f64]) -> tn[2:f64]{
+    input.map(relu)
 }
 
 fn main() -> i32 {
 
-    let mut test = mat[f64](2,2);
+    let mut a : tn[2:f64] = tn[f64](2, 2);
+    let mut b : tn[2:f64] = tn[f64](2, 2);
 
-    matrix_init(test, 1.0);
 
-    if(randomDouble(0.0, 1.0) > 0.0){
-        test = test * test;
+    a(0,0) = 1.0; a(0,1) = 2.0;
+    a(1,0) = 3.0; a(1,1) = 4.0;
+
+    b(0,0) = 1.0; b(0,1) = 1.0;
+    b(1,0) = 1.0; b(1,1) = 1.0;
+
+    for i in range( 0 as u64, 3 as u64 ){
+        let z = a * 1.0;
+        a = z * b;
     }
 
-    print_matrix(test);
 
-
-/*
-
-    let a : mat[2:f64] = mat[f64](2,2);
-    let b : mat[2:f64] = mat[f64](2,2);
-    let c : mat[2:f64] = mat[f64](2,3);
-
-    matrix_init(a, 1.0);
-    matrix_init(b, 2.0);
-    matrix_init(c, 1.0);
-
-    let rows = a.shape(0);
-    let cols = a.shape(1);
-
-    printInteger(rows as i32);
-    printLine("");
-    printInteger(cols as i32);
-    printLine("");
-    printLine("----");
-
-    printLine("a");
     print_matrix(a);
-    printLine("b");
-    print_matrix(b);
-
-    //matrix operations
-    printLine("a * b");
-    print_matrix(a * b);
-    printLine("a * c");
-    print_matrix(a * c);
-    printLine("a + b");
-    print_matrix(a + b);
-    printLine("a - b");
-    print_matrix(a - b);
-
-    //scalar operations
-    printLine("2.0 * b");
-    print_matrix(2.0 * b);
-    printLine("2.0 + b");
-    print_matrix(2.0 + b);
-    printLine("2.0 - b");
-    print_matrix(2.0 - b);
-
-    printLine("b * 2.0");
-    print_matrix(b * 2.0);
-    printLine("b + 2.0");
-    print_matrix(b + 2.0);
-    printLine("b - 2.0");
-    print_matrix(b - 2.0);
-    printLine("b / 2.0");
-    print_matrix(b / 2.0);
-
-    let input : mat[2:f64] = mat[f64](2, 2);
-    let first_weights : mat[2:f64] = mat[f64](2, 2);
-
-    input(0,0) = -1.0;
-    input(0,1) = -1.0;
-    input(1,0) = 2.0;
-    input(1,1) = 0.0;
-
-    first_weights(0,0) = 2.0;
-    first_weights(0,1) = 2.0;
-    first_weights(1,0) = 1.0;
-    first_weights(1,1) = 0.0;
-
-    print_matrix(input);
-    print_matrix(first_weights);
-
-    let Df = rev_diff(f);
-    let (fx,pb) = Df(input, first_weights);
-    let gradients = pb(1.0);
-    let input_d = gradients(0);
-    let first_weights_d = gradients(1);
-
-    printDouble(fx);
-
-    print_matrix(input_d);
-    print_matrix(first_weights_d);*/
-
-
 
     0
 }

@@ -16,8 +16,6 @@
 #include <iomanip>
 
 
-extern "C" {
-
 void print_mnist(double *digit) {
     for (int i = 0; i < 28; i++) {
         for (int j = 0; j < 28; j++) {
@@ -39,7 +37,7 @@ int reverseInt(int i) {
 }
 
 void
-readMNIST(int NumberOfImages, int DataOfAnImage, std::vector<std::vector<double>> &data, std::vector<int> &labels) {
+readMNIST(int NumberOfImages, int DataOfAnImage, std::vector<std::vector<double> > &data, std::vector<int> &labels) {
     data.resize(NumberOfImages, std::vector<double>(DataOfAnImage));
     labels.resize(NumberOfImages, 0);
     std::ifstream file("train-images.idx3-ubyte", std::ios::binary);
@@ -77,7 +75,10 @@ readMNIST(int NumberOfImages, int DataOfAnImage, std::vector<std::vector<double>
     }
 }
 
-std::vector<std::vector<double>> train_data;
+
+extern "C" {
+
+std::vector<std::vector<double> > train_data;
 std::vector<int> labels_data;
 
 void initMnist() {

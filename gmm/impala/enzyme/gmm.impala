@@ -156,7 +156,7 @@ fn malloc_double(size: i32) -> &mut[f64]{
     malloc((size * 8) as i64)
 }
 
-extern fn gmm(d: i32, k: i32, n: i32,
+fn gmm(d: i32, k: i32, n: i32,
         wishartGamma: f64,
         wishartM: i32,
         alphas : &[f64],

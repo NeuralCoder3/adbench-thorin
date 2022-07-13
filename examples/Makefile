@@ -16,9 +16,9 @@ setup-ubuntu:
 build-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
 	source ../../project.sh && \
-	impala ${FILE}.impala --emit-llvm --emit-llvm -o ${FILE}&& \
+	impala ${FILE}.impala --emit-llvm -o ${FILE}&& \
 	llvm-as ${FILE}.ll && \
-	clang++ lib.cpp ${FILE}.bc -O3 -o ${FILE}
+	clang++ -I/opt/homebrew/opt/openblas/include/ -L/opt/homebrew/opt/openblas/lib -lopenblas lib.cpp ${FILE}.bc -O3 -o ${FILE}
 
 run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
