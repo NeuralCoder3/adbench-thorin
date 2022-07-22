@@ -46,9 +46,9 @@ build-impala:
 	llvm-as ${NATIVE_IMPALA_BUILD}/nn_impala.ll && \
 	clang++ -I/opt/homebrew/opt/openblas/include/ -L/opt/homebrew/opt/openblas/lib -lopenblas -L${RUNTIME} -lgc -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${SHARED}/mnist.cpp ${NATIVE_IMPALA_BUILD}/nn_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/nn_impala
 
-
 	#sed -i '' 's/@malloc/@GC_malloc/' ${NATIVE_IMPALA_BUILD}/nn_impala.ll  && \
 	#sed -i '' '/@free/d' ${NATIVE_IMPALA_BUILD}/nn_impala.ll && \
+
 
 build-impala-clang:
 	source ../../project.sh && \
@@ -71,13 +71,15 @@ build-enzyme-impala:
 	llvm-link ${ENZYME_IMPALA_BUILD}/nn_enzyme_impala.bc ${ENZYME_IMPALA_BUILD}/nn_enzyme.bc  -o ${ENZYME_IMPALA_BUILD}/bundle.bc && \
 	llvm-dis ${ENZYME_IMPALA_BUILD}/bundle.bc -o ${ENZYME_IMPALA_BUILD}/bundle.ll && \
 	opt ${ENZYME_IMPALA_BUILD}/bundle.ll -load=../../Enzyme/enzyme/build/Enzyme/LLVMEnzyme-12.dylib -enzyme -O2 -o ${ENZYME_IMPALA_BUILD}/out.ll -S -enzyme-preopt=0 -enable-new-pm=0 && \
-	llvm-as ${ENZYME_IMPALA_BUILD}/out.ll && \
 	sed -i '' 's/@malloc/@GC_malloc/' ${ENZYME_IMPALA_BUILD}/out.ll  && \
 	sed -i '' '/@free/d' ${ENZYME_IMPALA_BUILD}/out.ll  && \
-	clang++ -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${SHARED}/mnist.cpp ${ENZYME_IMPALA_BUILD}/out.bc -O2 -o ${ENZYME_IMPALA_BUILD}/nn_enzyme
+	llvm-as ${ENZYME_IMPALA_BUILD}/out.ll && \
+	clang++ -I/opt/homebrew/opt/openblas/include/ -L/opt/homebrew/opt/openblas/lib -lopenblas -L${RUNTIME} -lgc -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${SHARED}/mnist.cpp ${ENZYME_IMPALA_BUILD}/out.bc -O2 -o ${ENZYME_IMPALA_BUILD}/nn_enzyme
 
 build-enzyme-clang:
 	source ../../project.sh && \
+	sed -i '' 's/@malloc/@GC_malloc/' ${ENZYME_IMPALA_BUILD}/out.ll  && \
+	sed -i '' '/@free/d' ${ENZYME_IMPALA_BUILD}/out.ll  && \
 	llvm-as ${ENZYME_IMPALA_BUILD}/out.ll && \
 	clang++ -L${RUNTIME} -lgc -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${SHARED}/mnist.cpp ${ENZYME_IMPALA_BUILD}/out.bc -O2 -fno-vectorize -fno-slp-vectorize -o ${ENZYME_IMPALA_BUILD}/nn_enzyme
 

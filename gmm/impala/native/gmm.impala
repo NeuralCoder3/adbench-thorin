@@ -1,10 +1,12 @@
 extern "C" {
     fn printString(&[u8]) -> ();
+    fn printLine(&[u8]) -> ();
     fn printFloat(f32) -> ();
     fn printDouble(f64) -> ();
     fn printInteger(i32) -> ();
     fn log(f64) -> (f64);
     fn exp(f64) -> (f64);
+    fn sqrt(f64) -> (f64);
     fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
     fn malloc(i64) -> (&mut[f64]);
@@ -35,293 +37,157 @@ fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
     }
 }
 
-fn subtract( d: i32,
-    x: &[f64],
-    x_offset: i32,
-    y: &[f64],
-    y_offset: i32,
-    out: &mut[f64]) -> (f32)
-{
-    let mut id = 0;
-    while id < d {
-        out(id) = x(id + x_offset) - y(id + y_offset);
-        id++;
+fn print_vector(m : tn[1:f64]) -> (){
+    printLine("----");
+    for row in range(0, m.shape as u32){
+        printString("|");
+        printDouble(m(row as u64));
+
+        printLine("|");
     }
-    0f
+    printLine("----");
 }
 
-fn Qtimesx( d: i32,
-    Qdiag: &[f64],
-    Qdiag_offset: i32,
-    ltri: &[f64], // strictly lower triangular part
-    ltri_offset: i32,
-    x: &[f64],
-    out: &mut[f64]) -> (f32)
-{
-    let mut id = 0;
-    while id < d {
-        out(id) = Qdiag(id + Qdiag_offset) * x(id);
-        id++;
-    }
-
-    let mut Lparamsidx = 0;
-
-    let mut i = 0;
-    while i < d {
-        let mut j = i + 1;
-        while j < d {
-            out(j) = out(j) + ltri(Lparamsidx + ltri_offset) * x(i);
-            Lparamsidx++;
-            j++;
+fn print_matrix(m : tn[2:f64]) -> (){
+    printLine("----");
+    for row in range(0, m.shape(0) as u32){
+        printString("|");
+        for col in range(0 , m.shape(1) as u32){
+            let value = m(row as u64,col as u64);
+            if value >= 0.0{
+                printString("");
+            }
+            printDouble(value);
         }
-        i++;
+
+        printLine("|");
     }
-
-    out = Qdiag * x + ltri.strictlyLower * x
-
-
-    0f
+    printLine("----");
 }
 
-fn sqnorm(d: i32, v : &[f64], offset: i32) -> (f64){
-    let mut sum = 0.0;
-    let mut i = 0;
-    while i < d{
-        let val = v(i + offset);
-        sum += val * val;
-        i++;
-    }
-
-    sum
+fn sqr(x:f64) -> f64{
+    x * x
 }
 
-fn arr_max(n: i32,x : &[f64] ) -> f64
-{
-    let mut m = x(0);
-    for i in range(1, n) {
-        if (m < x(i)){
-            m = x(i);
+fn print_tensor(m : tn[3:f64]) -> (){
+    printLine("####");
+    for index in range(0, m.shape(0) as u32){
+        printLine("----");
+        for row in range(0, m.shape(1) as u32){
+            printString("|");
+            for col in range(0 , m.shape(2) as u32){
+                let value = m(index as u64,row as u64,col as u64);
+                if value >= 0.0{
+                    printString("");
+                }
+                printDouble(value);
+            }
+
+            printLine("|");
         }
+        printLine("----");
     }
-
-    m
+    printLine("####");
 }
 
-fn logsumexp( x : mut[2: f64] ) -> f64
-{
-    let mx = x.max
-    (x - mx).map(log) + mx
-}
+/*
+fn gmm(){
+    xcentered = torch.stack(tuple( x[i] - means for i in range(n) )) #no
+}*/
 
-fn log_gamma_distrib( a: f64, p: i32 ) -> f64
+fn log_gamma_distrib( a: f64, p: i32, f: tn[1: f64] ) -> f64
 {
     let PI : f64 = 3.14159265359;
-    let mut out = 0.25 * ((p * (p - 1)) as f64) * log(PI);
 
-    for j in range(1, p+1) {
-        out += lgamma(a + 0.5 * ((1 - j) as f64));
-    }
+    let sub_res = tn.formula("{} - {i} -> {i}", a, f);
+    let lgamma_res = sub_res.map(lgamma);
+    let sum = lgamma_res.sum;
 
-    out
+    0.25 * ((p * (p - 1)) as f64) * log(PI) + sum
 }
 
+fn log_wishart_prior(d: i32, wishart_gamma: f64, wishart_m: i32, sum_qs: tn[1: f64], Qdiags: tn[2: f64], icf: tn[3: f64], f: tn[1 : f64] ) -> (f64){
 
-fn log_wishart_prior( p: i32, k: i32,
-    wishartM: i32,
-    wishartGamma: f64,
-    sum_qs: &[f64],
-    Qdiags: &[f64],
-    icf: &[f64]) -> f64
-{
+    let n = d + wishart_m + 1;
 
-    let n = p + wishartM + 1;
-    let icf_sz = p * (p + 1) / 2;
+    let k = icf.shape(0);
 
-    let distrb_tuble = (0.5 * (n as f64), p);
-    let C = (n as f64) * (p as f64) * (log(wishartGamma) - 0.5 * log(2.0)) - log_gamma_distrib([distrb_tuble,distrb_tuble]);
+    printInteger(n);
 
-    let mut out = 0.0;
+    let Qdiags_sqr = Qdiags.map(sqr);
+    let icf_sqr = icf.map(sqr);
 
-    let mut ik = 0;
-    while ik < k {
-        let p_offset = ik * p;
-        let icf_offset = ik * icf_sz + p;
+    let Qdiags_sqr_sum = tn.formula("{ij} -> {i}", Qdiags_sqr);
+    let icf_sqr_sum = tn.formula("{ijk} -> {i}", icf_sqr);
 
-        let frobenius = sqnorm(p, Qdiags, p_offset) + sqnorm(icf_sz - p, icf, icf_offset);
-        out += 0.5 * wishartGamma * wishartGamma * frobenius - (wishartM as f64) * sum_qs(ik);
-        ik++;
-    }
+    let out = (
+        0.5 * wishart_gamma * wishart_gamma *
+        (Qdiags_sqr_sum + icf_sqr_sum) - (wishart_m as f64) * sum_qs
+    ).sum;
 
-    out - (k as f64) * C
+    let C = ((n * d) as f64) * (log(wishart_gamma / sqrt(2.0)));
+    out - (k as f64) * (C  - log_gamma_distrib(0.5 * (n as f64), d, f))
 }
 
+fn logsumexpvec(x : tn[2: f64]) -> tn[1: f64]{
+    let mx = x.maxLast;
 
+    let diff = tn.formula("{ij} - {i}-> {ji}", x, mx);
 
-fn preprocess_qs( d: i32, k: i32,
-    icf : &[f64],
-    sum_qs : &mut[f64],
-    Qdiags : &mut[f64]) -> ()
-{
-/*
-    let icf_sz = d * (d + 1) / 2;
+    let exp_res = diff.map(exp);
+    let sum_res = tn.formula("{ij} -> {j}", exp_res);
+    let log_res = sum_res.map(log);
+    let logsumexp_res = log_res + mx;
+    logsumexp_res
+}
 
-    let mut ik = 0;
-    while ik < k {
-        sum_qs(ik) = 0.0;
-
-        let mut id = 0;
-        while id < d {
-            let q = icf(ik * icf_sz + id);
-            sum_qs(ik) = sum_qs(ik) + q;
-            Qdiags(ik * d + id) = exp(q);
-            id++;
-        }
-        ik++;
-    }*/
-
-    let m = tn[f64](10);
-    let res = m.ltri()
-
-    let icf_sz = d * (d + 1) / 2;
-
-    let mut ik = 0;
-    while ik < k {
-        sum_qs(ik) = 0.0;
-
-        let mut id = 0;
-        while id < d {
-            let q = icf(ik * icf_sz + id);
-            sum_qs(ik) = sum_qs(ik) + q;
-            Qdiags(ik * d + id) = exp(q);
-            id++;
-        }
-        ik++;
-    }
+fn logsumexp(x : tn[1: f64]) -> f64{
+    let mx2 = x.max;
+    let diff2 = tn.formula("{i} - {}-> {i}", x, mx2);
+    let emx = diff2.map(exp);
+    let sum_res2 = emx.sum;
+    let logsumexp_res2 = log(sum_res2) + mx2;
+    logsumexp_res2
 }
 
 fn gmm(d: i32, k: i32, n: i32,
         wishartGamma: f64,
         wishartM: i32,
-        alphas : tn[2:f64],
+        alphas : tn[1:f64],
         means : tn[2:f64],
-        icf : tn[2:f64],
-        x : tn[2:f64]) -> f64{
+        diag : tn[2:f64],
+        tri : tn[3:f64],
+        x : tn[2:f64],
+        factor: tn[1:f64]) -> f64{
 
-/*
-    let PI : f64 = 3.14159265359;
-    let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
-    let icf_sz = d * (d + 1) / 2;
+    let Qdiags = diag.map(exp);
+    let sum_qs = tn.formula("{ij} -> {i}", diag);
 
-    let Qdiags = ~[d*k:f64];
-    let sum_qs = ~[k:f64];
-    let xcentered = ~[d:f64];
-    let Qxcentered = ~[d:f64];
-    let main_term = ~[k:f64];
+    let xcentered = tn.formula("{ij} - {kj} -> {ikj}", x, means);
+    let f1 = tn.formula("{ijk} * {mik} -> {mij}", tri, xcentered);
+    let f2 = tn.formula("{jk} * {ijk} -> {ijk}", Qdiags, xcentered);
+    let Lxcentered = f1 + f2;
+    let Lxcentered_sq = Lxcentered.map(sqr);
+    let sqsum_Lxcentered = tn.formula("{ijk} -> {ij}", Lxcentered_sq);
 
-    preprocess_qs(d, k, icf, sum_qs, Qdiags);
+    let alpha_sumqs = alphas + sum_qs;
+    let inner_term = tn.formula("{j} - {ij} -> {ij}", alpha_sumqs, 0.5 * sqsum_Lxcentered);
 
-    let mut slse = 0.0;
+    let lse = logsumexpvec(inner_term);
+    let logsumexp_res = logsumexp(alphas);
 
-    for ix in range(0, n) {
-        let currentX : &[f64] =  &x(ix * d) as &[f64];
-        for ik in range(0, k) {
-            let currentQdiags =  &Qdiags(ik * d) as &[f64];
-            let currentMeans =  &means(ik * d) as &[f64];
-            let currentIfc =  &icf(ik * icf_sz + d) as &[f64];
+    let slse = lse.sum;
 
-            subtract(d, currentX, currentMeans, xcentered);
-            Qtimesx(d, currentQdiags, currentIfc, xcentered, Qxcentered);
-            main_term(ik) = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm(d, Qxcentered);
+    let prior = log_wishart_prior(d, wishartGamma, wishartM, sum_qs, Qdiags, tri, factor);
 
-            ij,jk->ik
+    let CONSTANT = -((n * d) as f64) * 0.5 * log(2.0 * 3.14159265359);
+    let result = CONSTANT + slse - (n as f64) * logsumexp_res + prior;
 
 
 
-            let res = tn.einsum("ij * jk->ik", a, b)
-            let a_diff = tn.einsum("jk * ik -> ij", b, res_diff)
-            let b_diff = tn.einsum("ij * ik -> jk", a, res_diff)
-
-
-
-            let res = tn.einsum("ij + i -> ij", a, b)
-            let a_diff = tn.einsum("ij -> ij", res_diff)
-            let b_diff = tn.einsum("ij -> i", res_diff)
-
-            let res = tn.einsum("ij / ji -> ij", a, b)
-            let a_diff = tn.einsum("ij -> ij", res_diff)
-            let b_diff = tn.einsum("ij -> ji", res_diff)
-
-            i = 1
-            j = 1 & 2
-            k = 2
-
-
-
-
-
-            i j k
-
-
-            i = 1
-            j = 1 & j = 2
-            k = 2
-
-
-            f = torch.einsum('ijk,mik->mij', a, b)
-
-
-            let a_diff = tn.einsum("mik,mij->ijk", b, res_diff)
-            let b_diff = tn.einsum("ijk,mij->mik", a, res_diff)
-
-
-            for i
-                for k
-                    = 0
-
-            i k j
-
-            i = 1
-            j = 1 & j = 2
-            k = 2
-
-            for i
-                for k
-                    for j
-                        res[i,k] += a[i,j] * b[j,k]
-
-        }
-        slse += logsumexp(k, main_term);
-    }
-
-    let lse_alphas = logsumexp(k, alphas);
-
-    *err = CONSTANT + slse - (n as f64) * lse_alphas + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
-    *err
-*/
-
-
-
-
-
-
-
-    Qdiags = torch.exp(icf[:, :d])
-    sum_qs = torch.sum(icf[:, :d], 1)
-    Ls = torch.stack([constructL(d, curr_icf) for curr_icf in icf])
-
-    xcentered = torch.stack(tuple( x[i] - means for i in range(n) ))
-    Lxcentered = Qtimesx(Qdiags, Ls, xcentered)
-    sqsum_Lxcentered = torch.sum(Lxcentered ** 2, 2)
-    inner_term = alphas + sum_qs - 0.5 * sqsum_Lxcentered
-    lse = logsumexpvec(inner_term)
-    slse = torch.sum(lse)
-
-    CONSTANT = -n * d * 0.5 * math.log(2 * math.pi)
-    return CONSTANT + slse - n * logsumexp(alphas) \
-        + log_wishart_prior(d, wishart_gamma, wishart_m, sum_qs, Qdiags, icf)
-
-    0.0
+    slse
 }
+
 
 fn runGmmBenchmark(file: &[u8]) -> (){
     let mut d = 2;
@@ -337,25 +203,63 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let mut wishartM: i32 = 0;
     let mut wishartGamma: f64 = 1.0;
 
-    let alphas_size = k as u64;
-    let means_size = (d*k) as u64;
-    let icf_size = (k * ( d * (d + 1) / 2 ))  as u64;
-    let x_size = (d*n) as u64;
+    let icf_size = ( d * (d + 1) / 2 );
 
-    let size = alphas_size + means_size + icf_size;
+    let alphas = tn[f64](k);
+    let means = tn[f64](k, d);
+    let icf = tn[f64](k, icf_size);
+    let x = tn[f64](n, d);
 
-    let alphas = mat[f64](1, alphas_size);
-    let means = mat[f64](1, means_size);
-    let icf = mat[f64](1, icf_size);
-    let x = mat[f64](1, x_size);
+    read_gmm(file, dp, kp, np, &mut wishartM, &mut wishartGamma, &alphas(0) as &mut[f64], &means(0,0) as &mut[f64], &icf(0,0) as &mut[f64], &x(0,0) as &mut[f64]);
 
-    let wishartMp = &mut wishartM;
-    let wishartGammap = &mut wishartGamma;
+    let diag = tn[f64](k, d);
+    let tri = tn[f64](k, d, d);
 
-    read_gmm(file, dp, kp, np, wishartMp, wishartGammap, &alphas(0,0) as &mut[f64], &means(0,0) as &mut[f64], &icf(0,0) as &mut[f64], &x(0,0) as &mut[f64]);
+    for n_index in range(0, n){
+        for d_index in range(0, d){
+            diag(n_index, d_index) = icf(n_index, d_index)
+        }
+    }
 
-    let result = gmm(d, k, n, wishartGamma, wishartM, alphas, means, icf, x);
+
+    for n_index in range(0, n){
+        let mut icf_index = d;
+        for icf_col_index in range(0, d){
+            for icf_row_index in range(0, d){
+                let mut value : f64;
+                if(icf_col_index < icf_row_index){
+                    value = icf(n_index, icf_index++);
+                }else{
+                    value = 0.0;
+                }
+
+                tri(n_index, icf_row_index, icf_col_index) = value;
+            }
+        }
+    }
+
+    let factor = tn[f64](d);
+    for j in range(0, d){
+        factor(j) = 0.5 * (j as f64);
+    }
+
+
+    //let result = gmm(d,k,n,wishartGamma, wishartM, alphas, means, diag, tri, x, factor);
+
+    let diff = rev_diff(gmm);
+
+    let (fx,pb) = diff(d, k, n, wishartGamma, wishartM, alphas, means, diag, tri, x, factor);
+    let gradients = pb(1.0);
+    let alphas_d = gradients(5);
+    let means_d = gradients(6);
+    let diag_d = gradients(7);
+    let tri_d = gradients(8);
+
+    printDouble(fx);
+
 /*
+    let result = gmm(d, k, n, wishartGamma, wishartM, alphas, means, icf, x);
+
     let diff = rev_diff(gmm);
 
     let (y,pb) = diff(d, k, n, wishartGamma, wishartM, alphas, means, icf, x);
@@ -365,7 +269,7 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let icf_d = gradients(7);
 */
 
-    printDouble(result);
+    printDouble(alphas(0));
 }
 
 

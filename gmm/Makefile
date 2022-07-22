@@ -35,11 +35,11 @@ build-impala:
 	mkdir -p ${NATIVE_IMPALA_BUILD} && \
 	impala ${NATIVE_IMPALA}/gmm.impala --emit-llvm --emit-c-interface -o ${NATIVE_IMPALA_BUILD}/gmm_impala&& \
 	llvm-as ${NATIVE_IMPALA_BUILD}/gmm_impala.ll
-	clang++ -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/gmm_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/gmm_impala
+	clang++ -I/opt/homebrew/opt/openblas/include/ -L/opt/homebrew/opt/openblas/lib -lopenblas  -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/gmm_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/gmm_impala
 
 run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
-	${NATIVE_IMPALA_BUILD}/gmm_impala ../benchmark/gmm/1k/gmm_d2_K5.txt
+	${NATIVE_IMPALA_BUILD}/gmm_impala ../benchmark/gmm/1k/gmm_d10_K5.txt
 
 impala: build-impala run-impala
 

@@ -115,8 +115,9 @@ fn log_gamma_distrib( a: f64, p: i32 ) -> f64
     let PI : f64 = 3.14159265359;
     let mut out = 0.25 * ((p * (p - 1)) as f64) * log(PI);
 
-    for j in range(1, p+1) {
-        out += lgamma(a + 0.5 * ((1 - j) as f64));
+
+    for j in range(0, p) {
+        out += lgamma(a - 0.5 * (j as f64));
     }
 
     out
