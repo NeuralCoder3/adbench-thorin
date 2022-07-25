@@ -145,9 +145,11 @@ fn predict(input: tn[2:f64], first_weights: tn[2:f64], second_weights: tn[2:f64]
     classification
 }
 
-fn loss(input: tn[2:f64], y: i32) -> f64{
-    //let res = input / input.sum;
-    input.sum
+fn loss(input: tn[2:f64], first_weights: tn[2:f64], second_weights: tn[2:f64], y: u64) -> f64{
+    let first_layer = (first_weights * input).map(relu);
+    let second_layer = (second_weights * first_layer).map(relu);
+    let classification = softmax(second_layer);
+    -log(classification(0,y))
 }
 
 
@@ -173,7 +175,7 @@ fn main( argc : i32, argv : &[&[u8]]) -> i32 {
     let mut sum = 0.0;
     let mut last = 0;
     let mut i = 0;
-    while i < 1{
+    while i < (epochs * instances){
         let instance = i % instances;
         let epoch = i / instances;
         if(epoch != last){
@@ -186,23 +188,20 @@ fn main( argc : i32, argv : &[&[u8]]) -> i32 {
         let input = tn(readInput(instance), 28*28, 1);
         let label = readLabel(instance);
 
-        let (fx,pb) = diff(input, 1);
+        let (fx,pb) = diff(input, first_weights, second_weights, label as u64);
         let gradients = pb(1.0);
-        let input_d = gradients(0);
-        //let first_weights_d = gradients(1);
-        //let second_weights_d = gradients(2);
+        let first_weights_d = gradients(1);
+        let second_weights_d = gradients(2);
 
         sum += fx;
 
-        printDouble(input_d.sum);
-
+        first_weights -= 0.01 * first_weights_d;
+        second_weights -= 0.01 * second_weights_d;
         i++;
     }
 
-    //printLine("--##--#-#-#-#--#");
-
     let input = tn(readInput(0), 28*28, 1);
-    let fx2 = loss(input, 1);
+    let fx2 = loss(input, first_weights, second_weights, readLabel(0) as u64);
     printDouble(fx2);
 
     let predictor = |instance: i32| -> i32{

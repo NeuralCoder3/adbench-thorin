@@ -109,7 +109,7 @@ fn matrix_zero(x : tn[2:f64]) -> (){
         *ptr = 0.0;
     }
 }
-
+/*
 fn softmax(input: tn[2:f64]) -> (tn[2:f64]){
   let e = input.map(exp);
   e / e.sum
@@ -140,47 +140,80 @@ fn log_gamma_distrib( a: f64, p: i32, f: tn[1: f64] ) -> f64
 {
     let PI : f64 = 3.14159265359;
 
-
-    /*
-    let factor = tn[f64](p);
-
-    for j in range(0 as i64, p as i64){
-        factor(j) = 0.5 * (j as f64);
-    }*/
-
     let sub_res = tn.formula("{} - {i} -> {i}", a, f);
     let lgamma_res = sub_res.map(lgamma);
     let sum = lgamma_res.sum;
 
     0.25 * ((p * (p - 1)) as f64) * log(PI) + sum
 
-}
+}*/
 
 fn maxTest(x : tn[2:f64]) -> tn[1:f64]{
    x.maxLast
 }
 
 fn main() -> i32 {
+
     let a = tn[f64](2,2);
-    a(0, 0) = 2.0; a(0, 1) = 1.0;
+    let b = tn[f64](2,2);
+
+    matrix_init(a, 1.0);
+    matrix_init(b, 2.0);
+
+    a -= b;
+
+    print_matrix(a);
+
+
+/*
+    let a = tn[f64](2,2);
+    let b = tn[f64](2);
+    a(0, 0) = 10.0; a(0, 1) = 1.0;
     a(1, 0) = 9.0; a(1, 1) = 0.0;
 
-    let s = tn[f64](2);
-    s(0) = 1.0;
-    s(1) = 1.0;
+    b(0) = 1.0;
+    b(1) = 1.0;
 
     let diff = rev_diff(maxTest);
 
     let (fx,pb) = diff(a);
-    let gradient = pb(s);
+    let gradient = pb(b);
 
     let a_d = gradient;
 
     print_vector(fx);
     print_matrix(a_d);
 
+    let a[i,j]
+
+    let (c, indices) fetch(i), max(j) = a[i,j];
+
+    let indices =
+    let values =
+    let values_d =
+
+
+    let c[i,j] = if indices[i] == j { values_d[i] } else { 0.0 };
+
+
+    select i,j from a[i,k], b[k,j] with i = 9 and sum(k)
+
+
 
 /*
+
+ let a = tn[f64](2,2);
+    let b = tn[f64](2,2,2);
+
+    let c = tn.const(2, 2.0);
+
+    let d = a + c;
+
+    print(d);
+
+
+    /*
+
     let a = tn[f64](10);
     let b = tn[i32](10);
 
