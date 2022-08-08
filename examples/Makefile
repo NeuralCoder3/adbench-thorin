@@ -10,6 +10,9 @@ BUILD_GMM := ${BUILD}/gmm
 
 FILE := example2
 
+RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+$(eval $(RUN_ARGS):;@:)
+
 setup-ubuntu:
 	sudo ldconfig ${RUNTIME}
 
@@ -22,6 +25,16 @@ build-impala:
 
 run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
-	./${FILE}
+	./${FILE} $(RUN_ARGS)
 
 all: build-impala run-impala
+
+
+
+
+build-enzyme-native:
+	source ../../project.sh && \
+	clang product.cpp -S -emit-llvm -o product.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
+	opt product.ll -load=../../Enzyme/enzyme/build/Enzyme/LLVMEnzyme-12.dylib -enzyme -o out.ll -S -enable-new-pm=0 && \
+	llvm-as out.ll -o out.bc && \
+	clang++ -I/opt/homebrew/opt/openblas/include/ -L/opt/homebrew/opt/openblas/lib -lopenblas lib.cpp out.bc -O2 -o prod

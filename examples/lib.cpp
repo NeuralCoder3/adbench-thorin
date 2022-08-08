@@ -131,5 +131,26 @@ double dsum(long a_rows, long b_cols, double* x){
     return cblas_dsum (a_rows * b_cols, x, 1);
 }
 
+uint64_t timeSinceEpochMillisec() {
+    using namespace std::chrono;
+    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+}
+
+static int start_time = 0;
+void start(){
+    start_time = timeSinceEpochMillisec();
+}
+
+void end(){
+    int end_time = timeSinceEpochMillisec();
+    printf("%d\n", end_time - start_time);
+    std::flush(std::cout);
+}
+
+int readInt(){
+    int n;
+    std::cin >> n;
+    return n;
+}
 
 }

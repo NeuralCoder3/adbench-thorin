@@ -44,10 +44,10 @@ build-impala:
 	mkdir -p ${NATIVE_IMPALA_BUILD} && \
 	impala ${NATIVE_IMPALA}/nn.impala -emit-c-interface -emit-thorin  -log-level error -emit-llvm -emit-c-interface -Othorin -o ${NATIVE_IMPALA_BUILD}/nn_impala&& \
 	llvm-as ${NATIVE_IMPALA_BUILD}/nn_impala.ll && \
+	sed -i '' 's/@malloc/@GC_malloc/' ${NATIVE_IMPALA_BUILD}/nn_impala.ll  && \
+	sed -i '' '/@free/d' ${NATIVE_IMPALA_BUILD}/nn_impala.ll && \
 	clang++ -I/opt/homebrew/opt/openblas/include/ -L/opt/homebrew/opt/openblas/lib -lopenblas -L${RUNTIME} -lgc -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${SHARED}/mnist.cpp ${NATIVE_IMPALA_BUILD}/nn_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/nn_impala
 
-	#sed -i '' 's/@malloc/@GC_malloc/' ${NATIVE_IMPALA_BUILD}/nn_impala.ll  && \
-	#sed -i '' '/@free/d' ${NATIVE_IMPALA_BUILD}/nn_impala.ll && \
 
 
 build-impala-clang:

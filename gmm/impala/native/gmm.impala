@@ -130,9 +130,6 @@ fn log_wishart_prior(d: i32, wishart_gamma: f64, wishart_m: i32, sum_qs: tn[1: f
 }
 
 fn logsumexpvec(x : tn[2: f64]) -> tn[1: f64]{
-
-    let mx{}, indices: max(i), sum(i) = x{i,j}
-
     let mx = x.maxLast;
 
     let diff = tn.formula("{ij} - {i}-> {ji}", x, mx);
@@ -165,7 +162,16 @@ fn gmm(d: i32, k: i32, n: i32,
         factor: tn[1:f64]) -> f64{
 
     let Qdiags = diag.map(exp);
+
+
+    let sum_qs = tn.formula("{ij} * {jk} -> {ik}", diag);
+    let sum_qs = tn.formula("{ik} * {jk} -> {ij}", diag);
+
+
     let sum_qs = tn.formula("{ij} -> {i}", diag);
+
+
+    let sum_qs = tn.formula("{ik} * {kj} -> {ij}", diag);
 
     let xcentered = tn.formula("{ij} - {kj} -> {ikj}", x, means);
     let f1 = tn.formula("{ijk} * {mik} -> {mij}", tri, xcentered);
@@ -181,13 +187,13 @@ fn gmm(d: i32, k: i32, n: i32,
     let logsumexp_res = logsumexp(alphas);
 
     let slse = lse.sum;
-
+/*
     let prior = log_wishart_prior(d, wishartGamma, wishartM, sum_qs, Qdiags, tri, factor);
 
     let CONSTANT = -((n * d) as f64) * 0.5 * log(2.0 * 3.14159265359);
-    let result = CONSTANT + slse - (n as f64) * logsumexp_res + prior;
+    let result = CONSTANT + slse - (n as f64) * logsumexp_res + prior;*/
 
-    result
+    slse
 }
 
 
@@ -246,10 +252,10 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     }
 
 
-   let result = gmm(d,k,n,wishartGamma, wishartM, alphas, means, diag, tri, x, factor);
-       printDouble(result);
+   //let result = gmm(d,k,n,wishartGamma, wishartM, alphas, means, diag, tri, x, factor);
+   //    printDouble(result);
 
-/*
+
     let diff = rev_diff(gmm);
 
     let (fx,pb) = diff(d, k, n, wishartGamma, wishartM, alphas, means, diag, tri, x, factor);
@@ -259,7 +265,8 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let diag_d = gradients(7);
     let tri_d = gradients(8);
 
-    print_vector(alphas_d);*/
+    print_vector(alphas_d);
+    printDouble(fx);
 
 
 /*

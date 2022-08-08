@@ -179,7 +179,10 @@ fn simple(x: tn[2: f64], y: tn[2: f64]) -> tn[2: f64]{
 
 fn main() -> i32 {
 
+    let size = 1024;
+
     let arr = ~[4: f64];
+
     arr(0) = 1.0;
     arr(1) = 2.0;
     arr(2) = 3.0;

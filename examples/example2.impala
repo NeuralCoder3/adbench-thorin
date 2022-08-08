@@ -12,34 +12,31 @@ extern "C" {
     fn exp(f64) -> (f64);
     fn lgamma(f64) -> (f64);
     fn log(f64) -> (f64);
+    fn readInt() -> (i32);
+
+
+    fn free(&u8) -> ();
+    fn parseInt(&[u8]) -> (i32);
+
+    fn start() -> ();
+    fn end() -> ();
+
 
     //fn parallel(i32, fn(i32, i32) -> ()) -> ();
 }
 
-fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
+fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
     while b < e {
         body(b++)
     }
 }
 
-fn range32(mut b: u32, e: u32, body: fn(u32) -> ()) -> () {
-    while b < e {
-        body(b++)
-    }
-}
-
-fn rangeRec(b: i32, e: i32, body: fn(i32) -> ()) -> () {
-    if b < e{
-        body(b);
-        rangeRec(b + 1, e, body);
-    }
-}
 
 fn print_matrix(m : tn[2:f64]) -> (){
     printLine("----");
-    for row in range(0 as u64, m.shape(0)){
+    for row in range(0, m.shape(0)){
         printString("|");
-        for col in range(0 as u64, m.shape(1)){
+        for col in range(0, m.shape(1)){
             printDouble(m(row,col));
         }
 
@@ -47,10 +44,11 @@ fn print_matrix(m : tn[2:f64]) -> (){
     }
     printLine("----");
 }
+/*
 
 fn print_vector(m : tn[1:f64]) -> (){
     printLine("----");
-    for row in range(0 as u64, m.shape){
+    for row in range(0, m.shape){
         printString("|");
         printDouble(m(row));
 
@@ -59,7 +57,7 @@ fn print_vector(m : tn[1:f64]) -> (){
     printLine("----");
 }
 
-fn iter( m: tn[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
+fn iter( m: tn[2:f64], body: fn((i32, i32,  &mut i32)) -> ()) -> () {
     let mut row = 0 as u64;
     let rows = m.shape(0);
     let cols = m.shape(1);
@@ -87,11 +85,11 @@ fn tensor_init(x : tn[3:f64], offset: f64) -> (){
     let cols = x.shape(2);
 
     let mut c = 0;
-    let mut i = 0 as u64;
+    let mut i = 0;
     while i < size {
-        let mut row = 0 as u64;
+        let mut row = 0;
         while row < rows {
-            let mut col = 0 as u64;
+            let mut col = 0;
             while col < cols {
                 x(i,row, col) = offset + (c++ as f64);
                 col++;
@@ -108,7 +106,7 @@ fn matrix_zero(x : tn[2:f64]) -> (){
         let (row, col, ptr) = cell;
         *ptr = 0.0;
     }
-}
+}*/
 /*
 fn softmax(input: tn[2:f64]) -> (tn[2:f64]){
   let e = input.map(exp);
@@ -148,21 +146,156 @@ fn log_gamma_distrib( a: f64, p: i32, f: tn[1: f64] ) -> f64
 
 }*/
 
-fn maxTest(x : tn[2:f64]) -> tn[1:f64]{
-   x.maxLast
+fn f(x : tn[2:f64], y : tn[2:f64]) -> tn[2:f64]{
+   x * y
 }
 
-fn main() -> i32 {
+fn lol() -> (){
+    printDouble(1.2);
+}
 
-    let a = tn[f64](2,2);
-    let b = tn[f64](2,2);
+fn test(x : tn[2:f64]) -> (){
+    printDouble(x(0,0));
+    lol();
+    printInteger(x.shape(0));
+    //printInteger(x.shape(1));
+}
+
+fn test2(x : tn[2:f64]) -> tn[2:f64]{
+    x
+}
+
+fn sqr(x : f64) -> f64{
+    x * x
+}
+
+
+fn simple(x: tn[2: f64], y: tn[2: f64]) -> tn[2: f64]{
+    x * y
+}
+
+fn main(argc : i32, argv : &[&[u8]]) -> i32 {
+
+    //let size = parseInt(argv(1));
+    //printInteger(size);
+    //printLine("s");
+
+    let mut helper = 0.0;
+    let diff = rev_diff(simple);
+
+    for i in range(1, 40){
+        let size = i * 50;
+
+        let a_arr = ~[size * size: f64];
+        let b_arr = ~[size * size: f64];
+        let s_arr = ~[size * size: f64];
+
+        for i in range(0, size * size){
+            a_arr(i) = i as f64;
+            b_arr(i) = i as f64;
+            s_arr(i) = 0.0;
+        }
+        s_arr(0) = 1.0;
+
+        let a = tn.dense(a_arr, (size, size));
+        let b = tn.dense(b_arr, (size, size));
+        let s = tn.dense(s_arr, (size, size));
+
+        start();
+
+        let (fx,pb) = diff(a, b);
+        let gradient = pb(s);
+
+        let a_d = gradient(0);
+        let b_d = gradient(1);
+        end();
+
+        //print_matrix(a_d);
+        //print_matrix(b_d);
+        //print_matrix(fx);
+
+        helper += a_d(0,0) +  b_d(0,0) +  fx(0,0);
+
+        free(&fx(0,0) as &u8);
+        free(&a_d(0,0) as &u8);
+        free(&b_d(0,0) as &u8);
+
+
+    }
+
+    printDouble(helper);
+
+
+
+
+
+
+
+    /*
+
+    let arrS = ~[4: f64];
+    arrS(0) = 1.0;
+    arrS(1) = 0.0;
+    arrS(2) = 0.0;
+    arrS(3) = 0.0;
+    let s = tn.dense(arrS, (2, 2));
+
+    //let a = tn.const(1.1, (2, 2));
+    //let b = tn.const(2.0, (2, 2));
+    //let s = tn.const(1.0, (2, 2));
+
+    let diff = rev_diff(simple);
+
+    let (fx,pb) = diff(a, b);
+    let gradient = pb(s);
+
+    let a_d = gradient(0);
+    let b_d = gradient(1);
+
+    //printDouble(a_d(0,0));
+    //printDouble(fx(0,0));
+
+
+/*
+
+    //let a = tn.const(4.2, (3, 4));
+    //
+    //let b = tn[f64](3, 4);
+    //let d = tn[f64](3, 4);
+    //let c = a + b;
+    //test(a);
+    //test(b);
+    //test(c);
+
+    //b(0,0) = 10.0;
+
+    //let c = a + b;
+    //let e = test2(a);
+    //printDouble(simple(a)(0,0));
+    //printDouble(simple(c)(0,0));
+
+
+
+/*
+    let a = tn[f64](1, 2);
+    let b = tn[f64](2, 2);
+    let s = tn[f64](2, 2);
+    s(0,0) = 1.0;
 
     matrix_init(a, 1.0);
     matrix_init(b, 2.0);
 
-    a -= b;
+    let diff = rev_diff(f);
 
-    print_matrix(a);
+    let (fx,pb) = diff(a, b);
+    let gradient = pb(s);
+
+    let a_d = gradient(0);
+    let b_d = gradient(1);
+
+    print_matrix(fx);
+    print_matrix(a_d);
+    print_matrix(b_d);
 
 
 /*
@@ -217,7 +350,7 @@ fn main() -> i32 {
     let a = tn[f64](10);
     let b = tn[i32](10);
 
-    for i in range32(0, 10){
+    for i in range(0, 10){
         a(i) = i as f64;
         b(i) = i as i32;
     }

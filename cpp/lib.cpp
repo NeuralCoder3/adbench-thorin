@@ -48,6 +48,12 @@ void printLong(unsigned long i) {
     printf("%lu\n", i);
 }
 
+int readInt(){
+    int n;
+    std::cin >> n;
+    return n;
+}
+
 int parseInt(const char* i) {
     return std::atoi(i);
 }

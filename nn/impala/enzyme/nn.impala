@@ -210,8 +210,8 @@ fn main( argc : i32, argv : &[&[u8]]) -> i32 {
 
             sum += loss;
 
-            first_weights = first_weights - 0.01 * first_weights_d;
-            second_weights = second_weights - 0.01 * second_weights_d;
+            first_weights -= 0.01 * first_weights_d;
+            second_weights -= 0.01 * second_weights_d;
             instance++;
         }
 
