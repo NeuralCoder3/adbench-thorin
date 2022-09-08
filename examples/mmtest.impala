@@ -108,6 +108,10 @@ fn matrix_zero(x : tn[2:f64]) -> (){
     }
 }*/
 /*
+fn softmax(input: tn[2:f64]) -> (tn[2:f64]){
+  let e = input.map(exp);
+  e / e.sum
+}
 
 fn f(a : tn[2:f64], b : tn[2:f64]) -> f64{
    a.sum
@@ -150,79 +154,80 @@ fn lol() -> (){
     printDouble(1.2);
 }
 
-
-fn softmax(input: tn[2:f64]) -> tn[2:f64]{
-  let e = input.map(exp);
-  e + e
+fn test(x : tn[2:f64]) -> (){
+    printDouble(x(0,0));
+    lol();
+    printInteger(x.shape(0));
+    //printInteger(x.shape(1));
 }
 
-fn test(x : f64) -> f64{
-    2.0 * x
+fn test2(x : tn[2:f64]) -> tn[2:f64]{
+    x
 }
 
-fn relu( x: f64 ) -> (f64){
-    if(x >= 0.0){
-        x
-    }else{
-        0.1 * x
-    }
+fn sqr(x : f64) -> f64{
+    x * x
 }
 
-fn simple(x: tn[2: f64], y: tn[2: f64], i : i32) -> f64{
-     //let res = (x * y).map(relu);
 
-     let classification = softmax(x);
-     classification(0,i)
+fn simple(x: tn[2: f64], y: tn[2: f64]) -> tn[2: f64]{
+    x * y
 }
 
 fn main(argc : i32, argv : &[&[u8]]) -> i32 {
-   let mut helper = 0.0;
-   let diff = rev_diff(simple);
 
-   //for i in range(1, 42){
-        let a_size = 3;
-        let b_size = 4;
-        let c_size = 5;
-        let a_arr = ~[a_size * b_size: f64];
-        let b_arr = ~[b_size * c_size: f64];
-        let s_arr = ~[a_size * c_size: f64];
+    //let size = parseInt(argv(1));
+    //printInteger(size);
+    //printLine("s");
 
-        for i in range(0, a_size * b_size){
-            a_arr(i) = ((i as f64) - 2.0) / 10.0;
-        }
+    let mut helper = 0.0;
+    let diff = rev_diff(simple);
 
-        for i in range(0, b_size * c_size){
-            b_arr(i) = ((i as f64) - 2.0) / 10.0;
-        }
+    for i in range(1, 40){
+        let size = i * 50;
 
-        for i in range(0, a_size * c_size){
+        let a_arr = ~[size * size: f64];
+        let b_arr = ~[size * size: f64];
+        let s_arr = ~[size * size: f64];
+
+        for i in range(0, size * size){
+            a_arr(i) = i as f64;
+            b_arr(i) = i as f64;
             s_arr(i) = 0.0;
         }
         s_arr(0) = 1.0;
 
-        let a = tn.dense(a_arr, (a_size, b_size));
-        let b = tn.dense(b_arr, (b_size, c_size));
-        let s = tn.hot(1.2, (0,0), (a_size, c_size));
-        let z = tn.const(1.001, (a_size, c_size));
-
-
+        let a = tn.dense(a_arr, (size, size));
+        let b = tn.dense(b_arr, (size, size));
+        let s = tn.dense(s_arr, (size, size));
 
         start();
-        let (fx,pb) = diff(a, b, 2);
-        let gradient = pb(1.0);
+
+        let (fx,pb) = diff(a, b);
+        let gradient = pb(s);
 
         let a_d = gradient(0);
         let b_d = gradient(1);
         end();
 
-        print_matrix(a);
-        print_matrix(b);
-        print_matrix(a_d);
-        print_matrix(b_d);
-        printDouble(fx);
+        //print_matrix(a_d);
+        //print_matrix(b_d);
+        //print_matrix(fx);
 
-        //helper += a_d(0,0) + b_d(0,0) + fx(0,0);
-    //}
+        helper += a_d(0,0) +  b_d(0,0) +  fx(0,0);
+
+        free(&fx(0,0) as &u8);
+        free(&a_d(0,0) as &u8);
+        free(&b_d(0,0) as &u8);
+
+
+    }
+
+    printDouble(helper);
+
+
+
+
 
 
 

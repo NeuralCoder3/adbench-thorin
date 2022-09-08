@@ -1,0 +1,4 @@
+hello
+
+@GC_malloc
+

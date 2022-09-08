@@ -4,65 +4,19 @@ extern "C" {
     fn printInteger(i32) -> ();
 }
 
-/*
-fn arr_max( x : &[f64], n: i32 ) -> f64
-{
-    let mut m = x(0);
-    let mut i = 0;
-    while i < n {
-        if (m < x(i)){
-            m = x(i);
-        }
-        i++;
-    }
+fn f(x : i32) -> i32{
+    x
+}
 
-    m
-}*/
-
-/*
-fn f(x: &[f64], y: i32) -> f64 {
-    if x(0) > x(1){
-        x(0)
-    }else{
-        x(1)
-    }
-}*/
-
-fn f(x: f64, y: i32) -> f64 {
-    if x > 0.0{
-        x
-    }else{
-        0.0
-    }
+fn g(x : i32) -> i32{
+    2 * x
 }
 
 fn main() -> i32 {
-    let x : &mut[f64] = ~[4:f64];
-    x(0) = 1.2;
-    x(1) = 1.3;
-    x(2) = 1.4;
-    x(3) = 1.5;
+    let x = ~[4: fn(i32) -> i32];
 
-    //printDouble(arr_max(x, 4));
+    x(0) = f;
+    x(1) = g;
 
-
-    let diff = rev_diff(f);
-
-
-    let (fx, gradient) = diff(x(0), 1);
-    let tangents  = gradient(1.0);
-    let xd = tangents(0);
-    printDouble(fx);
-    printDouble(xd);
-/*
-    let (fx, gradient) = diff((4 as u64, x), 1);
-    let tangents  = gradient(1.0);
-    let (size, xd)  = tangents(0);
-
-    printDouble(fx);
-    printDouble(xd(0));
-    printDouble(xd(1));
-    printDouble(xd(2));
-    printDouble(xd(3));*/
-    0
+    x(0)(3)
 }

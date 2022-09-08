@@ -1,294 +1,429 @@
 declare i8* @malloc(i64)
 
 declare void @printDouble(double)
+declare void @printLine([0 x i8]*)
 declare void @end()
 declare void @start()
-declare void @free(i8*)
-declare void @dgemm(i8, i32, i32, i32, [0 x double]*, [0 x double]*, [0 x double]*)
+declare double @exp(double)
+declare void @printString([0 x i8]*)
 
+@_201764 = global {i8, i8, i8, i8, i8} {i8 45, i8 45, i8 45, i8 45, i8 0}
+@_201794 = global {i8, i8, i8, i8, i8} {i8 45, i8 45, i8 45, i8 45, i8 0}
+@_201865 = global {i8, i8} {i8 124, i8 0}
+@_201886 = global {i8, i8} {i8 124, i8 0}
 
-define i32 @main(i32 %_193334, [0 x [0 x i8]*]* %_193339) {
-main_190357:
-    call void @range_190378(i32 1, i32 40)
-    br label %break_193203
+define i32 @main(i32 %_205979, [0 x [0 x i8]*]* %_205984) {
+main_200795:
+    %_201483.i8 = call i8* @malloc(i64 96)
+    %_201483 = bitcast i8* %_201483.i8 to [12 x double]*
+    %_201488.i8 = call i8* @malloc(i64 160)
+    %_201488 = bitcast i8* %_201488.i8 to [20 x double]*
+    %_201492.i8 = call i8* @malloc(i64 120)
+    %_201492 = bitcast i8* %_201492.i8 to [15 x double]*
+    %_201592 = zext i32 0 to i64
+    %_201768 = bitcast {i8, i8, i8, i8, i8}* @_201764 to [0 x i8]*
+    %_201795 = bitcast {i8, i8, i8, i8, i8}* @_201794 to [0 x i8]*
+    br label %range_200811
 
-break_193203:
-    call void @printDouble(double undef)
-    br label %printDouble_cont_193232
+range_200811:
+    %_204044 = phi i32 [ 12, %main_200795 ]
+    %_202410 = bitcast [12 x double]* %_201483 to [0 x double]*
+    br label %while_head_200826
 
-printDouble_cont_193232:
-    br label %return_193240
+while_head_200826:
+    %_203965 = phi i32 [ 0, %range_200811 ], [ %_203979, %eta_while_head_203961 ]
+    %_204051 = icmp slt i32 %_203965, %_204044
+    br i1 %_204051, label %while_body_203956, label %break_200835
 
-return_193240:
-    %_193507 = phi i32 [ 0, %printDouble_cont_193232 ]
-    ret i32 %_193507
+break_200835:
+    br label %range_200836
 
-}
+range_200836:
+    %_203932 = phi i32 [ 20, %break_200835 ]
+    %_202457 = bitcast [20 x double]* %_201488 to [0 x double]*
+    br label %while_head_200837
 
-define void @range_190378(i32 %_193190, i32 %_193173) {
-range_190378:
-    br label %while_head_190393
+while_head_200837:
+    %_203679 = phi i32 [ 0, %range_200836 ], [ %_203693, %eta_while_head_203675 ]
+    %_203939 = icmp slt i32 %_203679, %_203932
+    br i1 %_203939, label %while_body_203670, label %break_200841
 
-while_head_190393:
-    %_193149 = phi i32 [ %_193190, %range_190378 ], [ %_193165, %eta_while_head_193150 ]
-    %_193180 = icmp slt i32 %_193149, %_193173
-    br i1 %_193180, label %while_body_190411, label %_190395
+break_200841:
+    br label %range_200842
 
-_190395:
-    ret void
+range_200842:
+    %_203646 = phi i32 [ 15, %break_200841 ]
+    %_201495 = bitcast [15 x double]* %_201492 to [0 x double]*
+    br label %while_head_200843
 
-while_body_190411:
-    call void @lambda_190427(i32 %_193149)
-    br label %eta_while_head_193150
+while_head_200843:
+    %_203597 = phi i32 [ 0, %range_200842 ], [ %_203611, %eta_while_head_203593 ]
+    %_203653 = icmp slt i32 %_203597, %_203646
+    br i1 %_203653, label %while_body_203587, label %break_200847
 
-eta_while_head_193150:
-    %_193165 = add nsw i32 1, %_193149
-    br label %while_head_190393
+while_body_203587:
+    br label %lambda_203592
 
-}
+lambda_203592:
+    %_203618 = phi i32 [ %_203597, %while_body_203587 ]
+    %_203621 = zext i32 %_203618 to i64
+    %_203631 = getelementptr inbounds [0 x double], [0 x double]* %_201495, i64 0, i64 %_203621
+    store double 0x0000000000000000, double* %_203631
+    br label %eta_while_head_203593
 
-define void @lambda_190427(i32 %_191086) {
-lambda_190427:
-    %_192217 = alloca double
-    %_192188 = alloca double
-    %_192127 = alloca double
-    %_191094 = mul i32 %_191086, %_191086
-    %_191110 = mul i32 2500, %_191094
-    %_191113 = zext i32 %_191110 to i64
-    %_191332 = mul nuw nsw i64 8, %_191113
-    %_191333 = bitcast i64 %_191332 to i64
-    %_191335.i8 = call i8* @malloc(i64 %_191333)
-    %_191335 = bitcast i8* %_191335.i8 to [0 x double]*
-    %_191339.i8 = call i8* @malloc(i64 %_191333)
-    %_191339 = bitcast i8* %_191339.i8 to [0 x double]*
-    %_191343.i8 = call i8* @malloc(i64 %_191333)
-    %_191343 = bitcast i8* %_191343.i8 to [0 x double]*
-    %_191382 = zext i32 0 to i64
-    br label %range_190432
+eta_while_head_203593:
+    %_203611 = add nsw i32 1, %_203597
+    br label %while_head_200843
 
-range_190432:
-    %_193139 = phi i32 [ 0, %lambda_190427 ]
-    %_193124 = phi i32 [ %_191110, %lambda_190427 ]
-    %_191697 = bitcast [0 x double]* %_191335 to [0 x double]*
-    %_191755 = bitcast [0 x double]* %_191339 to [0 x double]*
-    %_191346 = bitcast [0 x double]* %_191343 to [0 x double]*
-    br label %while_head_190433
-
-while_head_190433:
-    %_192906 = phi i32 [ %_193139, %range_190432 ], [ %_192920, %eta_while_head_192900 ]
-    %_193131 = icmp slt i32 %_192906, %_193124
-    br i1 %_193131, label %while_body_192893, label %break_190439
-
-while_body_192893:
-    br label %lambda_192897
-
-lambda_192897:
-    %_192927 = phi i32 [ %_192906, %while_body_192893 ]
-    %_192930 = zext i32 %_192927 to i64
-    %_192940 = getelementptr inbounds [0 x double], [0 x double]* %_191697, i64 0, i64 %_192930
-    %_193027 = sitofp i32 %_192927 to double
-    store double %_193027, double* %_192940
-    %_193044 = getelementptr inbounds [0 x double], [0 x double]* %_191755, i64 0, i64 %_192930
-    store double %_193027, double* %_193044
-    %_193061 = getelementptr inbounds [0 x double], [0 x double]* %_191346, i64 0, i64 %_192930
-    store double 0x0000000000000000, double* %_193061
-    br label %eta_while_head_192900
-
-eta_while_head_192900:
-    %_192920 = add nsw i32 1, %_192906
-    br label %while_head_190433
-
-break_190439:
-    %_191392 = getelementptr inbounds [0 x double], [0 x double]* %_191346, i64 0, i64 %_191382
-    store double 0x3ff0000000000000, double* %_191392
+break_200847:
+    %_201602 = getelementptr inbounds [0 x double], [0 x double]* %_201495, i64 0, i64 %_201592
+    store double 0x3ff0000000000000, double* %_201602
     call void @start()
-    br label %start_cont_191410
+    br label %start_cont_201623
 
-start_cont_191410:
-    %_191752 = mul nsw i32 50, %_191086
-    %_192890.ret = call {[0 x double]*, {i32, i32}} @mop_vec_impl_191430([0 x double]* %_191697, i32 %_191752, i32 %_191752, [0 x double]* %_191755, i32 %_191752)
-    br label %mop_vec_entry_mop_result_191764
+start_cont_201623:
+    br label %matrix_unary_entry_201633
 
-mop_vec_entry_mop_result_191764:
-    %_192091 = phi {[0 x double]*, {i32, i32}} [ %_192890.ret, %start_cont_191410 ]
-    br label %mop_transpose_impl_191777
+matrix_unary_entry_201633:
+    %_203458.i8 = call i8* @malloc(i64 96)
+    %_203458 = bitcast i8* %_203458.i8 to [12 x double]*
+    %_203466.i8 = call i8* @malloc(i64 96)
+    %_203466 = bitcast i8* %_203466.i8 to [12 x double]*
+    %_203461 = bitcast [12 x double]* %_203458 to [0 x double]*
+    %_203469 = bitcast [12 x double]* %_203466 to [0 x double]*
+    br label %loop_head_201642
 
-mop_transpose_impl_191777:
-    %_192780 = phi [0 x double]* [ %_191755, %mop_vec_entry_mop_result_191764 ]
-    %_192250 = zext i32 %_191752 to i64
-    %_192258 = mul i64 %_192250, %_192250
-    %_192345 = mul nuw nsw i64 8, %_192258
-    %_192346 = bitcast i64 %_192345 to i64
-    %_192702.i8 = call i8* @malloc(i64 %_192346)
-    %_192702 = bitcast i8* %_192702.i8 to [0 x double]*
-    %_192705 = bitcast [0 x double]* %_192702 to [0 x double]*
-    br label %loop_head_191786
+loop_head_201642:
+    %_203478 = phi i32 [ 0, %matrix_unary_entry_201633 ], [ %_203563, %exp_diff_impl_cont_203501 ]
+    %_203575 = icmp ult i32 %_203478, 12
+    br i1 %_203575, label %loop_203474, label %loop_exit_201645
 
-loop_head_191786:
-    %_192715 = phi i32 [ 0, %mop_transpose_impl_191777 ], [ %_192729, %loop_exit_192711 ]
-    %_192878 = icmp ult i32 %_192715, %_191752
-    br i1 %_192878, label %loop_192709, label %loop_exit_191789
+loop_203474:
+    %_203488 = getelementptr inbounds [0 x double], [0 x double]* %_202410, i64 0, i32 %_203478
+    %_203496 = load double, double* %_203488
+    %_203567.ret = call double @exp(double %_203496)
+    br label %exp_diff_impl_cont_203501
 
-loop_exit_191789:
-    %_192706.0 = insertvalue {[0 x double]*, {i32, i32}} undef, [0 x double]* %_192705, 0
-    %_192352.0 = insertvalue {i32, i32} undef, i32 %_191752, 0
-    %_192352.1 = insertvalue {i32, i32} %_192352.0, i32 %_191752, 1
-    %_192706.1 = insertvalue {[0 x double]*, {i32, i32}} %_192706.0, {i32, i32} %_192352.1, 1
-    br label %mop_transpose_entry_mop_result_191798
+exp_diff_impl_cont_203501:
+    %_203516 = phi double [ %_203567.ret, %loop_203474 ]
+    %_203514 = getelementptr inbounds [0 x double], [0 x double]* %_203461, i64 0, i32 %_203478
+    store double %_203516, double* %_203514
+    %_203533 = getelementptr inbounds [0 x double], [0 x double]* %_203469, i64 0, i32 %_203478
+    %_203542 = fmul double 0x3ff0000000000000, %_203516
+    store double %_203542, double* %_203533
+    %_203563 = add i32 1, %_203478
+    br label %loop_head_201642
 
-mop_transpose_entry_mop_result_191798:
-    %_191803 = phi {[0 x double]*, {i32, i32}} [ %_192706.1, %loop_exit_191789 ]
-    %_191805 = extractvalue {[0 x double]*, {i32, i32}} %_191803, 0
-    %_191807 = extractvalue {[0 x double]*, {i32, i32}} %_191803, 1
-    %_191809 = extractvalue {i32, i32} %_191807, 1
-    %_192696.ret = call {[0 x double]*, {i32, i32}} @mop_vec_impl_191430([0 x double]* %_191346, i32 %_191752, i32 %_191752, [0 x double]* %_191805, i32 %_191809)
-    br label %mop_vec_entry_mop_result_191810
+loop_exit_201645:
+    %_203462.0 = insertvalue {{i32, i32}, [0 x double]*} undef, {i32, i32} {i32 3, i32 4}, 0
+    %_203462.1 = insertvalue {{i32, i32}, [0 x double]*} %_203462.0, [0 x double]* %_203461, 1
+    %_203471.0 = insertvalue {{{i32, i32}, [0 x double]*}, {{i32, i32}, [0 x double]*}} undef, {{i32, i32}, [0 x double]*} %_203462.1, 0
+    %_203470.0 = insertvalue {{i32, i32}, [0 x double]*} undef, {i32, i32} {i32 3, i32 4}, 0
+    %_203470.1 = insertvalue {{i32, i32}, [0 x double]*} %_203470.0, [0 x double]* %_203469, 1
+    %_203471.1 = insertvalue {{{i32, i32}, [0 x double]*}, {{i32, i32}, [0 x double]*}} %_203471.0, {{i32, i32}, [0 x double]*} %_203470.1, 1
+    br label %mat_mul_res_201667
 
-mop_vec_entry_mop_result_191810:
-    %_192042 = phi {[0 x double]*, {i32, i32}} [ %_192696.ret, %mop_transpose_entry_mop_result_191798 ]
-    br label %mop_transpose_impl_191811
+mat_mul_res_201667:
+    %_202701 = phi {{{i32, i32}, [0 x double]*}, {{i32, i32}, [0 x double]*}} [ %_203471.1, %loop_exit_201645 ]
+    br label %matrix_unary_entry_201668
 
-mop_transpose_impl_191811:
-    %_192541 = phi [0 x double]* [ %_191697, %mop_vec_entry_mop_result_191810 ]
-    %_192348.i8 = call i8* @malloc(i64 %_192346)
-    %_192348 = bitcast i8* %_192348.i8 to [0 x double]*
-    %_192351 = bitcast [0 x double]* %_192348 to [0 x double]*
-    br label %loop_head_191812
+matrix_unary_entry_201668:
+    %_203233.i8 = call i8* @malloc(i64 96)
+    %_203233 = bitcast i8* %_203233.i8 to [12 x double]*
+    %_203241.i8 = call i8* @malloc(i64 96)
+    %_203241 = bitcast i8* %_203241.i8 to [12 x double]*
+    %_203236 = bitcast [12 x double]* %_203233 to [0 x double]*
+    %_203244 = bitcast [12 x double]* %_203241 to [0 x double]*
+    br label %loop_head_201669
 
-loop_head_191812:
-    %_192399 = phi i32 [ 0, %mop_transpose_impl_191811 ], [ %_192413, %loop_exit_192360 ]
-    %_192684 = icmp ult i32 %_192399, %_191752
-    br i1 %_192684, label %loop_192358, label %loop_exit_191813
+loop_head_201669:
+    %_203263 = phi i32 [ 0, %matrix_unary_entry_201668 ], [ %_203427, %exp_diff_impl_cont_203288 ]
+    %_203444 = icmp ult i32 %_203263, 12
+    br i1 %_203444, label %loop_203249, label %loop_exit_201670
 
-loop_exit_191813:
-    %_192353.0 = insertvalue {[0 x double]*, {i32, i32}} undef, [0 x double]* %_192351, 0
-    %_192353.1 = insertvalue {[0 x double]*, {i32, i32}} %_192353.0, {i32, i32} %_192352.1, 1
-    br label %mop_transpose_entry_mop_result_191814
+loop_203249:
+    %_203273 = getelementptr inbounds [0 x double], [0 x double]* %_202410, i64 0, i32 %_203263
+    %_203281 = load double, double* %_203273
+    %_203431.ret = call double @exp(double %_203281)
+    br label %exp_diff_impl_cont_203288
 
-mop_transpose_entry_mop_result_191814:
-    %_191819 = phi {[0 x double]*, {i32, i32}} [ %_192353.1, %loop_exit_191813 ]
-    %_191821 = extractvalue {[0 x double]*, {i32, i32}} %_191819, 0
-    %_191823 = extractvalue {[0 x double]*, {i32, i32}} %_191819, 1
-    %_191825 = extractvalue {i32, i32} %_191823, 0
-    %_191827 = extractvalue {i32, i32} %_191823, 1
-    %_192246.ret = call {[0 x double]*, {i32, i32}} @mop_vec_impl_191430([0 x double]* %_191821, i32 %_191825, i32 %_191827, [0 x double]* %_191346, i32 %_191752)
-    br label %mop_vec_entry_mop_result_191828
+exp_diff_impl_cont_203288:
+    %_203303 = phi double [ %_203431.ret, %loop_203249 ]
+    %_203301 = getelementptr inbounds [0 x double], [0 x double]* %_203236, i64 0, i32 %_203263
+    store double %_203303, double* %_203301
+    %_203320 = getelementptr inbounds [0 x double], [0 x double]* %_203244, i64 0, i32 %_203263
+    %_203406 = fmul double 0x3ff0000000000000, %_203303
+    store double %_203406, double* %_203320
+    %_203427 = add i32 1, %_203263
+    br label %loop_head_201669
 
-mop_vec_entry_mop_result_191828:
-    %_192066 = phi {[0 x double]*, {i32, i32}} [ %_192246.ret, %mop_transpose_entry_mop_result_191814 ]
+loop_exit_201670:
+    %_203237.0 = insertvalue {{i32, i32}, [0 x double]*} undef, {i32, i32} {i32 3, i32 4}, 0
+    %_203237.1 = insertvalue {{i32, i32}, [0 x double]*} %_203237.0, [0 x double]* %_203236, 1
+    %_203246.0 = insertvalue {{{i32, i32}, [0 x double]*}, {{i32, i32}, [0 x double]*}} undef, {{i32, i32}, [0 x double]*} %_203237.1, 0
+    %_203245.0 = insertvalue {{i32, i32}, [0 x double]*} undef, {i32, i32} {i32 3, i32 4}, 0
+    %_203245.1 = insertvalue {{i32, i32}, [0 x double]*} %_203245.0, [0 x double]* %_203244, 1
+    %_203246.1 = insertvalue {{{i32, i32}, [0 x double]*}, {{i32, i32}, [0 x double]*}} %_203246.0, {{i32, i32}, [0 x double]*} %_203245.1, 1
+    br label %mat_mul_res_201671
+
+mat_mul_res_201671:
+    %_202462 = phi {{{i32, i32}, [0 x double]*}, {{i32, i32}, [0 x double]*}} [ %_203246.1, %loop_exit_201670 ]
+    %_202703 = extractvalue {{{i32, i32}, [0 x double]*}, {{i32, i32}, [0 x double]*}} %_202701, 0
+    %_202705 = extractvalue {{i32, i32}, [0 x double]*} %_202703, 1
+    %_202719 = getelementptr inbounds [0 x double], [0 x double]* %_202705, i64 0, i32 2
+    %_202727 = load double, double* %_202719
+    %_202464 = extractvalue {{{i32, i32}, [0 x double]*}, {{i32, i32}, [0 x double]*}} %_202462, 1
+    %_202466 = extractvalue {{i32, i32}, [0 x double]*} %_202464, 0
+    %_202468 = extractvalue {i32, i32} %_202466, 0
+    %_202470 = extractvalue {i32, i32} %_202466, 1
+    %_203215 = mul i32 %_202468, %_202470
+    %_202617 = zext i32 %_202468 to i64
+    %_202620 = zext i32 %_202470 to i64
+    %_202628 = mul i64 %_202617, %_202620
+    %_202778 = mul nuw nsw i64 8, %_202628
+    %_202779 = bitcast i64 %_202778 to i64
+    %_202781.i8 = call i8* @malloc(i64 %_202779)
+    %_202781 = bitcast i8* %_202781.i8 to [0 x double]*
+    %_202784 = bitcast [0 x double]* %_202781 to [0 x double]*
+    %_202988 = extractvalue {{i32, i32}, [0 x double]*} %_202464, 1
+    br label %loop_head_201672
+
+loop_head_201672:
+    %_202991 = phi i32 [ 0, %mat_mul_res_201671 ], [ %_203192, %loop_202985 ]
+    %_203222 = icmp ult i32 %_202991, %_203215
+    br i1 %_203222, label %loop_202985, label %loop_exit_201673
+
+loop_exit_201673:
     call void @end()
-    br label %end_cont_specific_191849
+    br label %end_cont_specific_201692
 
-end_cont_specific_191849:
-    %_192044 = extractvalue {[0 x double]*, {i32, i32}} %_192042, 0
-    %_192054 = getelementptr inbounds [0 x double], [0 x double]* %_192044, i64 0, i32 0
-    %_192062 = load double, double* %_192054
-    %_192068 = extractvalue {[0 x double]*, {i32, i32}} %_192066, 0
-    %_192078 = getelementptr inbounds [0 x double], [0 x double]* %_192068, i64 0, i32 0
-    %_192086 = load double, double* %_192078
-    %_192093 = extractvalue {[0 x double]*, {i32, i32}} %_192091, 0
-    %_192103 = getelementptr inbounds [0 x double], [0 x double]* %_192093, i64 0, i32 0
-    %_192111 = load double, double* %_192103
-    %_192121 = load double, double* %_192103
-    store double %_192121, double* %_192127
-    %_192171 = bitcast double* %_192127 to i8*
-    call void @free(i8* %_192171)
-    br label %free_cont_specific_192174
+end_cont_specific_201692:
+    call void @print_matrix_specific_dense_201705(i32 3, i32 4, [0 x double]* %_202410)
+    br label %print_matrix_cont_specific_202419
 
-free_cont_specific_192174:
-    %_192183 = load double, double* %_192054
-    store double %_192183, double* %_192188
-    %_192202 = bitcast double* %_192188 to i8*
-    call void @free(i8* %_192202)
-    br label %free_cont_specific_192203
+print_matrix_cont_specific_202419:
+    call void @print_matrix_specific_dense_201705(i32 4, i32 5, [0 x double]* %_202457)
+    br label %print_matrix_cont_specific_202458
 
-free_cont_specific_192203:
-    %_192212 = load double, double* %_192078
-    store double %_192212, double* %_192217
-    %_192231 = bitcast double* %_192217 to i8*
-    call void @free(i8* %_192231)
-    br label %_192232
+print_matrix_cont_specific_202458:
+    call void @print_matrix_specific_dense_201705(i32 %_202468, i32 %_202470, [0 x double]* %_202784)
+    br label %print_matrix_cont_specific_202785
 
-_192232:
-    ret void
+print_matrix_cont_specific_202785:
+    call void @printLine([0 x i8]* %_201768)
+    br label %printLine_cont_specific_202787
 
-loop_192358:
-    %_192502 = mul i32 %_191086, %_192399
-    %_192518 = mul i32 50, %_192502
-    br label %loop_head_192359
+printLine_cont_specific_202787:
+    call void @range_202792(i32 4)
+    br label %break_specific_202930
 
-loop_head_192359:
-    %_192521 = phi i32 [ 0, %loop_192358 ], [ %_192614, %loop_192416 ]
-    %_192669 = icmp ult i32 %_192521, %_191752
-    br i1 %_192669, label %loop_192416, label %loop_exit_192360
+break_specific_202930:
+    call void @printLine([0 x i8]* %_201795)
+    br label %print_matrix_cont_specific_202932
 
-loop_exit_192360:
-    %_192413 = add i32 1, %_192399
-    br label %loop_head_191812
+print_matrix_cont_specific_202932:
+    call void @printDouble(double %_202727)
+    br label %printDouble_cont_202947
 
-loop_192416:
-    %_192529 = add i32 %_192518, %_192521
-    %_192539 = getelementptr inbounds [0 x double], [0 x double]* %_192351, i64 0, i32 %_192529
-    %_192549 = mul i32 %_191086, %_192521
-    %_192565 = mul i32 50, %_192549
-    %_192573 = add i32 %_192399, %_192565
-    %_192583 = getelementptr inbounds [0 x double], [0 x double]* %_192541, i64 0, i32 %_192573
-    %_192591 = load double, double* %_192583
-    store double %_192591, double* %_192539
-    %_192614 = add i32 1, %_192521
-    br label %loop_head_192359
+printDouble_cont_202947:
+    br label %return_202958
 
-loop_192709:
-    %_192741 = mul i32 %_191086, %_192715
-    %_192757 = mul i32 50, %_192741
-    br label %loop_head_192710
+return_202958:
+    %_206094 = phi i32 [ 0, %printDouble_cont_202947 ]
+    ret i32 %_206094
 
-loop_head_192710:
-    %_192760 = phi i32 [ 0, %loop_192709 ], [ %_192853, %loop_192732 ]
-    %_192863 = icmp ult i32 %_192760, %_191752
-    br i1 %_192863, label %loop_192732, label %loop_exit_192711
+loop_202985:
+    %_203001 = getelementptr inbounds [0 x double], [0 x double]* %_202988, i64 0, i32 %_202991
+    %_203009 = load double, double* %_203001
+    %_203021 = getelementptr inbounds [0 x double], [0 x double]* %_202784, i64 0, i32 %_202991
+    %_203158 = icmp eq i32 2, %_202991
+    %_203160 = select i1 %_203158, double 0x3ff0000000000000, double 0x0000000000000000
+    %_203171 = fmul double %_203160, %_203009
+    store double %_203171, double* %_203021
+    %_203192 = add i32 1, %_202991
+    br label %loop_head_201672
 
-loop_exit_192711:
-    %_192729 = add i32 1, %_192715
-    br label %loop_head_191786
+while_body_203670:
+    br label %lambda_203674
 
-loop_192732:
-    %_192768 = add i32 %_192757, %_192760
-    %_192778 = getelementptr inbounds [0 x double], [0 x double]* %_192705, i64 0, i32 %_192768
-    %_192788 = mul i32 %_191086, %_192760
-    %_192804 = mul i32 50, %_192788
-    %_192812 = add i32 %_192715, %_192804
-    %_192822 = getelementptr inbounds [0 x double], [0 x double]* %_192780, i64 0, i32 %_192812
-    %_192830 = load double, double* %_192822
-    store double %_192830, double* %_192778
-    %_192853 = add i32 1, %_192760
-    br label %loop_head_192710
+lambda_203674:
+    %_203700 = phi i32 [ %_203679, %while_body_203670 ]
+    %_203703 = zext i32 %_203700 to i64
+    %_203713 = getelementptr inbounds [0 x double], [0 x double]* %_202457, i64 0, i64 %_203703
+    %_203891 = sitofp i32 %_203700 to double
+    %_203904 = fsub double %_203891, 0x4000000000000000
+    %_203917 = fdiv double %_203904, 0x4024000000000000
+    store double %_203917, double* %_203713
+    br label %eta_while_head_203675
+
+eta_while_head_203675:
+    %_203693 = add nsw i32 1, %_203679
+    br label %while_head_200837
+
+while_body_203956:
+    br label %lambda_203960
+
+lambda_203960:
+    %_203986 = phi i32 [ %_203965, %while_body_203956 ]
+    %_203989 = zext i32 %_203986 to i64
+    %_203999 = getelementptr inbounds [0 x double], [0 x double]* %_202410, i64 0, i64 %_203989
+    %_204013 = sitofp i32 %_203986 to double
+    %_204021 = fsub double %_204013, 0x4000000000000000
+    %_204029 = fdiv double %_204021, 0x4024000000000000
+    store double %_204029, double* %_203999
+    br label %eta_while_head_203961
+
+eta_while_head_203961:
+    %_203979 = add nsw i32 1, %_203965
+    br label %while_head_200826
 
 }
 
-define {[0 x double]*, {i32, i32}} @mop_vec_impl_191430([0 x double]* %_191456, i32 %_191447, i32 %_191453, [0 x double]* %_191459, i32 %_191450) {
-mop_vec_impl_191430:
-    %_191570 = zext i32 %_191447 to i64
-    %_191573 = zext i32 %_191450 to i64
-    %_191581 = mul i64 %_191570, %_191573
-    %_191665 = mul nuw nsw i64 8, %_191581
-    %_191666 = bitcast i64 %_191665 to i64
-    %_191668.i8 = call i8* @malloc(i64 %_191666)
-    %_191668 = bitcast i8* %_191668.i8 to [0 x double]*
-    %_191671 = bitcast [0 x double]* %_191668 to [0 x double]*
-    call void @dgemm(i8 0, i32 %_191447, i32 %_191450, i32 %_191453, [0 x double]* %_191456, [0 x double]* %_191459, [0 x double]* %_191671)
-    br label %result_mop_vec_191680
+define void @range_202792(i32 %_202913) {
+range_202792:
+    br label %while_head_202793
 
-result_mop_vec_191680:
-    %_191689.0 = insertvalue {[0 x double]*, {i32, i32}} undef, [0 x double]* %_191671, 0
-    %_191688.0 = insertvalue {i32, i32} undef, i32 %_191447, 0
-    %_191688.1 = insertvalue {i32, i32} %_191688.0, i32 %_191450, 1
-    %_191689.1 = insertvalue {[0 x double]*, {i32, i32}} %_191689.0, {i32, i32} %_191688.1, 1
-    br label %_191681
+while_head_202793:
+    %_202890 = phi i32 [ 0, %range_202792 ], [ %_202906, %eta_while_head_202891 ]
+    %_202920 = icmp slt i32 %_202890, %_202913
+    br i1 %_202920, label %while_body_202800, label %_202794
 
-_191681:
-    %_196520 = phi {[0 x double]*, {i32, i32}} [ %_191689.1, %result_mop_vec_191680 ]
-    ret {[0 x double]*, {i32, i32}} %_196520
+_202794:
+    ret void
+
+while_body_202800:
+    call void @lambda_specific_202801(i32 %_202890)
+    br label %eta_while_head_202891
+
+eta_while_head_202891:
+    %_202906 = add nsw i32 1, %_202890
+    br label %while_head_202793
+
+}
+
+define void @print_matrix_specific_dense_201705(i32 %_202364, i32 %_202201, [0 x double]* %_202116) {
+print_matrix_specific_dense_201705:
+    %_201768 = bitcast {i8, i8, i8, i8, i8}* @_201764 to [0 x i8]*
+    %_201868 = bitcast {i8, i8}* @_201865 to [0 x i8]*
+    %_201887 = bitcast {i8, i8}* @_201886 to [0 x i8]*
+    %_201795 = bitcast {i8, i8, i8, i8, i8}* @_201794 to [0 x i8]*
+    call void @printLine([0 x i8]* %_201768)
+    br label %printLine_cont_specific_201777
+
+printLine_cont_specific_201777:
+    br label %range_201778
+
+range_201778:
+    %_202345 = phi i32 [ %_202364, %printLine_cont_specific_201777 ]
+    br label %while_head_201779
+
+while_head_201779:
+    %_201983 = phi i32 [ 0, %range_201778 ], [ %_201997, %eta_while_head_201890 ]
+    %_202352 = icmp slt i32 %_201983, %_202345
+    br i1 %_202352, label %while_body_201808, label %break_specific_201788
+
+while_body_201808:
+    br label %lambda_specific_201814
+
+lambda_specific_201814:
+    %_202203 = phi i32 [ %_201983, %while_body_201808 ]
+    call void @printString([0 x i8]* %_201868)
+    br label %printString_cont_specific_201877
+
+printString_cont_specific_201877:
+    br label %range_201878
+
+range_201878:
+    %_202318 = phi i32 [ %_202201, %printString_cont_specific_201877 ]
+    %_202211 = mul i32 %_202201, %_202203
+    br label %while_head_201879
+
+while_head_201879:
+    %_202248 = phi i32 [ 0, %range_201878 ], [ %_202262, %eta_while_head_202244 ]
+    %_202325 = icmp slt i32 %_202248, %_202318
+    br i1 %_202325, label %while_body_202002, label %break_specific_201880
+
+while_body_202002:
+    br label %lambda_specific_202003
+
+lambda_specific_202003:
+    %_202213 = phi i32 [ %_202248, %while_body_202002 ]
+    %_202221 = add i32 %_202211, %_202213
+    %_202231 = getelementptr inbounds [0 x double], [0 x double]* %_202116, i64 0, i32 %_202221
+    %_202239 = load double, double* %_202231
+    call void @printDouble(double %_202239)
+    br label %eta_while_head_202244
+
+eta_while_head_202244:
+    %_202262 = add nsw i32 1, %_202248
+    br label %while_head_201879
+
+break_specific_201880:
+    call void @printLine([0 x i8]* %_201887)
+    br label %eta_while_head_201890
+
+eta_while_head_201890:
+    %_201997 = add nsw i32 1, %_201983
+    br label %while_head_201779
+
+break_specific_201788:
+    call void @printLine([0 x i8]* %_201795)
+    br label %_201796
+
+_201796:
+    ret void
+
+}
+
+define void @lambda_specific_202801(i32 %_205672) {
+lambda_specific_202801:
+    %_201868 = bitcast {i8, i8}* @_201865 to [0 x i8]*
+    %_201887 = bitcast {i8, i8}* @_201886 to [0 x i8]*
+    call void @printString([0 x i8]* %_201868)
+    br label %printString_cont_specific_202805
+
+printString_cont_specific_202805:
+    call void @range_202806(i32 5)
+    br label %break_specific_202874
+
+break_specific_202874:
+    call void @printLine([0 x i8]* %_201887)
+    br label %_202876
+
+_202876:
+    ret void
+
+}
+
+define void @range_202806(i32 %_202857) {
+range_202806:
+    br label %while_head_202807
+
+while_head_202807:
+    %_202834 = phi i32 [ 0, %range_202806 ], [ %_202850, %eta_while_head_202835 ]
+    %_202864 = icmp slt i32 %_202834, %_202857
+    br i1 %_202864, label %while_body_202814, label %_202808
+
+while_body_202814:
+    call void @lambda_specific_202815(i32 %_202834)
+    br label %eta_while_head_202835
+
+eta_while_head_202835:
+    %_202850 = add nsw i32 1, %_202834
+    br label %while_head_202807
+
+_202808:
+    ret void
+
+}
+
+define void @lambda_specific_202815(i32 %_205457) {
+lambda_specific_202815:
+    call void @printDouble(double 0x0000000000000000)
+    br label %_202824
+
+_202824:
+    ret void
 
 }
 
