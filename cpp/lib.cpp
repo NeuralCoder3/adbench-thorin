@@ -9,8 +9,9 @@
 #include <vector>
 #include <random>
 #include <sstream>
-#include <cblas.h>
+//#include <cblas.h>
 
+#include<sys/time.h>
 #include <cstring>
 
 #define MAX(A,B) ((A) > (B) ? A : B)
@@ -29,7 +30,7 @@ void printFloat(float i) {
 }
 
 void printDouble(double i) {
-    printf("%lf ", i);
+    std::cout << i ;
 }
 
 void printDoubleLine(double i) {
@@ -73,6 +74,26 @@ double randomDouble(double fMin, double fMax)
 
 
 
+long long startTime = 0;
+
+long long timeInMilliseconds(void) {
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
+}
+
+void begin(){
+    startTime = timeInMilliseconds();
+}
+
+void eval(){
+    long long endTime = timeInMilliseconds();
+    printf("%d\n", endTime - startTime);
+    fflush(stdout);
+    //printf("Time elapsed : %lld ms\n", endTime - startTime);
+}
+
 void measure(std::function<void()> f){
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
@@ -86,7 +107,7 @@ void measure(std::function<void()> f){
 }
 
 
-
+/*
 void dgemm(char mode, long a_rows, long b_cols, long a_cols_b_rows, double* a, double* b, double* c){
     bool ltrans = (mode & 1) == 1;
     bool rtrans = (mode & 2) == 2;
@@ -143,6 +164,6 @@ void dscal(long a_rows, long a_cols, double alpha, double* x, double* c){
 double dsum(long a_rows, long b_cols, double* x){
     return cblas_dsum (a_rows * b_cols, x, 1);
 }
-
+*/
 
 }

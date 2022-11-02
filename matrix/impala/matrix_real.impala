@@ -1,0 +1,93 @@
+extern "C" {
+    fn printString(&[u8]) -> ();
+    fn printLine(&[u8]) -> ();
+    fn printFloat(f32) -> ();
+    fn printDouble(f64) -> ();
+    fn printInteger(i32) -> ();
+    fn log(f64) -> (f64);
+    fn exp(f64) -> (f64);
+    fn logf(f32) -> (f32);
+    fn lgamma(f64) -> (f64);
+    fn randomDouble(f64, f64) -> (f64);
+}
+
+
+
+fn mul(input_size: i32, output_size: i32, input : &[f64], weights: &[f64], output: & mut[f64]) -> (){
+    for i in 0 .. input_size {
+        for j in 0 .. output_size {
+            output(j) += input(j) * weights(j + i * output_size);
+        }
+    }
+}
+
+fn init(size: i32, a : &mut [f64], offset : f64) -> (){
+    for i in 0 .. size {
+        a(i) = offset + i as f64;
+    }
+}
+
+fn const(size: i32, a : &mut [f64], value : f64) -> (){
+    for i in 0 .. size {
+        a(i) = value;
+    }
+}
+
+fn print(size: i32, a : &mut [f64]) -> (){
+    for i in 0 .. size {
+        printDouble(a(i));
+        printString(",");
+    }
+    printString("\n");
+}
+
+fn main() -> i32 {
+
+    printString("hello world");
+
+    let input_size = 4;
+    let output_size = 4;
+    let weights_size = input_size * output_size;
+
+    let input = ~[input_size: f64];
+    let weights = ~[weights_size: f64];
+    let output = ~[output_size: f64];
+
+    let input_d = ~[input_size: f64];
+    let weights_d = ~[weights_size: f64];
+    let output_d = ~[output_size: f64];
+
+    init(input_size, input, 1.0);
+    init(weights_size, weights, 2.0);
+    const(output_size, output, 0.0);
+
+    const(input_size, input_d, 0.0);
+    const(weights_size, weights_d, 0.0);
+    const(output_size, output_d, 1.0);
+
+
+    print(input_size, input);
+    print(weights_size, weights);
+    print(output_size, output);
+
+    print(input_size, input_d);
+    print(weights_size, weights_d);
+    print(output_size, output_d);
+
+    let diff = rev_diff(mul);
+
+    let backward = diff(input_size, output_size, input, weights, output);
+    let result = backward(input_d, weights_d, output_d);
+
+    printString("\n");
+
+    print(input_size, input);
+    print(weights_size, weights);
+    print(output_size, output);
+
+    print(input_size, input_d);
+    print(weights_size, weights_d);
+    print(output_size, output_d);
+
+    0
+}

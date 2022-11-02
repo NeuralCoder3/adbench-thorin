@@ -1,0 +1,93 @@
+extern "C" {
+    fn printString(&[u8]) -> ();
+    fn printLine(&[u8]) -> ();
+    fn printFloat(f32) -> ();
+    fn printDouble(f64) -> ();
+    fn printInteger(i32) -> ();
+    fn log(f64) -> (f64);
+    fn exp(f64) -> (f64);
+    fn logf(f32) -> (f32);
+    fn lgamma(f64) -> (f64);
+    fn randomDouble(f64, f64) -> (f64);
+}
+
+fn range(mut b: u64, e: u64, body: fn(u64) -> ()) -> () {
+    while b < e {
+        body(b++)
+    }
+}
+
+fn print_matrix(m : tn[2:f64]) -> (){
+    printLine("----");
+    for row in range(0 as u64, m.shape(0)){
+        printString("|");
+        for col in range(0 as u64, m.shape(1)){
+            printDouble(m(row,col));
+        }
+
+        printLine("|");
+    }
+    printLine("----");
+}
+
+fn iter( m: tn[2:f64], body: fn((u64, u64,  &mut f64)) -> ()) -> () {
+    let mut row = 0 as u64;
+    let rows = m.shape(0);
+    let cols = m.shape(1);
+    while row < rows {
+        let mut col = 0 as u64;
+        while col < cols {
+            body((row, col, (&(m(row, col))) as &mut f64));
+            col++;
+        }
+        row++;
+    }
+}
+
+fn matrix_init(x : tn[2:f64], offset: f64) -> (){
+    let cols = x.shape(1);
+    for cell in iter( x ){
+        let (row, col, ptr) = cell;
+        *ptr = (row * cols + col) as f64 + offset;
+    }
+}
+
+fn relu( x: f64 ) -> (f64){
+    if(x>=0.0){
+        x
+    }else{
+        0.1 * x
+    }
+}
+
+fn @(true) softmax(input: tn[2:f64]) -> (tn[2:f64]){
+  let e = input.map(exp);
+  e / e.sum
+}
+
+fn f(input: tn[2:f64], first_weights: tn[2:f64]) -> tn[2:f64]{
+    input.map(relu)
+}
+
+fn main() -> i32 {
+
+    let mut a : tn[2:f64] = tn[f64](2, 2);
+    let mut b : tn[2:f64] = tn[f64](2, 2);
+
+
+    a(0,0) = 1.0; a(0,1) = 2.0;
+    a(1,0) = 3.0; a(1,1) = 4.0;
+
+    b(0,0) = 1.0; b(0,1) = 1.0;
+    b(1,0) = 1.0; b(1,1) = 1.0;
+
+    for i in range( 0 as u64, 3 as u64 ){
+        let z = a * 1.0;
+        a = z * b;
+    }
+
+
+    print_matrix(a);
+
+    0
+}

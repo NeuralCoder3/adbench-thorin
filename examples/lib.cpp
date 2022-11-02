@@ -153,4 +153,8 @@ int readInt(){
     return n;
 }
 
+void* malloc2(long size){
+    return malloc(size);
+}
+
 }
