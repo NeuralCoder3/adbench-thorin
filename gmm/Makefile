@@ -39,7 +39,7 @@ build-impala:
 
 run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
-	${NATIVE_IMPALA_BUILD}/gmm_impala ../benchmark/gmm/1k/gmm_d10_K5.txt
+	${NATIVE_IMPALA_BUILD}/gmm_impala ../benchmark/gmm/1k/gmm_d2_K5.txt
 
 impala: build-impala run-impala
 
