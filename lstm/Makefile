@@ -17,6 +17,8 @@ ENZYME_NATIVE_BUILD := ${BUILD_lstm}/enzyme
 NATIVE_IMPALA_BUILD := ${BUILD_lstm}/impala/native
 NATIVE_MANUAL_BUILD := ${BUILD_lstm}/manual
 
+NATIVE_MANUAL_BUILD_CPP := ${SHARED_ALL}/read.cpp ${SHARED}/lstm.cpp ./manual/main.cpp ./manual/lstm_d.cpp
+
 setup-ubuntu:
 	sudo ldconfig ${RUNTIME}
 
@@ -35,7 +37,7 @@ run:
 build-native:
 	source ../../project.sh && \
 	mkdir -p ${NATIVE_MANUAL_BUILD} && \
-	clang++ manual/main.cpp ${SHARED_ALL}/read.cpp ${SHARED}/lstm_d.cpp ${SHARED}/lstm.cpp -O2 -o ${NATIVE_MANUAL_BUILD}/lstm_manual
+	clang++ ${NATIVE_MANUAL_BUILD_CPP} -O2 -std=c++11  -o ${NATIVE_MANUAL_BUILD}/lstm_manual
 
 run-native:
 	${NATIVE_MANUAL_BUILD}/lstm_manual ../benchmark/lstm/lstm_l2_c1024.txt

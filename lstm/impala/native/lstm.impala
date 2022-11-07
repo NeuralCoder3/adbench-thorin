@@ -64,27 +64,15 @@ fn lstm_model(
     input: &[f64]
 ) -> ()
 {
-    let forget = ~[ hsize: f64];
-    let ingate = ~[ hsize: f64];
-    let outgate = ~[ hsize: f64];
-    let change = ~[ hsize: f64];
-
-    for i in 0 .. hsize
-    {
-        forget(i) = sigmoid(input(i) * weight(i) + bias(i));
-        ingate(i) = sigmoid(hidden(i) * weight(hsize + i) + bias(hsize + i));
-        outgate(i) = sigmoid(input(i) * weight(2 * hsize + i) + bias(2 * hsize + i));
-        change(i) = tanh(hidden(i) * weight(3 * hsize + i) + bias(3 * hsize + i));
-    }
-
-    for i in 0 .. hsize
-    {
-        cell(i) = cell(i)  * forget(i) + ingate(i) * change(i);
-    }
-
     for i in 0  .. hsize
     {
-        hidden(i) = outgate(i) * tanh(cell(i));
+        let forget = sigmoid(input(i) * weight(i) + bias(i));
+        let ingate = sigmoid(hidden(i) * weight(hsize + i) + bias(hsize + i));
+        let change = tanh(hidden(i) * weight(3 * hsize + i) + bias(3 * hsize + i));
+        cell(i) = cell(i) * forget + ingate * change;
+
+        let outgate = sigmoid(input(i) * weight(2 * hsize + i) + bias(2 * hsize + i));
+        hidden(i) = outgate * tanh(cell(i));
     }
 }
 
@@ -104,7 +92,7 @@ fn lstm_predict(
         x2(i) = x(i) * w2(i);
     }
 
-    let mut xp: &[f64] = x2;
+    let mut xp: &[f64] = x2; //!!!!!
 
     for j in 0 .. l
     {
@@ -136,15 +124,13 @@ fn lstm(
 {
     let mut t = 0;
     let mut total = 0.0;
-    let mut count = 0;
-    let mut input = sequence;
+    let mut input = sequence; //!!!!!
     let ypred = ~[b: f64];
     let ynorm = ~[b: f64];
 
-    for i in 0 .. (c - 1) * b
+    for i in 0 .. c - 1
     {
         let t = i * b;
-
         lstm_predict(l, b, main_params, extra_params, state, input, ypred);
         let lse = logsumexp(ypred, b);
 
@@ -158,10 +144,11 @@ fn lstm(
             total += ygold(i) * ynorm(i);
         }
 
-        count += b;
         input = ygold;
     }
 
+    let count = (c - 1) * b;
+    printInteger(count);
     -total / ( count as f64)
 }
 

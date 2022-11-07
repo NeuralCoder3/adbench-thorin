@@ -238,21 +238,23 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     read_gmm(file, dp, kp, np, wishartMp, wishartGammap, alphas, means, icf, x);
 
-    //let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x);
+    let fx = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x);
+    //printDouble(fx);
 
+/*
     let diff = rev_diff(gmm);
     let (fx, backward) = diff(d, k, n, wishartM, wishartGamma, alphas, means, icf, x);
     let gradients = backward(alphas_d, means_d, icf_d, x_d, 1.0);
 
-    printDouble(fx);
     printString("\nalpha gradients: \n");
     print(alphas_size, alphas_d);
     printString("\nmeans gradients: \n");
     print(means_size, means_d);
     printString("\nicf gradients: \n");
-    print(icf_size, icf_d);
+    print(icf_size, icf_d);*/
 
 
+    printDouble(fx);
 }
 
 

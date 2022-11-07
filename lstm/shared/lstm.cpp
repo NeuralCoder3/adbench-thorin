@@ -150,12 +150,61 @@ void lstm_objective(
             total += ygold[i] * ynorm[i];
         }
 
+
         count += b;
         input = ygold;
     }
 
     *loss = -total / count;
-
-    free(ypred);
+free(ypred);
     free(ynorm);
+}
+
+
+
+void read_lstm_instance(const std::string& fn,
+                        int* l, int* c, int* b,
+                        std::vector<double>& main_params,
+                        std::vector<double>& extra_params,
+                        std::vector<double>& state,
+                        std::vector<double>& sequence)
+{
+    FILE* fid = fopen(fn.c_str(), "r");
+
+    if (!fid) {
+        printf("could not open file: %s\n", fn.c_str());
+        exit(1);
+    }
+
+    fscanf(fid, "%i %i %i", l, c, b);
+
+    int l_ = *l, c_ = *c, b_ = *b;
+
+    int main_sz = 2 * l_ * 4 * b_;
+    int extra_sz = 3 * b_;
+    int state_sz = 2 * l_ * b_;
+    int seq_sz = c_ * b_;
+
+    main_params.resize(main_sz);
+    extra_params.resize(extra_sz);
+    state.resize(state_sz);
+    sequence.resize(seq_sz);
+
+    for (int i = 0; i < main_sz; i++) {
+        fscanf(fid, "%lf", &main_params[i]);
+    }
+
+    for (int i = 0; i < extra_sz; i++) {
+        fscanf(fid, "%lf", &extra_params[i]);
+    }
+
+    for (int i = 0; i < state_sz; i++) {
+        fscanf(fid, "%lf", &state[i]);
+    }
+
+    for (int i = 0; i < c_ * b_; i++) {
+        fscanf(fid, "%lf", &sequence[i]);
+    }
+
+    fclose(fid);
 }

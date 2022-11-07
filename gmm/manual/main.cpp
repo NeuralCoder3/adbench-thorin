@@ -13,10 +13,10 @@ int main(int argc, const char** argv){
     int d;
     int k;
     int n;
-    vector<double> alphas;
-    vector<double> means;
-    vector<double> icf;
-    vector<double> x;
+    std::vector<double> alphas;
+    std::vector<double> means;
+    std::vector<double> icf;
+    std::vector<double> x;
     Wishart wishart;
 
     std::string benchmark = argv[1];//"benchmark/gmm_d2_K5.txt";
@@ -32,7 +32,7 @@ int main(int argc, const char** argv){
     printf("error\n");
     printf("%.20lf\n", error);
 
-    vector<double> J;
+    std::vector<double> J;
 
     int icf_sz = d * (d + 1) / 2;
     J.resize(k + d * k + icf_sz * k);

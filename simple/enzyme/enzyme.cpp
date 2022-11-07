@@ -32,7 +32,7 @@ double func(double x){
     return x * x;
 }
 
-void softmax(int size, const double* input, double* output){
+void softmax(int size, const double* __restrict input, double* __restrict output){
     double sum = 0.0;
     for(size_t i = 0 ; i < size ; i++){
         auto inp = exp(input[i]);
@@ -53,7 +53,7 @@ double relu(double x){
     }
 }
 
-void fully_connected_layer(int input_size, int output_size, const double *input, const double *weights, double *output){
+void fully_connected_layer(int input_size, int output_size, const double * __restrict input, const double * __restrict weights, double *__restrict output){
     for( int i = 0 ; i < input_size ; i++ ){
         for( int j = 0 ; j < output_size ; j++ ){
             output[j] += relu(input[j] * weights[j + i * output_size]);
@@ -63,27 +63,34 @@ void fully_connected_layer(int input_size, int output_size, const double *input,
 
 
 void mul(int input_size, int hidden_size, int output_size,
-         const double *input,
-         const double *first_weights,
-         double *hidden,
-         const double *second_weights,
-         double *output){
-    fully_connected_layer(input_size, hidden_size, input, first_weights, hidden);
-    fully_connected_layer(hidden_size, output_size, hidden, second_weights, output);
-    softmax(output_size, output, output);
+         const double * __restrict input,
+         const double * __restrict first_weights,
+         double *__restrict hidden,
+         const double *__restrict second_weights,
+         double *__restrict output){
+
+    for( int i = 0 ; i < input_size ; i++ ){
+        for( int j = 0 ; j < output_size ; j++ ){
+            output[j] += input[j] * input[j];
+        }
+    }
+
+    //fully_connected_layer(input_size, hidden_size, input, first_weights, hidden);
+    //fully_connected_layer(hidden_size, output_size, hidden, second_weights, output);
+    //softmax(output_size, output, output);
 }
 
 void mul_d(int input_size, int hidden_size, int output_size,
-           const double *input,
-           const double *first_weights,
-           const double *hidden,
-           const double *second_weights,
-           double *output,
-           double *input_d,
-           const double *first_weights_d,
-           const double *hidden_d,
-           const double *second_weights_d,
-           double *output_d
+           const double *__restrict input,
+           const double *__restrict first_weights,
+           const double *__restrict hidden,
+           const double *__restrict second_weights,
+           double *__restrict output,
+           double *__restrict input_d,
+           const double *__restrict first_weights_d,
+           const double *__restrict hidden_d,
+           const double *__restrict second_weights_d,
+           double *__restrict output_d
 ){
 
 
@@ -158,10 +165,9 @@ int main(int argc, const char** argv){
     for (int i = 0; i < output_size; i++)
     {
         output[i] = 0;
-        output_d[i] = 0;
+        output_d[i] = 1;
     }
 
-    output_d[0] = 1.0;
 
     begin();
     mul_d(input_size, hidden_size, output_size, input, first_weights, hidden, second_weights, output,

@@ -47,10 +47,4 @@ void read_ba_instance(const char* file,
 void read_ba_size(const char* file,
                   int& n, int& m, int& p);
 
-void read_lstm_instance(const char* fn,
-                        int* l, int* c, int* b,
-                        double **main_params_p,
-                        double **extra_params_p,
-                        double **state_p,
-                        double **sequence_p);
 }
