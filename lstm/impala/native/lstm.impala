@@ -138,7 +138,7 @@ fn lstm(
     let mut total = 0.0;
     let mut count = 0;
     let mut input = sequence;
-    let ypred =  ~[b: f64];
+    let ypred = ~[b: f64];
     let ynorm = ~[b: f64];
 
     for i in 0 .. (c - 1) * b
@@ -178,8 +178,6 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let mut sequence: &mut[f64];
 
     read_lstm_instance(file, &mut l, &mut c, &mut b, &mut main_params, &mut extra_params, &mut state, &mut sequence);
-
-    //let mut J = ~[2 * l * 4 * b + 3 * b:i32];
 
     let loss = lstm(l, c, b, main_params, extra_params, state, sequence);
 
