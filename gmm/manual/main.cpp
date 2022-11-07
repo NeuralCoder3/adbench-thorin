@@ -29,8 +29,6 @@ int main(int argc, const char** argv){
     double error = 0;
     gmm_objective(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart.gamma, wishart.m, &error);
 
-    printf("error\n");
-    printf("%.20lf\n", error);
 
     std::vector<double> J;
 
@@ -64,6 +62,8 @@ int main(int argc, const char** argv){
         printf("%.20lf\n", icf_d[i]);
     }
 
+    printf("error\n");
+    printf("%.20lf\n", error);
 
     return 0;
 }

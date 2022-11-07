@@ -70,7 +70,6 @@ int main(int argc, const char** argv){
     J.resize(k + d * k + icf_sz * k);
     gmm_d(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart.gamma, wishart.m, &error, &J[0]);
 
-    printf("%.20lf\n", error);
 
     double *alphas_d = &J[0];
     double *means_d = &J[k];
@@ -106,6 +105,7 @@ int main(int argc, const char** argv){
     {
         printf("%.20lf\n", x_d[i]);
     }
+    printf("%.20lf\n", error);
 
     return 0;
 }

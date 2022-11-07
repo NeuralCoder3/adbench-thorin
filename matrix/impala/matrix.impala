@@ -51,9 +51,7 @@ fn subtract( d: i32,
     y: &[f64],
     out: &mut[f64]) -> ()
 {
-    for id in 0 .. d {
-        out(id) = x(id) - y(id);
-    }
+
 }
 
 fn Qtimesx( d: i32,
@@ -66,13 +64,6 @@ fn Qtimesx( d: i32,
         out(id) = Qdiag(id) * x(id);
     }
 
-    let mut Lparamsidx = 0;
-    for i in 0 .. d {
-        for j in (i + 1) .. d {
-            out(j) += ltri(Lparamsidx) * x(i);
-            Lparamsidx++;
-        }
-    }
 }
 
 fn sqnorm(d: i32, v : &[f64]) -> (f64){
@@ -80,6 +71,15 @@ fn sqnorm(d: i32, v : &[f64]) -> (f64){
     for i in 0 .. d {
         let val = v(i);
         sum += val * val;
+    }
+
+    sum
+}
+
+fn sum(d: i32, v : &[f64]) -> (f64){
+    let mut sum = 0.0;
+    for i in 0 .. d {
+        sum += v(i);
     }
 
     sum
@@ -174,27 +174,39 @@ extern fn gmm(d: i32, k: i32, n: i32,
     let Qxcentered = ~[d:f64];
     let main_term = ~[k:f64];
 
-    preprocess_qs(d, k, icf, sum_qs, Qdiags);
+
+    //const(d*k, Qdiags, 0.0);
+    //const(k, sum_qs, 0.0);
+    const(d, xcentered, 0.0);
+    //const(d, Qxcentered, 0.0);
+    //const(k, main_term, 0.0);
+
+    //preprocess_qs(d, k, icf, sum_qs, Qdiags);
 
     let mut slse = 0.0;
 
     for ix in 0 .. n {
         let currentX : &[f64] =  &x(ix * d) as &[f64];
+
         for ik in 0 .. k {
             let currentQdiags =  &Qdiags(ik * d) as &[f64];
             let currentMeans =  &means(ik * d) as &[f64];
             let currentIfc =  &icf(ik * icf_sz + d) as &[f64];
 
             subtract(d, currentX, currentMeans, xcentered);
-            Qtimesx(d, currentQdiags, currentIfc, xcentered, Qxcentered);
-            main_term(ik) = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm(d, Qxcentered);
+            //Qtimesx(d, currentQdiags, currentIfc, xcentered, Qxcentered);
+            //main_term(ik) = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm(d, Qxcentered);
+
+            main_term(ik) = sum(d, xcentered);
         }
         slse += logsumexp(k, main_term);
     }
 
-    let lse_alphas = logsumexp(k, alphas);
+    /*let lse_alphas = logsumexp(k, alphas);
 
-    CONSTANT + slse - (n as f64) * lse_alphas + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf)
+    CONSTANT + slse - (n as f64) * lse_alphas + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf)*/
+
+    slse
 }
 
 fn runGmmBenchmark(file: &[u8]) -> (){
@@ -238,10 +250,9 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     read_gmm(file, dp, kp, np, wishartMp, wishartGammap, alphas, means, icf, x);
 
-    let fx = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x);
+    //let fx = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x);
     //printDouble(fx);
 
-/*
     let diff = rev_diff(gmm);
     let (fx, backward) = diff(d, k, n, wishartM, wishartGamma, alphas, means, icf, x);
     let gradients = backward(alphas_d, means_d, icf_d, x_d, 1.0);
@@ -251,9 +262,9 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     printString("\nmeans gradients: \n");
     print(means_size, means_d);
     printString("\nicf gradients: \n");
-    print(icf_size, icf_d);*/
+    print(icf_size, icf_d);
 
-
+    printString("\nerror: \n");
     printDouble(fx);
 }
 

@@ -75,19 +75,6 @@ void Qtimesx(int d,
         out[i] = Qdiag[i] * x[i];
     }
 
-    //caching lparams as scev doesn't replicate index calculation
-    // todo note changing to strengthened form
-    //int Lparamsidx = 0;
-    for (i = 0; i < d; i++)
-    {
-        int Lparamsidx = i*(2*d-i-1)/2;
-        for (j = i + 1; j < d; j++)
-        {
-            // and this x
-            out[j] = out[j] + ltri[i] * x[i];
-            Lparamsidx++;
-        }
-    }
 }
 
 void gmm_objective(int d, int k, int n,
@@ -111,6 +98,7 @@ void gmm_objective(int d, int k, int n,
   preprocess_qs(d, k, icf, &sum_qs[0], &Qdiags[0]);
 
   double slse = 0.;
+
   for (int ix = 0; ix < n; ix++)
   {
     for (int ik = 0; ik < k; ik++)
