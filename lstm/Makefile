@@ -35,7 +35,7 @@ run:
 build-native:
 	source ../../project.sh && \
 	mkdir -p ${NATIVE_MANUAL_BUILD} && \
-	clang++ manual/main.cpp ${SHARED_ALL}/read.cpp ${SHARED}/ba_d.cpp ${SHARED}/ba.cpp -O2 -o ${NATIVE_MANUAL_BUILD}/ba_manual
+	clang++ manual/main.cpp ${SHARED_ALL}/read.cpp ${SHARED}/lstm_d.cpp ${SHARED}/lstm.cpp -O2 -o ${NATIVE_MANUAL_BUILD}/ba_manual
 
 run-native:
 	${NATIVE_MANUAL_BUILD}/ba_manual ../benchmark/lstm/lstm_l2_c1024.txt
@@ -46,9 +46,9 @@ build-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
 	source ../../project.sh && \
 	mkdir -p ${NATIVE_IMPALA_BUILD} && \
-	impala ${NATIVE_IMPALA}/ba.impala --emit-llvm --emit-c-interface -o ${NATIVE_IMPALA_BUILD}/ba_impala -O0 && \
-	llvm-as ${NATIVE_IMPALA_BUILD}/ba_impala.ll && \
-	clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/ba_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/ba_impala
+	impala ${NATIVE_IMPALA}/ba.impala -emit-llvm --emit-c-interface -o ${NATIVE_IMPALA_BUILD}/ba_impala && \
+	/opt/homebrew/opt/llvm/bin/llvm-as ${NATIVE_IMPALA_BUILD}/ba_impala.ll && \
+	/opt/homebrew/opt/llvm/bin/clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/ba_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/ba_impala
 
 run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
