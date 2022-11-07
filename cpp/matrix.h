@@ -109,10 +109,19 @@ int arr_max_idx(int n, const T* const x)
 template<typename T>
 T sqnorm(int n, const T* const x)
 {
-  T res = x[0] * x[0];
-  for (int i = 1; i < n; i++)
-    res = res + x[i] * x[i];
-  return res;
+    T res = x[0] * x[0];
+    for (int i = 1; i < n; i++)
+        res = res + x[i] * x[i];
+    return res;
+}
+
+template<typename T>
+T sum(int n, const T* const x)
+{
+    T res = 0;
+    for (int i = 0; i < n; i++)
+        res = res + x[i];
+    return res;
 }
 
 template<typename T>
@@ -137,6 +146,17 @@ void subtract(int d,
   {
     out[id] = x[id] - y[id];
   }
+}
+
+template<typename T1, typename T2>
+void copy(int d,
+              const T1* const x,
+              T2* out)
+{
+    for (int id = 0; id < d; id++)
+    {
+        out[id] = x[id];
+    }
 }
 
 template<typename T1, typename T2, typename T3>

@@ -30,7 +30,7 @@ void printFloat(float i) {
 }
 
 void printDouble(double i) {
-    std::cout << i ;
+    std::cout << i << " ";
 }
 
 void printDoubleLine(double i) {

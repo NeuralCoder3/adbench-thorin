@@ -75,6 +75,7 @@ int main(int argc, const char** argv){
     double *alphas_d = &J[0];
     double *means_d = &J[k];
     double *icf_d = &J[k + d * k];
+    double *x_d = &J[k + d * k];
 
     printf("\n");
     printf("alpha derivative\n");
@@ -96,6 +97,14 @@ int main(int argc, const char** argv){
     for (int i = 0; i < k*icf_sz; i++)
     {
         printf("%.20lf\n", icf_d[i]);
+    }
+
+
+    printf("\n");
+    printf("x derivative\n");
+    for (int i = 0; i < k*icf_sz; i++)
+    {
+        printf("%.20lf\n", x_d[i]);
     }
 
     return 0;

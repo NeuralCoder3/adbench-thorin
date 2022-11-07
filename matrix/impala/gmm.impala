@@ -33,7 +33,7 @@ fn preprocess_qs( d: i32, k: i32,
     sum_qs : &mut[f64],
     Qdiags : &mut[f64]) -> ()
 {
-    let icf_sz = d * (d + 1) >> 1;
+    let icf_sz = d * (d + 1) / 2;
 
     for ik in 0 .. k {
         sum_qs(ik) = 0.0;
@@ -67,6 +67,7 @@ fn Qtimesx( d: i32,
     }
 
     let mut Lparamsidx = 0;
+
     for i in 0 .. d {
         for j in (i + 1) .. d {
             out(j) += ltri(Lparamsidx) * x(i);
@@ -126,7 +127,7 @@ fn log_wishart_prior( p: i32, k: i32,
     icf: &[f64]) -> f64
 {
     let n = p + wishartM + 1;
-    let icf_sz = p * (p + 1) >> 1;
+    let icf_sz = p * (p + 1) / 2;
 
     let C = (n as f64) * (p as f64) * (log(wishartGamma) - 0.5 * log(2.0)) - log_gamma_distrib(0.5 * (n as f64), p);
 
@@ -166,7 +167,7 @@ extern fn gmm(d: i32, k: i32, n: i32,
 
     let PI : f64 = 3.14159265359;
     let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
-    let icf_sz = d * (d + 1) >> 1;
+    let icf_sz = d * (d + 1) / 2;
 
     let Qdiags = ~[d*k:f64];
     let sum_qs = ~[k:f64];
@@ -194,7 +195,7 @@ extern fn gmm(d: i32, k: i32, n: i32,
 
     let lse_alphas = logsumexp(k, alphas);
 
-    CONSTANT + slse - (n as f64) * lse_alphas + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf)
+    CONSTANT + slse - (n as f64) * lse_alphas// + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf)
 }
 
 fn runGmmBenchmark(file: &[u8]) -> (){

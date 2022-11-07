@@ -47,7 +47,7 @@ build-enzyme-impala:
 	source ../../project.sh && \
 	mkdir -p ${ENZYME_IMPALA_BUILD} && \
 	impala ${ENZYME_IMPALA}/gmm.impala --emit-thorin --emit-llvm -O0 --emit-c-interface -o ${ENZYME_IMPALA_BUILD}/gmm_enzyme_impala -Othorin && \
-	clang++ ${ENZYME_IMPALA}/enzyme.cpp -S -emit-llvm -o ${ENZYME_IMPALA_BUILD}/gmm_enzyme.ll -O3 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
+	clang++ ${ENZYME_IMPALA}/enzyme.cpp -S -emit-llvm -o ${ENZYME_IMPALA_BUILD}/gmm_enzyme.ll -O0 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
 	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${ENZYME_IMPALA_BUILD}/gmm_enzyme_impala.ll && \
 	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${ENZYME_IMPALA_BUILD}/gmm_enzyme.ll && \
 	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-link ${ENZYME_IMPALA_BUILD}/gmm_enzyme_impala.bc ${ENZYME_IMPALA_BUILD}/gmm_enzyme.bc  -o ${ENZYME_IMPALA_BUILD}/bundle.bc && \
