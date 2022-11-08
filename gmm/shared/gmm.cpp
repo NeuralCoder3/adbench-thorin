@@ -75,6 +75,14 @@ void Qtimesx(int d,
         out[i] = Qdiag[i] * x[i];
     }
 
+    int Lparamsidx = 0;
+    for (i = 0; i < d; i++)
+    {
+        for (j = i + 1; j < d; j++)
+        {
+            out[j] = out[j] + ltri[Lparamsidx++] * x[i];
+        }
+    }
 }
 
 void gmm_objective(int d, int k, int n,
@@ -86,14 +94,15 @@ void gmm_objective(int d, int k, int n,
                    const int wishart_m,
                    double* err)
 {
+
   const double CONSTANT = -n * d * 0.5 * log(2 * PI);
   int icf_sz = d * (d + 1) / 2;
 
-  vector<double> Qdiags(d * k);
-  vector<double> sum_qs(k);
-  vector<double> xcentered(d);
-  vector<double> Qxcentered(d);
-  vector<double> main_term(k);
+    double* Qdiags = (double*)malloc(d * k * sizeof(double));
+    double* sum_qs = (double*)malloc(k * sizeof(double));
+    double* xcentered = (double*)malloc(d * sizeof(double));
+    double* Qxcentered = (double*)malloc(d * sizeof(double));
+    double* main_term = (double*)malloc(k * sizeof(double));
 
   preprocess_qs(d, k, icf, &sum_qs[0], &Qdiags[0]);
 
@@ -106,16 +115,20 @@ void gmm_objective(int d, int k, int n,
       subtract(d, &x[ix * d], &means[ik * d], &xcentered[0]);
       Qtimesx(d, &Qdiags[ik * d], &icf[ik * icf_sz + d], &xcentered[0], &Qxcentered[0]);
 
-      main_term[ik] = alphas[ik] + sum_qs[ik] - 0.5 * sqnorm(d, &Qxcentered[0]);
+      main_term[ik] = alphas[ik] + sum_qs[ik] - -sqnorm(d, &Qxcentered[0]);
     }
     slse = slse + logsumexp(k, &main_term[0]);
   }
 
   double lse_alphas = logsumexp(k, alphas);
 
-  *err = CONSTANT + slse - n * lse_alphas;
+  *err = CONSTANT + slse - n * lse_alphas + log_wishart_prior(d, k, wishart_gamma, wishart_m, &sum_qs[0], &Qdiags[0], icf);
 
-  *err = *err + log_wishart_prior(d, k, wishart_gamma, wishart_m, &sum_qs[0], &Qdiags[0], icf);
+    free(Qdiags);
+    free(sum_qs);
+    free(xcentered);
+    free(Qxcentered);
+    free(main_term);
 }
 
 

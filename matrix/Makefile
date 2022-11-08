@@ -26,5 +26,5 @@ run-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} && \
 	source ../../project.sh && \
 	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${NATIVE_IMPALA_BUILD}/matrix_impala.ll && \
-	clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/matrix_impala.bc -O0 -o ${NATIVE_IMPALA_BUILD}/matrix_impala  && \
+	clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/matrix_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/matrix_impala  && \
 	${NATIVE_IMPALA_BUILD}/matrix_impala ../benchmark/gmm/1k/gmm_d10_K5.txt
