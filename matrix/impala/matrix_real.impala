@@ -28,29 +28,15 @@ fn softmax(size: i32, input: &[f64], output: &mut[f64]) -> (){
     }
 }
 
-/*
-fn softmax(size: i32, input: &[f64], output: &mut[f64]) -> (){
-    let mut sum = sum i in 0 .. size {
-        let inp = exp(input(i));
-        output(i) = inp;
-        inp
-    }
-
-    for i in 0 .. size {
-        output(i) /= sum;
-    }
-}
-
-*/
-
 fn relu( x: f64 ) -> (f64){
     max(x, 0.1 * x)
 }
 
 fn fully_connected_layer(input_size: i32, output_size: i32, input : &[f64], weights: &[f64], output: & mut[f64]) -> (){
     for i in 0 .. input_size {
+        let inp = input(i);
         for j in 0 .. output_size {
-            output(j) += relu(input(j) * weights(j + i * output_size));
+            output(j) += relu(inp * weights(j + i * output_size));
         }
     }
 }
@@ -63,7 +49,7 @@ fn mul(input_size: i32, hidden_size: i32, output_size: i32, input : &[f64], firs
 
 fn init(size: i32, a : &mut [f64], offset : f64) -> (){
     for i in 0 .. size {
-        a(i) = offset + i as f64;
+        a(i) = offset + (i as f64 ) * 0.1;
     }
 }
 
@@ -102,8 +88,8 @@ fn main(argc: i32, argv: &[&[u8]]) -> i32 {
     let output_d = ~[output_size: f64];
 
     init(input_size, input, 1.0);
-    init(first_weights_size, first_weights, -8.0);
-    init(second_weights_size, second_weights, -8.0);
+    init(first_weights_size, first_weights, 0.0);
+    init(second_weights_size, second_weights, 0.0);
     const(output_size, output, 0.0);
 
     const(input_size, input_d, 0.0);
@@ -115,13 +101,16 @@ fn main(argc: i32, argv: &[&[u8]]) -> i32 {
     begin();
     let diff = rev_diff(mul);
 
-    let backward = diff(input_size, hidden_size, output_size, input, first_weights, hidden_output, second_weights, output);
-    let result = backward(input_d, first_weights_d, hidden_output_d, second_weights_d, output_d);
+    let backward = diff(input_size, hidden_size, output_size, input, input_d, first_weights, first_weights_d, hidden_output, hidden_output_d, second_weights, second_weights_d, output, output_d);
+    let result = backward();
+
+    //let backward = diff(input_size, hidden_size, output_size, input, first_weights, hidden_output, second_weights, output);
+    //let result = backward(input_d, first_weights_d, hidden_output_d, second_weights_d, output_d);
 
     eval();
 
 
-    if argc >= 5 && atoi(argv(3)) == 1 {
+    if argc >= 5 && atoi(argv(4)) == 1 {
         print(input_size, input);
         print(first_weights_size, first_weights);
         print(hidden_size, hidden_output);

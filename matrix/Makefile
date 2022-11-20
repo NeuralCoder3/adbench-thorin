@@ -19,7 +19,7 @@ build-impala:
 	mkdir -p ${NATIVE_IMPALA_BUILD} && \
 	impala ${NATIVE_IMPALA}/matrix.impala -autodiff -emit-c-interface -emit-thorin -log-level error -emit-llvm -emit-c-interface -o ${NATIVE_IMPALA_BUILD}/matrix_impala && \
 	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${NATIVE_IMPALA_BUILD}/matrix_impala.ll && \
-	clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/matrix_impala.bc -O2 -o ${NATIVE_IMPALA_BUILD}/matrix_impala
+	clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/matrix_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/matrix_impala
 
 
 run-impala:
@@ -27,4 +27,8 @@ run-impala:
 	source ../../project.sh && \
 	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${NATIVE_IMPALA_BUILD}/matrix_impala.ll && \
 	clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/matrix_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/matrix_impala  && \
-	${NATIVE_IMPALA_BUILD}/matrix_impala ../benchmark/gmm/1k/gmm_d10_K5.txt
+	${NATIVE_IMPALA_BUILD}/matrix_impala 4 4 2 1
+
+#../benchmark/ba/1k/ba_d2_K5.txt
+
+#../benchmark/gmm/1k/gmm_d2_K5.txt

@@ -94,15 +94,21 @@ fn lstm_predict(
 
     let mut xp: &[f64] = x2; //!!!!!
 
+    let weight = &(w(0))  as &mut[f64];
+    let bias = &(w((b * 4)) as &mut[f64];
+    let hidden = &(s(0)) as &mut[f64];
+    let cell = &(s(b)) as &mut[f64];
+    lstm_model(b, weight, bias, hidden, cell, xp);
+
     for j in 0 .. l
     {
         let i = 2 * j * b;
         let weight = &(w(i * 4))  as &mut[f64];
         let bias = &(w((i + b) * 4)) as &mut[f64];
+        let xp = &(s(i-1)) as &mut[f64];
         let hidden = &(s(i)) as &mut[f64];
         let cell = &(s(i + b)) as &mut[f64];
         lstm_model(b, weight, bias, hidden, cell, xp);
-        xp = hidden;
     }
 
     for i in 0 .. b
