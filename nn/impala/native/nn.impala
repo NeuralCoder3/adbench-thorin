@@ -4,193 +4,125 @@ extern "C" {
     fn printFloat(f32) -> ();
     fn printDouble(f64) -> ();
     fn printInteger(i32) -> ();
-    fn log(f64) -> (f64);
-    fn pow(f64, f64) -> (f64);
-    fn sqrt(f64) -> (f64);
-    fn exp(f64) -> (f64);
-    fn logf(f32) -> (f32);
-    fn lgamma(f64) -> (f64);
     fn randomDouble(f64, f64) -> (f64);
 
-    fn parseInt(&[u8]) -> (i32);
+    fn log(f64) -> (f64);
+    fn exp(f64) -> (f64);
+    fn max(f64, f64) -> (f64);
 
-    fn initMnist() -> ();
-    fn readInput(i32) -> (&[f64]);
-    fn readLabel(i32) -> (i32);
-    fn print_digit(i32) -> ();
+    fn atoi(&[u8]) -> (i32);
+    fn begin() -> ();
+    fn eval() -> ();
 }
 
-fn range(mut b: i32, e: i32, body: fn(i32) -> ()) -> () {
-    while b < e {
-        body(b++)
-    }
-}
-
-fn print_matrix(m : tn[2:f64]) -> (){
-    printLine("----");
-    for row in range(0, m.shape(0)){
-        printString("|");
-        for col in range(0, m.shape(1)){
-            let value = m(row,col);
-            printDouble(value);
-        }
-
-        printLine("|");
-    }
-    printLine("----");
-}
-
-fn iter( m: tn[2:f64], body: fn((i32, i32,  &mut f64)) -> ()) -> () {
-    let mut row = 0;
-    let rows = m.shape(0) as i32;
-    let cols = m.shape(1) as i32;
-    while row < rows {
-        let mut col = 0;
-        while col < cols {
-            body((row, col, (&(m(row, col))) as &mut f64));
-            col++;
-        }
-        row++;
-    }
-}
-/*
-fn matrix_init(x : tn[2:f64], offset: f64) -> (){
-    let cols = x.shape(1);
-    for cell in iter( x ){
-        let (row, col, ptr) = cell;
-        *ptr = (row * cols + col) as f64 + offset;
-    }
-}
-
-fn matrix_init_random(x : tn[2:f64], min: f64, max: f64) -> (){
-    let cols = x.shape(1);
-    for cell in iter( x ){
-        let (row, col, ptr) = cell;
-        *ptr = randomDouble(min, max);
-    }
-}*/
-
-fn init_random(x : &mut [f64], size: i32, min: f64, max: f64) -> (){
-    for i in range( 0, size ){
-        x(i) = randomDouble(min, max);
-    }
-}
-/*
-fn adamOptimizer( epoch: i32, size: i32, weights: tn[2:f64], J: tn[2:f64], lr: f64, beta1: f64, beta2: f64, m: tn[2:f64], v: tn[2:f64] ) -> (tn[2:f64], tn[2:f64], tn[2:f64]) {
-  let beta1Pow = pow(beta1, epoch as f64);
-  let beta2Pow = pow(beta2, epoch as f64);
-
-  let new_m = beta1 * m + (1.0 - beta1) * J;
-  let new_v = beta2 * v + (1.0 - beta2) * J * J;
-
-  let mHat = new_m / ( 1.0 - beta1Pow );
-  let vHat = new_v / ( 1.0 - beta2Pow );
-
-  let offset = lr * mHat / ( vHat.map(sqrt) + 1e-8 );
-
-  (offset, new_m, new_v)
-}*/
-
-fn accuracy(offset : i32, len: i32, predictor: fn(i32) -> (i32)) -> (f64){
-  let mut has_match = 0;
-  let mut non_match = 0;
-  for j in range(offset, offset + len){
-    let output = predictor(j as i32);
-    let label = readLabel(j as i32);
-
-    if(output == label){
-      has_match++;
-    }else{
-      non_match++;
-    }
-  }
-
-  printInteger(has_match);
-  printString("/");
-  printInteger(has_match + non_match);
-  printLine("");
-
-  (has_match as f64) / ( (has_match + non_match)  as f64)
-}
-
-fn argmax(x: tn[2:f64]) -> (i32, i32){
-    let mut maxIndices = (0 , 0 );
-    let mut max = x(0,0);
-    for cell in iter( x ){
-        let (row, col, ptr) = cell;
-        let value = *ptr;
-        if( max < value ){
-            max = value;
-            maxIndices = (row, col);
-        }
+fn softmax(size: i32, input: &[f64], output: &mut[f64]) -> (){
+    let mut sum = 0.0;
+    for i in 0 .. size {
+        let inp = exp(input(i));
+        sum += inp;
+        output(i) = inp;
     }
 
-    maxIndices
-}
-
-fn @(true) softmax(input: tn[2:f64]) -> (tn[2:f64]){
-  let e = input.map(exp);
-  e// / e.sum
+    for i in 0 .. size {
+        output(i) /= sum;
+    }
 }
 
 fn relu( x: f64 ) -> (f64){
-    if(x>=0.0){
-        x
-    }else{
-        0.1 * x
+    max(x, 0.1 * x)
+}
+
+fn fully_connected_layer(input_size: i32, output_size: i32, input : &[f64], weights: &[f64], output: & mut[f64]) -> (){
+    for i in 0 .. input_size {
+        let inp = input(i);
+        for j in 0 .. output_size {
+            output(j) += relu(inp * weights(j + i * output_size));
+        }
     }
 }
 
+extern fn nn_f(input_size: i32, hidden_size: i32, output_size: i32, input : &[f64], first_weights: &[f64], hidden_output: &mut [f64], second_weights: &[f64], output: & mut[f64]) -> (){
+    fully_connected_layer(input_size, hidden_size, input, first_weights, hidden_output);
+    fully_connected_layer(hidden_size, output_size, hidden_output, second_weights, output);
+    softmax(output_size, output, output);
+}
 
-fn relu2( x: f64 ) -> (f64){
-    if(x>=0.0){
-        x
-    }else{
-        0.1 * x
+fn init(size: i32, a : &mut [f64], offset : f64) -> (){
+    for i in 0 .. size {
+        a(i) = offset + (i as f64 ) * 0.1;
     }
 }
 
-
-fn loss(input: tn[2:f64], first_weights: tn[2:f64], second_weights: tn[2:f64], y: i32) -> f64{
-    let first_layer = (first_weights * input).map(relu);
-    let second_layer = (second_weights * first_layer).map(relu);
-    let classification = softmax(second_layer);
-   -log(classification(0,y))
+fn const(size: i32, a : &mut [f64], value : f64) -> (){
+    for i in 0 .. size {
+        a(i) = value;
+    }
 }
 
+fn print(size: i32, a : &mut [f64]) -> (){
+    for i in 0 .. size {
+        printDouble(a(i));
+        printString(",");
+    }
+    printString("\n");
+}
 
-fn main( argc : i32, argv : &[&[u8]]) -> i32 {
-    initMnist();
+fn main(argc: i32, argv: &[&[u8]]) -> i32 {
 
-    let hidden_size = parseInt(argv(1));
-    let epochs = parseInt(argv(2));
+    let input_size = atoi(argv(1));
+    let hidden_size = atoi(argv(2));
+    let output_size = atoi(argv(3));
+    let first_weights_size = input_size * hidden_size;
+    let second_weights_size = hidden_size * output_size;
 
-    printInteger(hidden_size);
-    printInteger(epochs);
+    let input = ~[input_size: f64];
+    let first_weights = ~[first_weights_size: f64];
+    let second_weights = ~[second_weights_size: f64];
+    let hidden_output = ~[hidden_size: f64];
+    let output = ~[output_size: f64];
 
-    let first_weights_arr = ~[hidden_size * 28*28: f64];
-    let second_weights_arr = ~[10 * hidden_size: f64];
+    let input_d = ~[input_size: f64];
+    let first_weights_d = ~[first_weights_size: f64];
+    let second_weights_d = ~[second_weights_size: f64];
+    let hidden_output_d = ~[hidden_size: f64];
+    let output_d = ~[output_size: f64];
 
-    init_random(first_weights_arr, hidden_size * 28*28, -0.1, 0.1);
-    init_random(second_weights_arr, 10 * hidden_size, -0.1, 0.1);
+    init(input_size, input, 1.0);
+    init(first_weights_size, first_weights, 0.0);
+    init(second_weights_size, second_weights, 0.0);
+    const(output_size, output, 0.0);
 
-    let first_weights = tn.dense(first_weights_arr, (hidden_size, 28*28));
-    let second_weights = tn.dense(second_weights_arr, (10, hidden_size));
+    const(input_size, input_d, 0.0);
+    const(first_weights_size, first_weights_d, 0.0);
+    const(second_weights_size, second_weights_d, 0.0);
+    const(output_size, output_d, 0.0);
 
-    let diff = rev_diff(loss);
+    output_d(0) = 1.0;
+    begin();
+    let diff = rev_diff(nn_f);
 
-    let input = tn.dense(readInput(0), (28*28, 1));
-    let label = readLabel(0) as i32;
+    let backward = diff(input_size, hidden_size, output_size, input, input_d, first_weights, first_weights_d, hidden_output, hidden_output_d, second_weights, second_weights_d, output, output_d);
+    let result = backward();
 
-    let (fx,pb) = diff(input, first_weights, second_weights, label);
-    let gradients = pb(1.0);
-    let first_weights_d = gradients(1);
-    let second_weights_d = gradients(2);
+    //let backward = diff(input_size, hidden_size, output_size, input, first_weights, hidden_output, second_weights, output);
+    //let result = backward(input_d, first_weights_d, hidden_output_d, second_weights_d, output_d);
 
-    printDouble(fx);
-    printLine("###");
-    print_matrix(first_weights_d);
-    print_matrix(second_weights_d);
+    eval();
+
+
+    if argc >= 5 && atoi(argv(4)) == 1 {
+        print(input_size, input);
+        print(first_weights_size, first_weights);
+        print(hidden_size, hidden_output);
+        print(second_weights_size, second_weights);
+        print(output_size, output);
+
+        print(input_size, input_d);
+        print(first_weights_size, first_weights_d);
+        print(hidden_size, hidden_output_d);
+        print(second_weights_size, second_weights_d);
+        print(output_size, output_d);
+    }
 
     0
 }

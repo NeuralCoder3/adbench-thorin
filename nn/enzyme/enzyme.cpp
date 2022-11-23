@@ -161,8 +161,7 @@ int main(int argc, const char** argv){
     output_d[0] = 1;
     begin();
     mul_d(input_size, hidden_size, output_size, input, first_weights, hidden, second_weights, output,
-                                   input_d, first_weights_d, hidden_d, second_weights_d, output_d);
-    //mul(n,input,weights,output);
+          input_d, first_weights_d, hidden_d, second_weights_d, output_d);
     eval();
 
     if(argc >= 5 && atoi(argv[4])){

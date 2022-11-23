@@ -51,12 +51,12 @@ function remote {
 function clone_or_update {
     branch=${3:-master}
     if [ ! -e "$2" ]; then
-        echo ">>> clone $1/$2 $COLOR_RED($branch)$COLOR_RESET"
+        echo ">>> clone $1/$2 $branch"
         echo -e "git clone --recursive `remote $1/$2.git` --branch $branch"
         git clone --recursive `remote $1/$2.git` --branch $branch
     else
         cd $2
-        echo -e ">>> pull $1/$2 $COLOR_RED($branch)$COLOR_RESET"
+        echo -e ">>> pull $1/$2 $branch"
         git fetch --tags origin
         git checkout $branch
         set +e
@@ -71,3 +71,6 @@ function clone_or_update {
 }
 
 clone_or_update EnzymeAD Enzyme main
+cd Enzyme
+mkdir build && cd build
+cmake -G Ninja .. -DLLVM_DIR=

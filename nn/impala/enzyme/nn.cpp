@@ -19,39 +19,32 @@ using namespace std;
 
 
 extern "C"{
-    void loss_c_stub(
-                     int hidden_size,
-                     double const* input_c,
-                     double const* first_weights_c,
-                     double const* second_weights_c,
-                     unsigned long long y, double * loss){
-
-        loss_c(
-                hidden_size,
-                input_c,
-                first_weights_c,
-                second_weights_c,
-                y, loss);
+    void loss_c_stub(int input_size, int hidden_size, int output_size, double const* input, double const* first_weights, double* hidden_output, double const* second_weights, double* output){
+        nn_f(
+                input_size, hidden_size, output_size,
+                input,
+                first_weights,
+                hidden_output,
+                second_weights,
+                output);
     }
 
-double loss_d_c(
-            int hidden_size,
+void nn_f_d(
+            int input_size, int hidden_size, int output_size,
             double const* input_c, double const* input_d_c,
             double const* first_weights_c, double const* first_weights_d_c,
+            double const* hidden_c, double const* hidden_c_d,
             double const* second_weights_c, double const* second_weights_d_c,
-            unsigned long long y){
-
-        double loss = 1.0;
-        double loss_d = 1.0;
+            double const* output_c, double const* output_c_d){
 
         __enzyme_autodiff((void*) loss_c_stub,
+                          enzyme_const, input_size,
                           enzyme_const, hidden_size,
+                          enzyme_const, output_size,
                           enzyme_dup,   input_c, input_d_c,
                           enzyme_dup,   first_weights_c, first_weights_d_c,
+                          enzyme_dup,   hidden_c, hidden_c_d,
                           enzyme_dup,   second_weights_c, second_weights_d_c,
-                          enzyme_const, y,
-                          enzyme_dup, &loss, &loss_d);
-
-        return loss;
+                          enzyme_dup,   output_c, output_c_d);
     }
 }

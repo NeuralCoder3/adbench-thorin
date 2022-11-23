@@ -1,245 +1,128 @@
 extern "C" {
     fn printString(&[u8]) -> ();
+    fn printLine(&[u8]) -> ();
     fn printFloat(f32) -> ();
     fn printDouble(f64) -> ();
     fn printInteger(i32) -> ();
+    fn randomDouble(f64, f64) -> (f64);
+
     fn log(f64) -> (f64);
     fn exp(f64) -> (f64);
-    fn sqrt(f64) -> (f64);
-    fn sin(f64) -> (f64);
-    fn cos(f64) -> (f64);
-    fn tanh(f64) -> (f64);
-    fn logf(f32) -> (f32);
-    fn lgamma(f64) -> (f64);
-    fn read_ba_size(
-        file: &[u8],
-        n: &mut i32,
-        m: &mut i32,
-        p: &mut i32
-    ) -> ();
-    fn read_ba_instance(
-        file: &[u8],
-        n: i32,
-        m: i32,
-        p: i32,
-        cams: &mut[f64],
-        X: &mut[f64],
-        w: &mut[f64],
-        obs: &mut[i32],
-        feats: &mut[f64]
-    ) -> ();
+    fn max(f64, f64) -> (f64);
 
-    fn read_lstm_instance(file: &[u8],
-                              l: &mut i32,
-                              c: &mut i32,
-                              b: &mut i32,
-                              main_params_p: &&mut[f64],
-                              extra_params_p: &&mut[f64],
-                              state_p: &&mut[f64],
-                              sequence_p: &&mut[f64]) -> ();
+    fn atoi(&[u8]) -> (i32);
+    fn begin() -> ();
+    fn eval() -> ();
 }
 
-fn sigmoid( x: f64) -> (f64)
-{
-    1.0 / (1.0 + exp(-x))
-}
-
-fn logsumexp(vect: &[f64],  sz: i32) -> f64
-{
-    let mut sum = 2.0;
-    for i in 0 .. sz{
-        sum += exp(vect(i));
-    }
-    log(sum)
-}
-
-// LSTM OBJECTIVE
-// The LSTM model
-fn lstm_model(
-    hsize: i32,
-    weight: &[f64],
-    bias: &[f64],
-    hidden: &mut[f64],
-    cell: &mut[f64],
-    input: &[f64]
-) -> ()
-{
-    for i in 0  .. hsize
-    {
-        let forget = sigmoid(input(i) * weight(i) + bias(i));
-        let ingate = sigmoid(hidden(i) * weight(hsize + i) + bias(hsize + i));
-        let change = tanh(hidden(i) * weight(3 * hsize + i) + bias(3 * hsize + i));
-        cell(i) = cell(i) * forget + ingate * change;
-
-        let outgate = sigmoid(input(i) * weight(2 * hsize + i) + bias(2 * hsize + i));
-        hidden(i) = outgate * tanh(cell(i));
-    }
-}
-
-// Predict LSTM output given an input
-fn lstm_predict(
-    l: i32,
-    b: i32,
-    w: &[f64],
-    w2: &[f64],
-    s: &[f64],
-    x: &[f64],
-    x2: &mut[f64]
-) -> ()
-{
-    for i in 0 .. b
-    {
-        x2(i) = x(i) * w2(i);
-    }
-
-    let weight = &(w(0))  as &mut[f64];
-    let bias = &(w((b) * 4)) as &mut[f64];
-    let hidden = &(s(0)) as &mut[f64];
-    let cell = &(s(b)) as &mut[f64];
-    lstm_model(b, weight, bias, hidden, cell, x2);
-
-    for j in 1 .. l
-    {
-        let i = 2 * j * b;
-        let last_i = 2 * (j - 1) * b;
-        let weight = &(w(i * 4))  as &mut[f64];
-        let bias = &(w((i + b) * 4)) as &mut[f64];
-        let last_hidden = &(s(last_i)) as &mut[f64];
-        let hidden = &(s(i)) as &mut[f64];
-        let cell = &(s(i + b)) as &mut[f64];
-        lstm_model(b, weight, bias, hidden, cell, last_hidden);
-    }
-
-    for i in 0 .. b
-    {
-        let hidden = &(s(2 * (l - 1) * b)) as &mut[f64];
-        x2(i) = hidden(i) * w2(b + i) + w2(2 * b + i);
-    }
-}
-
-// LSTM objective (loss function)
-fn lstm(
-    l: i32,
-    c: i32,
-    b: i32,
-    main_params: &mut[f64],
-    extra_params: &mut[f64],
-    state: &[f64],
-    sequence: &[f64],
-) -> f64
-{
-    let mut total = 0.0;
-    let ypred = ~[b: f64];
-    let ynorm = ~[b: f64];
-
-    lstm_predict(l, b, main_params, extra_params, state, sequence, ypred);
-    let lse = logsumexp(ypred, b);
-
-    for i in 0 .. b{
-        ynorm(i) = ypred(i) - lse;
-    }
-
-    let ygold = &sequence(b) as &[f64];
-
-    for i in 0 .. b{
-        total += ygold(i) * ynorm(i);
-    }
-
-    for i in 1 .. c - 1
-    {
-        let t = i * b;
-        let last_t = (i - 1) * b;
-
-        let input = &sequence(last_t + b) as &[f64];
-        lstm_predict(l, b, main_params, extra_params, state, input, ypred);
-        let lse = logsumexp(ypred, b);
-
-        for i in 0 .. b{
-            ynorm(i) = ypred(i) - lse;
-        }
-
-        let ygold = &sequence(t + b) as &[f64];
-
-        for i in 0 .. b{
-            total += ygold(i) * ynorm(i);
-        }
-    }
-
-    let count = (c - 1) * b;
-    -total / ( count as f64)
-}
-
-extern fn print(size: i32, a : &mut [f64]) -> (){
+fn softmax(size: i32, input: &[f64], output: &mut[f64]) -> (){
+    let mut sum = 0.0;
     for i in 0 .. size {
-        printDouble(a(i));
-        printString("\n");
+        let inp = exp(input(i));
+        sum += inp;
+        output(i) = inp;
+    }
+
+    for i in 0 .. size {
+        output(i) /= sum;
     }
 }
 
-extern fn const(size: i32, a : &mut [f64], value : f64) -> (){
+fn relu( x: f64 ) -> (f64){
+    max(x, 0.1 * x)
+}
+
+fn fully_connected_layer(input_size: i32, output_size: i32, input : &[f64], weights: &[f64], output: & mut[f64]) -> (){
+    for i in 0 .. input_size {
+        let inp = input(i);
+        for j in 0 .. output_size {
+            output(j) += relu(inp * weights(j + i * output_size));
+        }
+    }
+}
+
+extern fn nn(input_size: i32, hidden_size: i32, output_size: i32, input : &[f64], first_weights: &[f64], hidden_output: &mut [f64], second_weights: &[f64], output: & mut[f64]) -> (){
+    fully_connected_layer(input_size, hidden_size, input, first_weights, hidden_output);
+    fully_connected_layer(hidden_size, output_size, hidden_output, second_weights, output);
+    softmax(output_size, output, output);
+}
+
+fn init(size: i32, a : &mut [f64], offset : f64) -> (){
+    for i in 0 .. size {
+        a(i) = offset + (i as f64 ) * 0.1;
+    }
+}
+
+fn const(size: i32, a : &mut [f64], value : f64) -> (){
     for i in 0 .. size {
         a(i) = value;
     }
 }
 
-fn runGmmBenchmark(file: &[u8]) -> (){
-
-    let mut l: i32;
-    let mut c: i32;
-    let mut b: i32;
-
-    let mut main_params: &mut[f64];
-    let mut extra_params: &mut[f64];
-    let mut state: &mut[f64];
-    let mut sequence: &mut[f64];
-
-
-    read_lstm_instance(file, &mut l, &mut c, &mut b, &mut main_params, &mut extra_params, &mut state, &mut sequence);
-
-    let main_sz = 2 * l * 4 * b;
-    let extra_sz = 3 * b;
-    let state_sz = 2 * l * b;
-    let seq_sz = c * b;
-
-    let mut main_params_d: &mut[f64] = ~[main_sz: f64];
-    let mut extra_params_d: &mut[f64] = ~[extra_sz: f64];
-    let mut state_d: &mut[f64] = ~[state_sz: f64];
-    let mut sequence_d: &mut[f64] = ~[seq_sz: f64];
-
-    const(main_sz, main_params_d, 0.0);
-    const(extra_sz, extra_params_d, 0.0);
-    const(state_sz, state_d, 0.0);
-    const(seq_sz, sequence_d, 0.0);
-
-    //let fx = lstm(l, c, b, main_params, extra_params, state, sequence);
-
-    let diff = rev_diff(lstm);
-    let (fx, backward) = diff(l, c, b, main_params, main_params_d, extra_params, extra_params_d, state, state_d, sequence, sequence_d);
-    let result = backward(1.0);
-
-    printDouble(fx);
+fn print(size: i32, a : &mut [f64]) -> (){
+    for i in 0 .. size {
+        printDouble(a(i));
+        printString(",");
+    }
     printString("\n");
-    printString("extra_params_d\n");
-    print(3*b, extra_params_d);
-    printString("tests\n");
-
-
-    //printDouble(loss);
 }
 
-fn main(argc: i32,argv :&[&[u8]]) -> i32 {
-    if argc < 2{
-        printString("No Benchmark specified");
-    }else{
-        let file = argv(1);
-        printString(file);
-        runGmmBenchmark(file);
+fn main(argc: i32, argv: &[&[u8]]) -> i32 {
+
+    let input_size = atoi(argv(1));
+    let hidden_size = atoi(argv(2));
+    let output_size = atoi(argv(3));
+    let first_weights_size = input_size * hidden_size;
+    let second_weights_size = hidden_size * output_size;
+
+    let input = ~[input_size: f64];
+    let first_weights = ~[first_weights_size: f64];
+    let second_weights = ~[second_weights_size: f64];
+    let hidden_output = ~[hidden_size: f64];
+    let output = ~[output_size: f64];
+
+    let input_d = ~[input_size: f64];
+    let first_weights_d = ~[first_weights_size: f64];
+    let second_weights_d = ~[second_weights_size: f64];
+    let hidden_output_d = ~[hidden_size: f64];
+    let output_d = ~[output_size: f64];
+
+    init(input_size, input, 1.0);
+    init(first_weights_size, first_weights, 0.0);
+    init(second_weights_size, second_weights, 0.0);
+    const(output_size, output, 0.0);
+
+    const(input_size, input_d, 0.0);
+    const(first_weights_size, first_weights_d, 0.0);
+    const(second_weights_size, second_weights_d, 0.0);
+    const(output_size, output_d, 0.0);
+
+    output_d(0) = 1.0;
+    begin();
+    let diff = rev_diff(nn);
+
+    let backward = diff(input_size, hidden_size, output_size, input, input_d, first_weights, first_weights_d, hidden_output, hidden_output_d, second_weights, second_weights_d, output, output_d);
+    let result = backward();
+
+    //let backward = diff(input_size, hidden_size, output_size, input, first_weights, hidden_output, second_weights, output);
+    //let result = backward(input_d, first_weights_d, hidden_output_d, second_weights_d, output_d);
+
+    eval();
+
+
+    if argc >= 5 && atoi(argv(4)) == 1 {
+        print(input_size, input);
+        print(first_weights_size, first_weights);
+        print(hidden_size, hidden_output);
+        print(second_weights_size, second_weights);
+        print(output_size, output);
+
+        print(input_size, input_d);
+        print(first_weights_size, first_weights_d);
+        print(hidden_size, hidden_output_d);
+        print(second_weights_size, second_weights_d);
+        print(output_size, output_d);
     }
 
     0
 }
-
-
-
-
-
