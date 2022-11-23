@@ -92,23 +92,31 @@ fn rodrigues_rotate_point(
             w(i) = rot(i) * theta_inverse;
         }
 
+
         cross(w, pt, &w_cross_pt as &mut[f64]);
 
+
+        for i in 0 .. 3 {
+            rotatedPt(i) = w_cross_pt(i);
+        }
+
+/*
         let tmp = (w(0) * pt(0) + w(1) * pt(1) + w(2) * pt(2)) *
             (1.0 - costheta);
 
         for i in 0 .. 3 {
             rotatedPt(i) = pt(i) * costheta + w_cross_pt(i) * sintheta + w(i) * tmp;
-        }
+        }*/
     }
     else
     {
+    /*
         let mut rot_cross_pt : [f64 * 3];
         cross(rot, pt, &rot_cross_pt as &mut[f64]);
 
         for i in 0 .. 3 {
             rotatedPt(i) = pt(i) + rot_cross_pt(i);
-        }
+        }*/
     }
 }
 
@@ -127,7 +135,7 @@ fn radial_distort(
 fn project(cam: &[f64], X: &[f64], proj: &mut[f64]) -> (){
 
     let C =  &cam(3) as &[f64];
-    let mut Xo : [f64 * 3];
+    let mut Xo : [f64 * 2];
     let mut Xcam : [f64 * 3];
 
     Xo(0) = X(0) - C(0);

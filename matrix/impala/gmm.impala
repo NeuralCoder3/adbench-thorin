@@ -277,7 +277,7 @@ fn main(argc: i32,argv :&[&[u8]]) -> i32 {
         printString("No Benchmark specified");
     }else{
         let file = argv(1);
-        printString(file);
+        //printString(file);
         runGmmBenchmark(file);
     }
 

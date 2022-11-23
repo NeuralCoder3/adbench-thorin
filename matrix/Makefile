@@ -27,7 +27,9 @@ run-impala:
 	source ../../project.sh && \
 	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${NATIVE_IMPALA_BUILD}/matrix_impala.ll && \
 	clang++ -L${RUNTIME} -lruntime -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/matrix_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/matrix_impala  && \
-	${NATIVE_IMPALA_BUILD}/matrix_impala 4 4 2 1
+	${NATIVE_IMPALA_BUILD}/matrix_impala ../benchmark/lstm/lstm_l2_c1024.txt
+
+#../benchmark/ba/1k/ba_d2_K5.txt
 
 #../benchmark/ba/1k/ba_d2_K5.txt
 

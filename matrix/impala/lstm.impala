@@ -92,28 +92,28 @@ fn lstm_predict(
         x2(i) = x(i) * w2(i);
     }
 
-    let mut xp: &[f64] = x2; //!!!!!
-
     let weight = &(w(0))  as &mut[f64];
-    let bias = &(w((b * 4)) as &mut[f64];
+    let bias = &(w((b) * 4)) as &mut[f64];
     let hidden = &(s(0)) as &mut[f64];
     let cell = &(s(b)) as &mut[f64];
-    lstm_model(b, weight, bias, hidden, cell, xp);
+    lstm_model(b, weight, bias, hidden, cell, x2);
 
-    for j in 0 .. l
+    for j in 1 .. l
     {
         let i = 2 * j * b;
+        let last_i = 2 * (j - 1) * b;
         let weight = &(w(i * 4))  as &mut[f64];
         let bias = &(w((i + b) * 4)) as &mut[f64];
-        let xp = &(s(i-1)) as &mut[f64];
+        let last_hidden = &(s(last_i)) as &mut[f64];
         let hidden = &(s(i)) as &mut[f64];
         let cell = &(s(i + b)) as &mut[f64];
-        lstm_model(b, weight, bias, hidden, cell, xp);
+        lstm_model(b, weight, bias, hidden, cell, last_hidden);
     }
 
     for i in 0 .. b
     {
-        x2(i) = xp(i) * w2(b + i) + w2(2 * b + i);
+        let hidden = &(s(2 * (l - 1) * b)) as &mut[f64];
+        x2(i) = hidden(i) * w2(b + i) + w2(2 * b + i);
     }
 }
 
@@ -122,20 +122,35 @@ fn lstm(
     l: i32,
     c: i32,
     b: i32,
-    main_params: &[f64],
-    extra_params: &[f64],
+    main_params: &mut[f64],
+    extra_params: &mut[f64],
     state: &[f64],
     sequence: &[f64],
 ) -> f64
 {
     let mut total = 0.0;
-    let mut input = sequence;
     let ypred = ~[b: f64];
     let ynorm = ~[b: f64];
 
-    for i in 0 .. c - 1
+    lstm_predict(l, b, main_params, extra_params, state, sequence, ypred);
+    let lse = logsumexp(ypred, b);
+
+    for i in 0 .. b{
+        ynorm(i) = ypred(i) - lse;
+    }
+
+    let ygold = &sequence(b) as &[f64];
+
+    for i in 0 .. b{
+        total += ygold(i) * ynorm(i);
+    }
+
+    for i in 1 .. c - 1
     {
         let t = i * b;
+        let last_t = (i - 1) * b;
+
+        let input = &sequence(last_t + b) as &[f64];
         lstm_predict(l, b, main_params, extra_params, state, input, ypred);
         let lse = logsumexp(ypred, b);
 
@@ -148,14 +163,24 @@ fn lstm(
         for i in 0 .. b{
             total += ygold(i) * ynorm(i);
         }
-
-        input = ygold;
     }
 
     let count = (c - 1) * b;
     -total / ( count as f64)
 }
 
+extern fn print(size: i32, a : &mut [f64]) -> (){
+    for i in 0 .. size {
+        printDouble(a(i));
+        printString("\n");
+    }
+}
+
+extern fn const(size: i32, a : &mut [f64], value : f64) -> (){
+    for i in 0 .. size {
+        a(i) = value;
+    }
+}
 
 fn runGmmBenchmark(file: &[u8]) -> (){
 
@@ -181,11 +206,22 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let mut state_d: &mut[f64] = ~[state_sz: f64];
     let mut sequence_d: &mut[f64] = ~[seq_sz: f64];
 
-    //let loss = lstm(l, c, b, main_params, extra_params, state, sequence);
+    const(main_sz, main_params_d, 0.0);
+    const(extra_sz, extra_params_d, 0.0);
+    const(state_sz, state_d, 0.0);
+    const(seq_sz, sequence_d, 0.0);
+
+    //let fx = lstm(l, c, b, main_params, extra_params, state, sequence);
 
     let diff = rev_diff(lstm);
     let (fx, backward) = diff(l, c, b, main_params, main_params_d, extra_params, extra_params_d, state, state_d, sequence, sequence_d);
     let result = backward(1.0);
+
+    printDouble(fx);
+    printString("\n");
+    printString("extra_params_d\n");
+    print(3*b, extra_params_d);
+
 
     //printDouble(loss);
 }
