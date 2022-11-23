@@ -81,17 +81,17 @@ build-enzyme-native:
 	clang ${ENZYME_NATIVE}/enzyme.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/enzyme_input.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
 	clang ${SHARED_ALL}/read.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/read.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
 	clang ${SHARED}/lstm.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/lstm.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
-	llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_input.ll && \
-	llvm-as ${ENZYME_NATIVE_BUILD}/lstm.ll -o ${ENZYME_NATIVE_BUILD}/lstm.bc && \
-	llvm-link ${ENZYME_NATIVE_BUILD}/enzyme_input.bc ${ENZYME_NATIVE_BUILD}/lstm.bc  -o ${ENZYME_NATIVE_BUILD}/bundle.bc && \
-	llvm-dis ${ENZYME_NATIVE_BUILD}/bundle.bc -o ${ENZYME_NATIVE_BUILD}/bundle.ll && \
-	opt ${ENZYME_NATIVE_BUILD}/bundle.ll -load=../../Enzyme/enzyme/build/Enzyme/LLVMEnzyme-12.so -enzyme -o ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -S -enable-new-pm=0 && \
-	llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -o ${ENZYME_NATIVE_BUILD}/enzyme_output.bc && \
-	llvm-as ${ENZYME_NATIVE_BUILD}/read.ll -o ${ENZYME_NATIVE_BUILD}/read.bc && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_input.ll && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${ENZYME_NATIVE_BUILD}/lstm.ll -o ${ENZYME_NATIVE_BUILD}/lstm.bc && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-link ${ENZYME_NATIVE_BUILD}/enzyme_input.bc ${ENZYME_NATIVE_BUILD}/lstm.bc  -o ${ENZYME_NATIVE_BUILD}/bundle.bc && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-dis ${ENZYME_NATIVE_BUILD}/bundle.bc -o ${ENZYME_NATIVE_BUILD}/bundle.ll && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/opt ${ENZYME_NATIVE_BUILD}/bundle.ll -load=../../Enzyme2/enzyme/build/Enzyme/LLVMEnzyme-12.dylib -enzyme -o ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -S -enable-new-pm=0 && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -o ${ENZYME_NATIVE_BUILD}/enzyme_output.bc && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${ENZYME_NATIVE_BUILD}/read.ll -o ${ENZYME_NATIVE_BUILD}/read.bc && \
 	clang++ ${ENZYME_NATIVE_BUILD}/enzyme_output.bc ${ENZYME_NATIVE_BUILD}/read.bc -O2 -o ${ENZYME_NATIVE_BUILD}/lstm_enzyme
 
 run-enzyme-native:
-	${ENZYME_NATIVE_BUILD}/lstm_enzyme ../benchmark/lstm/1k/lstm_d2_K5.txt
+	${ENZYME_NATIVE_BUILD}/lstm_enzyme ../benchmark/lstm/lstm_l2_c1024.txt
 
 
 enzyme: build-enzyme run-enzyme

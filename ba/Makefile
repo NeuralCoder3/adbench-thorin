@@ -76,20 +76,20 @@ run-enzyme-impala:
 build-enzyme-native:
 	mkdir -p ${ENZYME_NATIVE_BUILD} && \
 	source ../../project.sh && \
-	clang ${ENZYME_NATIVE}/enzyme.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/enzyme_input.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
-	clang ${SHARED_ALL}/read.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/read.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
-	clang ${SHARED}/ba.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/ba.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
-	llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_input.ll && \
-	llvm-as ${ENZYME_NATIVE_BUILD}/ba.ll -o ${ENZYME_NATIVE_BUILD}/ba.bc && \
-	llvm-link ${ENZYME_NATIVE_BUILD}/enzyme_input.bc ${ENZYME_NATIVE_BUILD}/ba.bc  -o ${ENZYME_NATIVE_BUILD}/bundle.bc && \
-	llvm-dis ${ENZYME_NATIVE_BUILD}/bundle.bc -o ${ENZYME_NATIVE_BUILD}/bundle.ll && \
-	opt ${ENZYME_NATIVE_BUILD}/bundle.ll -load=../../Enzyme/enzyme/build/Enzyme/LLVMEnzyme-12.so -enzyme -o ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -S -enable-new-pm=0 && \
-	llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -o ${ENZYME_NATIVE_BUILD}/enzyme_output.bc && \
-	llvm-as ${ENZYME_NATIVE_BUILD}/read.ll -o ${ENZYME_NATIVE_BUILD}/read.bc && \
-	clang++ ${ENZYME_NATIVE_BUILD}/enzyme_output.bc ${ENZYME_NATIVE_BUILD}/read.bc -O2 -o ${ENZYME_NATIVE_BUILD}/ba_enzyme
+	clang++ ${ENZYME_NATIVE}/enzyme.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/enzyme_input.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
+	clang++ ${SHARED_ALL}/read.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/read.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
+	clang++ ${SHARED}/ba.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/ba.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_input.ll && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${ENZYME_NATIVE_BUILD}/ba.ll -o ${ENZYME_NATIVE_BUILD}/ba.bc && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-link ${ENZYME_NATIVE_BUILD}/enzyme_input.bc ${ENZYME_NATIVE_BUILD}/ba.bc  -o ${ENZYME_NATIVE_BUILD}/bundle.bc && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-dis ${ENZYME_NATIVE_BUILD}/bundle.bc -o ${ENZYME_NATIVE_BUILD}/bundle.ll && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/opt ${ENZYME_NATIVE_BUILD}/bundle.ll -load=../../Enzyme2/enzyme/build/Enzyme/LLVMEnzyme-12.dylib -enzyme -o ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -S -enable-new-pm=0 && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -o ${ENZYME_NATIVE_BUILD}/enzyme_output.bc && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/llvm-as ${ENZYME_NATIVE_BUILD}/read.ll -o ${ENZYME_NATIVE_BUILD}/read.bc && \
+	/Users/chris/CLionProjects/anydsl/llvm_install/bin/clang++ ${ENZYME_NATIVE_BUILD}/enzyme_output.bc ${ENZYME_NATIVE_BUILD}/read.bc -O2 -o ${ENZYME_NATIVE_BUILD}/ba_enzyme
 
 run-enzyme-native:
-	${ENZYME_NATIVE_BUILD}/ba_enzyme ../benchmark/ba/1k/ba_d2_K5.txt
+	${ENZYME_NATIVE_BUILD}/ba_enzyme ../benchmark/ba/ba1_n49_m7776_p31843.txt
 
 
 enzyme: build-enzyme run-enzyme

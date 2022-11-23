@@ -9,6 +9,6 @@ def filename(n, d, k):
 
 
 for k in k_list:
-    subprocess.run(["../build/matrix/matrix_impala" , "../benchmark/gmm/" + filename('10k', 64, k)])
+    subprocess.run(["../build/gmm/enzyme/gmm_enzyme" , "../benchmark/gmm/" + filename('2.5M', 2, k)])
 
 

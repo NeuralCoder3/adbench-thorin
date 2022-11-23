@@ -3,6 +3,27 @@
 #include <stdio.h>
 #include "../../cpp/read.h"
 #include <string>
+#include<sys/time.h>
+
+
+long long timeInMilliseconds(void) {
+    struct timeval tv;
+
+    gettimeofday(&tv,NULL);
+    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
+}
+
+long long startTime = 0;
+
+void begin(){
+    startTime = timeInMilliseconds();
+}
+
+void eval(){
+    long long endTime = timeInMilliseconds();
+    printf("%d\n", endTime - startTime);
+}
+
 
 int main(int argc, const char** argv){
     if(argc < 2){
@@ -34,12 +55,15 @@ int main(int argc, const char** argv){
 
     int icf_sz = d * (d + 1) / 2;
     J.resize(k + d * k + icf_sz * k);
+    begin();
     gmm_objective_d(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart.gamma, wishart.m, &error, &J[0]);
+    eval();
 
     double *alphas_d = &J[0];
     double *means_d = &J[k];
     double *icf_d = &J[k + d * k];
 
+    /*
     printf("\n");
     printf("alpha derivative\n");
 
@@ -63,7 +87,7 @@ int main(int argc, const char** argv){
     }
 
     printf("error\n");
-    printf("%.20lf\n", error);
+    printf("%.20lf\n", error);*/
 
     return 0;
 }

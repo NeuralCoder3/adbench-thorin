@@ -138,8 +138,8 @@ void cross(
 // out = a - b
 template<typename T1, typename T2, typename T3>
 void subtract(int d,
-              const T1* const x,
-              const T2* const y,
+              const T1* const __restrict x,
+              const T2* const __restrict y,
               T3* out)
 {
   for (int id = 0; id < d; id++)
@@ -150,7 +150,7 @@ void subtract(int d,
 
 template<typename T1, typename T2>
 void copy(int d,
-              const T1* const x,
+              const T1* const __restrict x,
               T2* out)
 {
     for (int id = 0; id < d; id++)
@@ -160,7 +160,7 @@ void copy(int d,
 }
 
 template<typename T1, typename T2, typename T3>
-void scale(int n, T1 factor, const T2* const x, T3* out)
+void scale(int n, T1 factor, const T2* const __restrict x, T3* out)
 {
   for (int i = 0; i < n; ++i)
     out[i] = factor * x[i];

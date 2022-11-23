@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include "../shared/lstm.cpp"
+#include "../shared/lstm.h"
 #include "../../cpp/defs.h"
 #include "../../cpp/read.h"
 
@@ -51,74 +51,32 @@ int main(int argc, const char** argv){
     int c;
     int b;
 
-    double *main_params;
-    double *extra_params;
-    double *state;
-    double *sequence;
+    std::vector<double> main_params;
+    std::vector<double> extra_params;
+    std::vector<double> state;
+    std::vector<double> sequence;
 
-    read_lstm_instance(benchmark.c_str(), &l, &c, &b, &main_params, &extra_params, &state, &sequence);
+    read_lstm_instance(benchmark.c_str(), &l, &c, &b, main_params, extra_params, state, sequence);
 
     double *J = new double [2 * l * 4 * b + 3 * b];
     double loss;
 
+
     //lstm_objective(l, c, b, main_params, extra_params, state, sequence, &loss);
 
-    lstm_d(l, c, b, main_params, extra_params, state, sequence, &loss, J);
+    lstm_d(l, c, b, &main_params[0], &extra_params[0], &state[0], &sequence[0], &loss, J);
     //lstm_objective(l, c, b, main_params, extra_params, state, sequence, &loss);
+
+    double *main_d = &J[0];
+    double *extra_d = &J[2 * l * 4 * b];
+
+    printf("\n");
+
+    for( size_t i = 0 ; i < 3 * b ; i++ ){
+        printf("%f\n", extra_d[i]);
+    }
 
     std::cout << loss << std::endl;
 
-    /*
-     *
-    std::cout << reproj_err[0] << std::endl;
-    std::cout << reproj_err[1] << std::endl;
-
-    std::cout << "---" << std::endl;
-    for( int i = 0 ; i < derivative_size ; i++ ){
-      if(J[i] * J[i] > 0.01){
-        std::cout << i << " : " << J[i] << std::endl;
-      }
-    }
-
-    compute_reproj_error_d(cams,X,w[0],feats[0],feats[1],reproj_err, J);
-    std::cout << "####" << std::endl;
-    std::cout << reproj_err[0] << std::endl;
-    std::cout << reproj_err[1] << std::endl;
-
-    std::cout << "---" << std::endl;
-    for( int i = 0 ; i < derivative_size ; i++ ){
-      if(J[i] * J[i] > 0.01){
-        std::cout << i << " : " << J[i] << std::endl;
-      }
-    }
-     *
-    printf("%.20lf\n", error);
-
-    double *alphas_d = &J[0];
-    double *means_d = &J[k];
-    double *icf_d = &J[k + d * k];
-
-    printf("\n");
-    printf("alpha derivative\n");
-
-    for (int i = 0; i < k; i++)
-    {
-        printf("%.20lf\n", alphas_d[i]);
-    }
-
-    printf("\n");
-    printf("means derivative\n");
-    for (int i = 0; i < k*d; i++)
-    {
-        printf("%.20lf\n", means_d[i]);
-    }
-
-    printf("\n");
-    printf("icf derivative\n");
-    for (int i = 0; i < k*icf_sz; i++)
-    {
-        printf("%.20lf\n", icf_d[i]);
-    }
-*/
     return 0;
 }

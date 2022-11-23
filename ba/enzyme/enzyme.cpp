@@ -4,8 +4,8 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include "../shared/ba.cpp"
-#include "../shared/ba_d.cpp"
+#include "../shared/ba.h"
+#include "../shared/ba_d.h"
 #include "../../cpp/defs.h"
 #include "../../cpp/read.h"
 
@@ -30,8 +30,17 @@ void ba_d(int n, int m, int p,
     double *X_d = &J[11 * n];
     double *w_d = &X_d[3 * m];
 
-    double *err_d = new double [p]{1.0};
-    double *reproj_err_d = new double [2 * p]{1.0};
+    double *err_d = new double [p];
+    double *reproj_err_d = new double [2 * p];
+
+    for( size_t i = 0 ; i < p ; i++ ){
+        err_d[i] = 1.0;
+
+    }
+
+    for( size_t i = 0 ; i < 2 * p ; i++ ){
+        reproj_err_d[i] = 1.0;
+    }
 
     __enzyme_autodiff((void*) ba_objective,
                         enzyme_const, n,
@@ -55,11 +64,11 @@ int main(int argc, const char** argv){
     int n = 49;
     int m = 7776;
     int p = 31843;
-    double *cams = new double[11 * n]{0.0};
-    double *X = new double[3 * m]{0.0};
-    double *w = new double[p]{0.0};
-    int *obs = new int[2 * p]{0};
-    double *feats = new double[2 * p]{0.0};
+    double *cams = new double[11 * n];
+    double *X = new double[3 * m];
+    double *w = new double[p];
+    int *obs = new int[2 * p];
+    double *feats = new double[2 * p];
 
     std::string benchmark = argv[1];
 
@@ -71,8 +80,21 @@ int main(int argc, const char** argv){
     int derivative_size = 11 * n + 3*m + p;
     double *J = new double [ derivative_size ];
 
+    for( size_t i = 0 ; i < derivative_size ; i++ ){
+        J[i] = 0.0;
+    }
+
     ba_d(n, m, p, cams, X, w, obs, feats, reproj_err, w_err, &J[0]);
 
+    double *cams_d = &J[0];
+    double *X_d = &J[11 * n];
+    double *w_d = &X_d[3 * m];
+
+    for( int i = 0 ; i < 20 ; i++ ){
+        std::cout << cams_d[i] << std::endl;
+    }
+
+    /*
     std::cout << reproj_err[0] << std::endl;
     std::cout << reproj_err[1] << std::endl;
 
@@ -93,7 +115,7 @@ int main(int argc, const char** argv){
       if(J[i] * J[i] > 0.01){
         std::cout << i << " : " << J[i] << std::endl;
       }
-    }
+    }*/
 
     /*
     printf("%.20lf\n", error);

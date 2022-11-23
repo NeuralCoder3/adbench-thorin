@@ -51,8 +51,9 @@ double relu(double x){
 
 void fully_connected_layer(int input_size, int output_size, const double *  input, const double *  weights, double * output){
     for( int i = 0 ; i < input_size ; i++ ){
+        auto inp = input[i];
         for( int j = 0 ; j < output_size ; j++ ){
-            output[j] += relu(input[i] * weights[j + i * output_size]);
+            output[j] += relu(inp * weights[j + i * output_size]);
         }
     }
 }
@@ -64,6 +65,7 @@ void mul(int input_size, int hidden_size, int output_size,
          double * hidden,
          const double * second_weights,
          double * output){
+
 
     fully_connected_layer(input_size, hidden_size, input, first_weights, hidden);
     fully_connected_layer(hidden_size, output_size, hidden, second_weights, output);
@@ -130,7 +132,7 @@ int main(int argc, const char** argv){
     auto output_d = new double[output_size];
     for (int i = 0; i < input_size; i++)
     {
-        input[i] = 0.1 * i + 1;
+        input[i] = i * 0.1 + 1;
         input_d[i] = 0;
     }
 
@@ -158,14 +160,13 @@ int main(int argc, const char** argv){
         output_d[0] = 0;
     }
 
-
     output_d[0] = 1;
     begin();
     mul_d(input_size, hidden_size, output_size, input, first_weights, hidden, second_weights, output,
                                    input_d, first_weights_d, hidden_d, second_weights_d, output_d);
     //mul(n,input,weights,output);
     eval();
-
+/*
     if(argc >= 5 && atoi(argv[4])){
         print(input_size, input);
         print(first_weights_size, first_weights);
@@ -178,6 +179,6 @@ int main(int argc, const char** argv){
         print(hidden_size, hidden_d);
         print(second_weights_size, second_weights_d);
         print(output_size, output_d);
-    }
+    }*/
     return 0;
 }

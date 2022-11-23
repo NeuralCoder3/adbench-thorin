@@ -4,10 +4,10 @@
 import torch
 import time
 
-for i in range(200, 201):
-    size = 300 * i
+for i in range(1, 50):
+    size = 1000 * i
 
-    torch.set_num_threads(1)
+    torch.set_num_threads(10)
     x = torch.rand(size, requires_grad=True)
 
     first_layer = torch.nn.Linear(size, size)

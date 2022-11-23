@@ -8,6 +8,8 @@ extern "C" {
     fn lgamma(f64) -> (f64);
     fn max(f64, f64) -> (f64);
     fn malloc(i64) -> (&mut[f64]);
+    fn begin() -> ();
+    fn eval() -> ();
     fn read_gmm_size(
         file: &[u8],
         d: &mut i32,
@@ -33,7 +35,7 @@ fn preprocess_qs( d: i32, k: i32,
     sum_qs : &mut[f64],
     Qdiags : &mut[f64]) -> ()
 {
-    let icf_sz = d * (d + 1) / 2;
+    let icf_sz = d * (d + 1) >> 1;
 
     for ik in 0 .. k {
         sum_qs(ik) = 0.0;
@@ -66,11 +68,12 @@ fn Qtimesx( d: i32,
         out(id) = Qdiag(id) * x(id);
     }
 
-    let mut Lparamsidx = 0;
 
+    let mut Lparamsidx = 0;
     for i in 0 .. d {
+        let x_val = x(i);
         for j in (i + 1) .. d {
-            out(j) += ltri(Lparamsidx) * x(i);
+            out(j) += ltri(Lparamsidx) * x_val;
             Lparamsidx++;
         }
     }
@@ -79,7 +82,18 @@ fn Qtimesx( d: i32,
 fn sqnorm(d: i32, v : &[f64]) -> (f64){
     let mut sum = 0.0;
     for i in 0 .. d {
-        sum += v(i) * v(i);
+        let val = v(i);
+        sum += val * val;
+    }
+
+    sum
+}
+
+fn sum(d: i32, v : &[f64]) -> (f64){
+    let mut sum = 0.0;
+    for i in 0 .. d {
+        let val = v(i);
+        sum += val;
     }
 
     sum
@@ -126,7 +140,7 @@ fn log_wishart_prior( p: i32, k: i32,
     icf: &[f64]) -> f64
 {
     let n = p + wishartM + 1;
-    let icf_sz = p * (p + 1) / 2;
+    let icf_sz = p * (p + 1) >> 1;
 
     let C = (n as f64) * (p as f64) * (log(wishartGamma) - 0.5 * log(2.0)) - log_gamma_distrib(0.5 * (n as f64), p);
 
@@ -143,6 +157,19 @@ fn log_wishart_prior( p: i32, k: i32,
     out - (k as f64) * C
 }
 
+extern fn print(size: i32, a : &mut [f64]) -> (){
+    for i in 0 .. size {
+        printDouble(a(i));
+        printString("\n");
+    }
+}
+
+extern fn const(size: i32, a : &mut [f64], value : f64) -> (){
+    for i in 0 .. size {
+        a(i) = value;
+    }
+}
+
 extern fn gmm(d: i32, k: i32, n: i32,
         wishartM: i32,
         wishartGamma: f64,
@@ -153,7 +180,7 @@ extern fn gmm(d: i32, k: i32, n: i32,
 
     let PI : f64 = 3.14159265359;
     let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
-    //let icf_sz = d * (d + 1) / 2;
+    let icf_sz = d * (d + 1) >> 1;
 
     let Qdiags = ~[d*k:f64];
     let sum_qs = ~[k:f64];
@@ -162,7 +189,7 @@ extern fn gmm(d: i32, k: i32, n: i32,
     let main_term = ~[k:f64];
 
     preprocess_qs(d, k, icf, sum_qs, Qdiags);
-/*
+
     let mut slse = 0.0;
 
     for ix in 0 .. n {
@@ -181,9 +208,7 @@ extern fn gmm(d: i32, k: i32, n: i32,
 
     let lse_alphas = logsumexp(k, alphas);
 
-    CONSTANT + slse - (n as f64) * lse_alphas + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf)*/
-
-    1.0
+    CONSTANT + slse - (n as f64) * lse_alphas + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf)
 }
 
 fn runGmmBenchmark(file: &[u8]) -> (){
@@ -200,10 +225,10 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let mut wishartM: i32 = 0;
     let mut wishartGamma: f64 = 1.0;
 
-    let alphas_size = k as u64;
-    let means_size = (d*k) as u64;
-    let icf_size = (k * ( d * (d + 1) / 2 ))  as u64;
-    let x_size = (d*n) as u64;
+    let alphas_size = k;
+    let means_size = (d*k);
+    let icf_size = (k * ( d * (d + 1) / 2 )) ;
+    let x_size = (d*n);
 
     let size = alphas_size + means_size + icf_size;
 
@@ -217,6 +242,11 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let icf_d = ~[icf_size:f64];
     let x_d = ~[x_size:f64];
 
+    const(alphas_size, alphas_d, 0.0);
+    const(means_size, means_d, 0.0);
+    const(icf_size, icf_d, 0.0);
+    const(x_size, x_d, 0.0);
+
     let wishartMp = &mut wishartM;
     let wishartGammap = &mut wishartGamma;
 
@@ -225,10 +255,20 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     //let result = gmm(d, k, n, wishartM, wishartGamma, alphas, means, icf, x);
 
     let diff = rev_diff(gmm);
-    let (fx, backward) = diff(d, k, n, wishartM, wishartGamma, alphas, means, icf, x);
-    let gradients = backward(alphas_d, means_d, icf_d, x_d, 1.0);
-
+    begin();
+    let (fx, backward) = diff(d, k, n, wishartM, wishartGamma, alphas, alphas_d, means, means_d, icf, icf_d, x, x_d);
+    backward(1.0);
+    eval();
+/*
     printDouble(fx);
+    printString("\nalpha gradients: \n");
+    print(alphas_size, alphas_d);
+    printString("\nmeans gradients: \n");
+    print(means_size, means_d);
+    printString("\nicf gradients: \n");
+    print(icf_size, icf_d);
+*/
+
 }
 
 

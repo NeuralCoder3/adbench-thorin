@@ -103,7 +103,10 @@ fn arr_max(n: i32,x : &[f64] ) -> f64
 {
     let mut m = x(0);
     for i in 1 .. n {
-        m = max(m, x(i));
+        let val = x(i);
+        if m < val{
+            m = val;
+        }
     }
 
     m

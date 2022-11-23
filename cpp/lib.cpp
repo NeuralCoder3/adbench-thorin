@@ -17,6 +17,13 @@
 #define MAX(A,B) ((A) > (B) ? A : B)
 
 extern "C"{
+
+void* malloc_test(size_t size){
+    void* result = malloc(size);
+    //printf("%p %zu\n", result, size);
+    return result;
+}
+
 void printString(const char* str){
     printf("%s ", str);
 }

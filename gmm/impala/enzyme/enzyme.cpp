@@ -7,6 +7,26 @@
 #include "../../../cpp/defs.h"
 #include <string>
 #include <iostream>
+#include<sys/time.h>
+
+
+long long timeInMilliseconds(void) {
+    struct timeval tv;
+
+    gettimeofday(&tv,NULL);
+    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
+}
+
+static long long startTime = 0;
+
+void begin(){
+    startTime = timeInMilliseconds();
+}
+
+void eval(){
+    long long endTime = timeInMilliseconds();
+    printf("%d\n", endTime - startTime);
+}
 
 extern double __enzyme_autodiff(void*, ...);
 
@@ -36,8 +56,8 @@ void gmm_d(int d, int k, int n,
                       enzyme_const, d,
                       enzyme_const, k,
                       enzyme_const, n,
-                      enzyme_const, wishart.gamma,
                       enzyme_const, wishart.m,
+                      enzyme_const, wishart.gamma,
                       enzyme_dup,   alphas, alphas_d,
                       enzyme_dup,   means, means_d,
                       enzyme_dup,   icf, icf_d,
@@ -78,14 +98,18 @@ int main(int argc, const char** argv){
 
     int icf_sz = d * (d + 1) / 2;
     J.resize(k + d * k + icf_sz * k);
+
+    begin();
     gmm_d(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart, &error, &J[0]);
 
-    printf("%.20lf\n", error);
+    eval();
+
+    //printf("%.20lf\n", error);
 
     double *alphas_d = &J[0];
     double *means_d = &J[k];
     double *icf_d = &J[k + d * k];
-
+/*
     printf("\n");
     printf("alpha derivative\n");
 
@@ -106,7 +130,7 @@ int main(int argc, const char** argv){
     for (int i = 0; i < k*icf_sz; i++)
     {
         printf("%.20lf\n", icf_d[i]);
-    }
+    }*/
 
     return 0;
 }

@@ -120,13 +120,10 @@ fn lstm(
     extra_params: &mut[f64],
     state: &[f64],
     sequence: &[f64],
-    sequence_d: &[f64],
 ) -> f64
 {
-    let mut t = 0;
     let mut total = 0.0;
-    let mut input = sequence; //!!!!!
-    let mut input_d = sequence_d; //!!!!!
+    let mut input = sequence;
     let ypred = ~[b: f64];
     let ynorm = ~[b: f64];
 
@@ -141,19 +138,15 @@ fn lstm(
         }
 
         let ygold = &sequence(t + b) as &[f64];
-        let ygold_d = &sequence_d(t + b) as &[f64];
 
         for i in 0 .. b{
             total += ygold(i) * ynorm(i);
         }
 
         input = ygold;
-
-        input_d =
     }
 
     let count = (c - 1) * b;
-    printInteger(count);
     -total / ( count as f64)
 }
 
