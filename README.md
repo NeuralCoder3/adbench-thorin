@@ -29,18 +29,38 @@ https://github.com/EnzymeAD/Enzyme
 In each folder (gmm, ba, lstm, nn) are these make targets:
 ```
 #Manual implementation
-  build-native 
-  run-native 
+  make build-native 
+  make run-native 
 
 #Impala Autodiff
-  build-impala 
-  run-impala 
+  make build-impala 
+  make run-impala 
 
 #Enzyme Autodiff on impala llvm code
-  build-enzyme-impala
-  run-enzyme-impala 
+  make build-enzyme-impala
+  make run-enzyme-impala 
 
 #Enzyme Autodiff on c llvm code
-  build-enzyme-native 
-  run-enzyme-native
+  make build-enzyme-native 
+  make run-enzyme-native
+```
+
+You can call the run commands with different benchmarks:
+```
+#NN
+  make run-<...> <input-size> <hidden-size> <output-size> [0|1 : disable or enable gradient print out]
+  make run-<...> 4 4 2 1
+  
+#GMM
+  make run-<...> <path-to-gmm-benchmark>
+  make run-<...> ../benchmark/gmm/1k/gmm_d2_K5.txt
+  
+#BA
+  make run-<...> <path-to-ba-benchmark>
+  make run-<...> ../benchmark/ba/ba1_n49_m7776_p31843.txt
+  
+#LSTM
+  make run-<...> <path-to-lstm-benchmark>
+  make run-<...> ../benchmark/lstm/lstm_l2_c1024.txt
+  
 ```
