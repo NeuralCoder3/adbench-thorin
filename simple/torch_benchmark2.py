@@ -1,27 +1,32 @@
 
 
-
-import torch
 import time
+import torch
+torch.set_num_threads(1)
 
 for i in range(1, 50):
     size = 1000 * i
 
-    torch.set_num_threads(10)
     x = torch.rand(size, requires_grad=True)
 
     first_layer = torch.nn.Linear(size, size)
     second_layer = torch.nn.Linear(size, 2)
     softmax = torch.nn.Softmax(dim=0)
 
-    start = time.time()
+    avg = 0
+    runs = 5
+    for k in range(runs):
+        start = time.time()
 
-    x = first_layer(x)
-    x = second_layer(x)
-    x = softmax(x)
+        t = first_layer(x)
+        t = second_layer(t)
+        t = softmax(t)
 
-    x = torch.sum(x)
-    x.backward()
+        t = torch.sum(t)
+        t.backward()
 
-    end = time.time()
-    print( int((end - start) * 1000))
+        end = time.time()
+        avg += end - start
+        # print(f"  {end - start:.2}s")
+    avg /= runs
+    print(f"{i}, {int(avg*1000)}")
