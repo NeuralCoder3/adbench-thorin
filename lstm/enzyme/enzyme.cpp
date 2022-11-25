@@ -7,6 +7,26 @@
 #include "../shared/lstm.h"
 #include "../../cpp/defs.h"
 #include "../../cpp/read.h"
+#include<sys/time.h>
+
+
+long long timeInMilliseconds(void) {
+    struct timeval tv;
+
+    gettimeofday(&tv,NULL);
+    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
+}
+
+static long long startTime = 0;
+
+void begin(){
+    startTime = timeInMilliseconds();
+}
+
+void eval(){
+    long long endTime = timeInMilliseconds();
+    printf("%d\n", endTime - startTime);
+}
 
 extern double __enzyme_autodiff(void*, ...);
 
@@ -64,7 +84,9 @@ int main(int argc, const char** argv){
 
     //lstm_objective(l, c, b, main_params, extra_params, state, sequence, &loss);
 
+    begin();
     lstm_d(l, c, b, &main_params[0], &extra_params[0], &state[0], &sequence[0], &loss, J);
+    eval();
     //lstm_objective(l, c, b, main_params, extra_params, state, sequence, &loss);
 
     double *main_d = &J[0];

@@ -1,16 +1,17 @@
 extern "C" {
-    fn printString(&[u8]) -> ();
     fn printFloat(f32) -> ();
     fn printDouble(f64) -> ();
     fn printInteger(i32) -> ();
+    fn printString(&[u8]) -> ();
     fn log(f64) -> (f64);
     fn exp(f64) -> (f64);
     fn sqrt(f64) -> (f64);
     fn sin(f64) -> (f64);
     fn cos(f64) -> (f64);
-    fn tanh(f64) -> (f64);
     fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
+    fn begin() -> ();
+    fn eval() -> ();
     fn read_ba_size(
         file: &[u8],
         n: &mut i32,
@@ -28,145 +29,139 @@ extern "C" {
         obs: &mut[i32],
         feats: &mut[f64]
     ) -> ();
+    fn compute_reproj_error_d(
+        cams: &[f64],
+        X: &[f64],
+        w: f64,
+        feat_x: f64,
+        feat_y: f64,
+        err: &mut[f64],
+        J: &mut[f64],
+    ) -> ();
 
-    fn read_lstm_instance(file: &[u8],
-                              l: &mut i32,
-                              c: &mut i32,
-                              b: &mut i32,
-                              main_params_p: &&mut[f64],
-                              extra_params_p: &&mut[f64],
-                              state_p: &&mut[f64],
-                              sequence_p: &&mut[f64]) -> ();
+    fn ba_objective(
+        n: i32,
+        m: i32,
+        p: i32,
+        cams: &[f64],
+        X: &[f64],
+        w: &[f64],
+        obs: &[i32],
+        feats: &[f64],
+        reproj_err: &mut[f64],
+        w_err: &mut[f64]) -> ();
 }
 
-fn sigmoid( x: f64) -> (f64)
+fn cross(
+    a : &[f64],
+    b : &[f64],
+    out : &mut[f64]) -> ()
 {
-    1.0 / (1.0 + exp(-x))
+    out(0) = a(1) * b(2) - a(2) * b(1);
+    out(1) = a(2) * b(0) - a(0) * b(2);
+    out(2) = a(0) * b(1) - a(1) * b(0);
 }
 
-fn logsumexp(vect: &[f64],  sz: i32) -> f64
+
+fn sqsum( n: i32, x : &[f64]) -> (f64)
 {
-    let mut sum = 2.0;
-    for i in 0 .. sz{
-        sum += exp(vect(i));
+    let mut res = 0.0;
+    for i in 0 .. n {
+        res = res + x(i) * x(i);
     }
-    log(sum)
+
+    res
 }
 
-// LSTM OBJECTIVE
-// The LSTM model
-fn lstm_model(
-    hsize: i32,
-    weight: &[f64],
-    bias: &[f64],
-    hidden: &mut[f64],
-    cell: &mut[f64],
-    input: &[f64]
-) -> ()
+
+fn rodrigues_rotate_point(
+    rot: &[f64],
+    pt: &[f64],
+    rotatedPt : &mut[f64]) -> ()
 {
-    for i in 0  .. hsize
+    let sqtheta = sqsum(3, rot);
+    if (sqtheta != 0.0)
     {
-        let forget = sigmoid(input(i) * weight(i) + bias(i));
-        let ingate = sigmoid(hidden(i) * weight(hsize + i) + bias(hsize + i));
-        let change = tanh(hidden(i) * weight(3 * hsize + i) + bias(3 * hsize + i));
-        cell(i) = cell(i) * forget + ingate * change;
+        let mut w : [f64 * 3];
+        let mut w_cross_pt : [f64 * 3];
 
-        let outgate = sigmoid(input(i) * weight(2 * hsize + i) + bias(2 * hsize + i));
-        hidden(i) = outgate * tanh(cell(i));
-    }
-}
+        let theta = sqrt(sqtheta);
+        let costheta = cos(theta);
+        let sintheta = sin(theta);
+        let theta_inverse = 1.0 / theta;
 
-// Predict LSTM output given an input
-fn lstm_predict(
-    l: i32,
-    b: i32,
-    w: &[f64],
-    w2: &[f64],
-    s: &[f64],
-    x: &[f64],
-    x2: &mut[f64]
-) -> ()
-{
-    for i in 0 .. b
-    {
-        x2(i) = x(i) * w2(i);
-    }
-
-    let weight = &(w(0))  as &mut[f64];
-    let bias = &(w((b) * 4)) as &mut[f64];
-    let hidden = &(s(0)) as &mut[f64];
-    let cell = &(s(b)) as &mut[f64];
-    lstm_model(b, weight, bias, hidden, cell, x2);
-
-    for j in 1 .. l
-    {
-        let i = 2 * j * b;
-        let last_i = 2 * (j - 1) * b;
-        let weight = &(w(i * 4))  as &mut[f64];
-        let bias = &(w((i + b) * 4)) as &mut[f64];
-        let last_hidden = &(s(last_i)) as &mut[f64];
-        let hidden = &(s(i)) as &mut[f64];
-        let cell = &(s(i + b)) as &mut[f64];
-        lstm_model(b, weight, bias, hidden, cell, last_hidden);
-    }
-
-    for i in 0 .. b
-    {
-        let hidden = &(s(2 * (l - 1) * b)) as &mut[f64];
-        x2(i) = hidden(i) * w2(b + i) + w2(2 * b + i);
-    }
-}
-
-// LSTM objective (loss function)
-fn lstm(
-    l: i32,
-    c: i32,
-    b: i32,
-    main_params: &mut[f64],
-    extra_params: &mut[f64],
-    state: &[f64],
-    sequence: &[f64],
-) -> f64
-{
-    let mut total = 0.0;
-    let ypred = ~[b: f64];
-    let ynorm = ~[b: f64];
-
-    lstm_predict(l, b, main_params, extra_params, state, sequence, ypred);
-    let lse = logsumexp(ypred, b);
-
-    for i in 0 .. b{
-        ynorm(i) = ypred(i) - lse;
-    }
-
-    let ygold = &sequence(b) as &[f64];
-
-    for i in 0 .. b{
-        total += ygold(i) * ynorm(i);
-    }
-
-    for i in 1 .. c - 1
-    {
-        let t = i * b;
-        let last_t = (i - 1) * b;
-
-        let input = &sequence(last_t + b) as &[f64];
-        lstm_predict(l, b, main_params, extra_params, state, input, ypred);
-        let lse = logsumexp(ypred, b);
-
-        for i in 0 .. b{
-            ynorm(i) = ypred(i) - lse;
+        for i in 0 .. 3 {
+            w(i) = rot(i) * theta_inverse;
         }
 
-        let ygold = &sequence(t + b) as &[f64];
+        cross(w, pt, &w_cross_pt as &mut[f64]);
 
-        for i in 0 .. b{
-            total += ygold(i) * ynorm(i);
+        let tmp = (w(0) * pt(0) + w(1) * pt(1) + w(2) * pt(2)) *
+            (1.0 - costheta);
+
+        for i in 0 .. 3 {
+            rotatedPt(i) = pt(i) * costheta + w_cross_pt(i) * sintheta + w(i) * tmp;
         }
     }
+    else
+    {
+        let mut rot_cross_pt : [f64 * 3];
+        cross(rot, pt, &rot_cross_pt as &mut[f64]);
 
-    let count = (c - 1) * b;
-    -total / ( count as f64)
+        for i in 0 .. 3 {
+            rotatedPt(i) = pt(i) + rot_cross_pt(i);
+        }
+    }
+}
+
+
+fn radial_distort(
+    rad_params : &[f64],
+    proj: &mut[f64]) -> ()
+{
+    let rsq = sqsum(2, proj);
+    let L = 1.0 + rad_params(0) * rsq + rad_params(1) * rsq * rsq;
+    proj(0) = proj(0) * L;
+    proj(1) = proj(1) * L;
+}
+
+
+fn project(cam: &[f64], X: &[f64], proj: &mut[f64]) -> (){
+
+    let C =  &cam(3) as &[f64];
+    let mut Xo : [f64 * 3];
+    let mut Xcam : [f64 * 3];
+
+    Xo(0) = X(0) - C(0);
+    Xo(1) = X(1) - C(1);
+    Xo(2) = X(2) - C(2);
+
+    rodrigues_rotate_point(&cam(0) as &[f64], &Xo as &mut[f64], &Xcam as &mut[f64]);
+
+    proj(0) = Xcam(0) / Xcam(2);
+    proj(1) = Xcam(1) / Xcam(2);
+
+    radial_distort(&cam(9) as &[f64], proj);
+
+    proj(0) = proj(0) * cam(6) + cam(7);
+    proj(1) = proj(1) * cam(6) + cam(8);
+}
+
+
+
+fn computeReprojError(cam: &[f64], X: &[f64], w: f64, feats: &[f64], err: &mut[f64]) -> (){
+    let mut proj : [f64 * 2];
+    project(cam, X, &proj as &mut[f64]);
+
+    err(0) = w * (proj(0) - feats(0));
+    err(1) = w * (proj(1) - feats(1));
+}
+
+
+
+fn computeZachWeightError(w: f64) -> (f64)
+{
+    1.0 - w * w
 }
 
 extern fn print(size: i32, a : &mut [f64]) -> (){
@@ -176,68 +171,131 @@ extern fn print(size: i32, a : &mut [f64]) -> (){
     }
 }
 
-extern fn const(size: i32, a : &mut [f64], value : f64) -> (){
+extern fn constDouble(size: i32, a : &mut [f64], value : f64) -> (){
     for i in 0 .. size {
         a(i) = value;
     }
 }
 
-fn runGmmBenchmark(file: &[u8]) -> (){
-
-    let mut l: i32;
-    let mut c: i32;
-    let mut b: i32;
-
-    let mut main_params: &mut[f64];
-    let mut extra_params: &mut[f64];
-    let mut state: &mut[f64];
-    let mut sequence: &mut[f64];
-
-
-    read_lstm_instance(file, &mut l, &mut c, &mut b, &mut main_params, &mut extra_params, &mut state, &mut sequence);
-
-    let main_sz = 2 * l * 4 * b;
-    let extra_sz = 3 * b;
-    let state_sz = 2 * l * b;
-    let seq_sz = c * b;
-
-    let mut main_params_d: &mut[f64] = ~[main_sz: f64];
-    let mut extra_params_d: &mut[f64] = ~[extra_sz: f64];
-    let mut state_d: &mut[f64] = ~[state_sz: f64];
-    let mut sequence_d: &mut[f64] = ~[seq_sz: f64];
-
-    const(main_sz, main_params_d, 0.0);
-    const(extra_sz, extra_params_d, 0.0);
-    const(state_sz, state_d, 0.0);
-    const(seq_sz, sequence_d, 0.0);
-
-    //let fx = lstm(l, c, b, main_params, extra_params, state, sequence);
-
-    let diff = rev_diff(lstm);
-    let (fx, backward) = diff(l, c, b, main_params, main_params_d, extra_params, extra_params_d, state, state_d, sequence, sequence_d);
-    let result = backward(1.0);
-
-    printDouble(fx);
-    printString("\n");
-    printString("extra_params_d\n");
-    print(3*b, extra_params_d);
-
-    //printDouble(loss);
+extern fn constInt(size: i32, a : &mut [i32], value : i32) -> (){
+    for i in 0 .. size {
+        a(i) = value;
+    }
 }
 
-fn main(argc: i32,argv :&[&[u8]]) -> i32 {
-    if argc < 2{
-        printString("No Benchmark specified");
-    }else{
-        let file = argv(1);
-        printString(file);
-        runGmmBenchmark(file);
+fn ba(n: i32, m: i32, p: i32, cams: &[f64], X: &[f64], w: &[f64], obs: &[i32], feats: &[f64], reproj_err: &mut[f64], w_err: &mut[f64]) -> (){
+
+    for i in 0  .. p
+    {
+        let camIdx = obs(i * 2 + 0);
+        let ptIdx = obs(i * 2 + 1);
+        computeReprojError(
+            &cams(camIdx * 11)  as &[f64],
+            &X(ptIdx * 3)  as &[f64],
+            w(i),
+            &feats(i * 2) as &[f64],
+            &reproj_err(2 * i) as &mut[f64]
+        );
     }
 
-    0
+    for i in 0 .. p
+    {
+        w_err(i) = computeZachWeightError(w(i));
+    }
 }
 
+fn runGmmBenchmark(file: &[u8]) -> (){
+
+    let mut n = 2;
+    let mut m = 5;
+    let mut p = 1000;
+
+    read_ba_size(file, &mut n, &mut m, &mut p);
+
+    let nCamParams = 11;
+
+    let cams = ~[nCamParams * n:f64];
+    let X = ~[3 * m:f64];
+    let w = ~[p:f64];
+    let obs = ~[2 * p:i32];
+    let feats = ~[2 * p:f64];
+
+    let reproj_err = ~[2 * p:f64];
+    let w_err = ~[p:f64];
+
+    read_ba_instance(file, n, m, p, cams, X, w, obs, feats);
+
+    let cams_d = ~[nCamParams * n:f64];
+    let X_d = ~[3 * m:f64];
+    let w_d = ~[p:f64];
+    let obs_d = ~[2 * p:i32];
+    let feats_d = ~[2 * p:f64];
+    let reproj_err_d = ~[2 * p:f64];
+    let w_err_d = ~[p:f64];
+
+    constDouble(nCamParams * n, cams_d, 0.0);
+    constDouble(3 * m, X_d, 0.0);
+    constDouble(p, w_d, 0.0);
+    constInt(2 * p, obs_d, 0);
+    constDouble(2 * p, feats_d, 0.0);
+    constDouble(2 * p, reproj_err_d, 1.0);
+    constDouble(p, w_err_d, 1.0);
+/*
+    printInteger(n);
+    printInteger(m);
+    printInteger(p);
+    printDouble(cams(0));
+*/
+    //ba(n, m, p, cams, X, w, obs, feats, reproj_err, w_err);
+
+    /*printDouble(w_err(0));
+    printDouble(w_err(1));
+    printDouble(w_err(2));
+*/
+
+    let diff = rev_diff(ba);
+    begin();
+    let backward = diff(n, m, p, cams, cams_d, X, X_d, w, w_d, obs, obs_d, feats, feats_d, reproj_err, reproj_err_d, w_err, w_err_d);
+    backward();
+    eval();
+/*
+    printString("\ncams gradients: \n");
+    print(20, cams_d);*/
+
+/*
+
+    ba_objective(n, m, p, cams, X, w, obs, feats, reproj_err, w_err);
+
+    let J = ~[2 * (nCamParams + 3):f64];
+
+    for i in 0 .. p {
+        let camIdx = obs(2 * i);
+        let ptIdx = obs(2 * i + 1);
+
+        let currentCams =  &cams(nCamParams * camIdx) as &[f64];
+        let currentX =  &X(nCamParams * camIdx) as &[f64];
+        let currentW = w(i);
+        let feat_x = feats(2 * i);
+        let feat_y = feats(2 * i + 1);
+        let current_reproj_err =  &reproj_err(2 * i) as &mut[f64];
+
+        compute_reproj_error_d(currentCams, currentX, currentW, feat_x, feat_y, current_reproj_err, J );
+    }
 
 
+    for i in 0 .. p {
+        let mut w_err = 0.0;
+        let mut w_d = 0.0;
+        compute_zach_weight_error_d(w(i), &mut w_err, &mut w_d);
 
+        printDouble(w_err);
+        printDouble(w_d);
+    }*/
+
+}
+
+fn main() -> i32 {
+    runGmmBenchmark("../benchmark/ba/ba1_n49_m7776_p31843.txt");
+    0
+}
 

@@ -99,7 +99,7 @@ int main(int argc, const char** argv){
     double *icf_d = &J[k + d * k];
     double *x_d = &J[k + d * k];
 
-    /*
+/*
     printf("%f, \n", error);
     printf("alpha derivative\n");
 

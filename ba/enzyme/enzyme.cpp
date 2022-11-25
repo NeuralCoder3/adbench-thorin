@@ -8,6 +8,26 @@
 #include "../shared/ba_d.h"
 #include "../../cpp/defs.h"
 #include "../../cpp/read.h"
+#include<sys/time.h>
+
+
+long long timeInMilliseconds(void) {
+    struct timeval tv;
+
+    gettimeofday(&tv,NULL);
+    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
+}
+
+long long startTime = 0;
+
+void begin(){
+    startTime = timeInMilliseconds();
+}
+
+void eval(){
+    long long endTime = timeInMilliseconds();
+    printf("%d\n", endTime - startTime);
+}
 
 extern double __enzyme_autodiff(void*, ...);
 
@@ -84,15 +104,17 @@ int main(int argc, const char** argv){
         J[i] = 0.0;
     }
 
+    begin();
     ba_d(n, m, p, cams, X, w, obs, feats, reproj_err, w_err, &J[0]);
 
+    eval();
     double *cams_d = &J[0];
     double *X_d = &J[11 * n];
     double *w_d = &X_d[3 * m];
-
+/*
     for( int i = 0 ; i < 20 ; i++ ){
         std::cout << cams_d[i] << std::endl;
-    }
+    }*/
 
     /*
     std::cout << reproj_err[0] << std::endl;

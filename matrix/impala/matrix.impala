@@ -41,7 +41,7 @@ fn fully_connected_layer(input_size: i32, output_size: i32, input : &[f64], weig
     }
 }
 
-extern fn nn(input_size: i32, hidden_size: i32, output_size: i32, input : &[f64], first_weights: &[f64], hidden_output: &mut [f64], second_weights: &[f64], output: & mut[f64]) -> (){
+fn mul(input_size: i32, hidden_size: i32, output_size: i32, input : &[f64], first_weights: &[f64], hidden_output: &mut [f64], second_weights: &[f64], output: & mut[f64]) -> (){
     fully_connected_layer(input_size, hidden_size, input, first_weights, hidden_output);
     fully_connected_layer(hidden_size, output_size, hidden_output, second_weights, output);
     softmax(output_size, output, output);
@@ -99,13 +99,13 @@ fn main(argc: i32, argv: &[&[u8]]) -> i32 {
 
     output_d(0) = 1.0;
     begin();
-    let diff = rev_diff(nn);
+    let diff = rev_diff(mul);
 
-    let backward = diff(input_size, hidden_size, output_size, input, input_d, first_weights, first_weights_d, hidden_output, hidden_output_d, second_weights, second_weights_d, output, output_d);
+    let backward = diff(input_size, hidden_size, output_size, input, 0 as &mut[f64], first_weights, first_weights_d, hidden_output, hidden_output_d, second_weights, second_weights_d, output, output_d);
     let result = backward();
 
     //let backward = diff(input_size, hidden_size, output_size, input, first_weights, hidden_output, second_weights, output);
-    //let result = backward(input_d, first_weights_d, hidden_output_d, second_weights_d, output_d);
+    //let result = backward(0 as &mut[f64], first_weights_d, hidden_output_d, second_weights_d, output_d);
 
     eval();
 

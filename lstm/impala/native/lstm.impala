@@ -11,6 +11,8 @@ extern "C" {
     fn tanh(f64) -> (f64);
     fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
+    fn begin() -> ();
+    fn eval() -> ();
     fn read_ba_size(
         file: &[u8],
         n: &mut i32,
@@ -214,8 +216,11 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     //let fx = lstm(l, c, b, main_params, extra_params, state, sequence);
 
     let diff = rev_diff(lstm);
+    begin();
     let (fx, backward) = diff(l, c, b, main_params, main_params_d, extra_params, extra_params_d, state, state_d, sequence, sequence_d);
     let result = backward(1.0);
+    eval();
+
 
     printDouble(fx);
     printString("\n");

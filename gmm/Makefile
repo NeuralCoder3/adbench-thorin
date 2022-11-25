@@ -24,7 +24,6 @@ IMPALA_EXE := ../../impala/build/bin/impala
 CC := clang++
 
 build-native:
-	source ../../project.sh
 	mkdir -p ${NATIVE_MANUAL_BUILD}
 	${CC} manual/main.cpp ${SHARED_ALL}/read.cpp ${SHARED}/gmm_d.cpp ${SHARED}/gmm.cpp -O2 -o ${NATIVE_MANUAL_BUILD}/gmm_manual
 
