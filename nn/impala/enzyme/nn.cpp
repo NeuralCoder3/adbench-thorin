@@ -19,7 +19,7 @@ using namespace std;
 
 
 extern "C"{
-    void loss_c_stub(int input_size, int hidden_size, int output_size, double const* input, double const* first_weights, double* hidden_output, double const* second_weights, double* output){
+    void loss_c_stub(int input_size, int hidden_size, int output_size, double const* __restrict input, double const* __restrict first_weights, double* __restrict hidden_output, double const* __restrict second_weights, double* __restrict output){
         nn_f(
                 input_size, hidden_size, output_size,
                 input,

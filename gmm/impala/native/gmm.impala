@@ -259,7 +259,7 @@ fn runGmmBenchmark(file: &[u8]) -> (){
 
     let diff = rev_diff(gmm);
     begin();
-    let (fx, backward) = diff(d, k, n, wishartM, wishartGamma, alphas, alphas_d, means, means_d, icf, icf_d, x, x_d);
+    let (fx, backward) = diff(d, k, n, wishartM, wishartGamma, alphas, alphas_d, means, means_d, icf, icf_d, x, 0 as &mut[f64]);
     backward(1.0);
     eval();
 /*
@@ -269,8 +269,8 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     printString("\nmeans gradients: \n");
     print(means_size, means_d);
     printString("\nicf gradients: \n");
-    print(icf_size, icf_d);*/
-
+    print(icf_size, icf_d);
+*/
 
 }
 

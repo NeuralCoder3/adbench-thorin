@@ -68,18 +68,12 @@ void lstm_model(
     double const* input
 )
 {
+
     for (int i = 0; i < hsize; i++)
     {
-        auto forget = sigmoid(input[i] * weight[i] + bias[i]);
-        auto ingate = sigmoid(hidden[i] * weight[hsize + i] + bias[hsize + i]);
-        auto outgate = sigmoid(input[i] * weight[2 * hsize + i] + bias[2 * hsize + i]);
-        auto change = tanh(hidden[i] * weight[3 * hsize + i] + bias[3 * hsize + i]);
-
-        cell[i] = cell[i] * forget + ingate * change;
-        hidden[i] = outgate * tanh(cell[i]);
+        auto outgate = (input[i] * weight[2 * hsize + i]);
+        hidden[i] = outgate ;
     }
-
-
 }
 
 // Predict LSTM output given an input
@@ -91,25 +85,24 @@ void lstm_predict(
     double const* w2, // extra_params
     double* s, //state
     double const* x, //input
-    double* x2
+    double* x2//ypred
 )
 {
-    int i;
-    for (i = 0; i < b; i++)
+    for (int i = 0; i < b; i++)
     {
-        x2[i] = x[i] * w2[i];
+        x2[i] *= x[i];
     }
 
-    double* xp = x2;
-    for (i = 0; i <= 2 * l * b - 1; i += 2 * b)
+    auto hidden = &(s[2 * b]);
+
+    for (int i = 0; i < b; i++)
     {
-        lstm_model(b, &(w[i * 4]), &(w[(i + b) * 4]), &(s[i]), &(s[i + b]), xp);
-        xp = &(s[i]);
+        hidden[i] = x2[i] ;
     }
 
-    for (i = 0; i < b; i++)
+    for (int i = 0; i < b; i++)
     {
-        x2[i] = xp[i] * w2[b + i] + w2[2 * b + i];
+        x2[i] = hidden[i] + w2[2 * b + i];
     }
 }
 
@@ -134,28 +127,11 @@ void lstm_objective(
     const double* ygold;
     double lse;
 
-    for (t = 0; t <= (c - 1) * b - 1; t += b)
-    {
-        lstm_predict(l, b, main_params, extra_params, state, input, ypred);
-        lse = logsumexp(ypred, b);
-        for (i = 0; i < b; i++)
-        {
-            ynorm[i] = ypred[i] - lse;
-        }
+    lstm_predict(l, b, main_params, extra_params, state, input, ypred);
 
-        ygold = &(sequence[t + b]);
-        for (i = 0; i < b; i++)
-        {
-            total += ygold[i] * ynorm[i];
-        }
+    *loss = sum(ypred, b);
 
-
-        count += b;
-        input = ygold;
-    }
-
-    *loss = -total / count;
-free(ypred);
+    free(ypred);
     free(ynorm);
 }
 

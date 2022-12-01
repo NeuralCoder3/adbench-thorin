@@ -87,7 +87,7 @@ fn main(argc: i32, argv: &[&[u8]]) -> i32 {
     let hidden_output_d = ~[hidden_size: f64];
     let output_d = ~[output_size: f64];
 
-    init(input_size, input, 1.0);
+    init(input_size, input, -0.2);
     init(first_weights_size, first_weights, 0.0);
     init(second_weights_size, second_weights, 0.0);
     const(output_size, output, 0.0);

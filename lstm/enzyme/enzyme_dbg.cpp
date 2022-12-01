@@ -43,16 +43,8 @@ void lstm_d(int l, int c, int b,
           double *loss,
           double *J){
 
-
-    int main_sz = 2 * l * 4 * b;
-    int extra_sz = 3 * b;
-    int state_sz = 2 * l * b;
-    int seq_sz = c * b;
-
-    double *main_d = J;
-    double *extra_d = &main_d[main_sz];
-    double *state_d = &extra_d[extra_sz];
-    double *sequence_d = &state_d[state_sz];
+    double *main_d = &J[0];
+    double *extra_d = &J[2 * l * 4 * b];
 
     double loss_d = 1.0;
 
@@ -60,10 +52,10 @@ void lstm_d(int l, int c, int b,
                         enzyme_const, l,
                         enzyme_const, c,
                         enzyme_const, b,
-                        enzyme_dup, main_params, main_d,
-                        enzyme_dup, extra_params, extra_d,
-                        enzyme_dup, state, state_d,
-                        enzyme_dup, sequence, sequence_d,
+                        enzyme_dup,   main_params, main_d,
+                        enzyme_dup,   extra_params, extra_d,
+                        enzyme_const,   state,
+                        enzyme_const, sequence,
                         enzyme_dup, loss, &loss_d);
 }
 
@@ -86,12 +78,8 @@ int main(int argc, const char** argv){
 
     read_lstm_instance(benchmark.c_str(), &l, &c, &b, main_params, extra_params, state, sequence);
 
-    int main_sz = 2 * l * 4 * b;
-    int extra_sz = 3 * b;
-    int state_sz = 2 * l * b;
-    int seq_sz = c * b;
-
-    double *J = new double [main_sz + extra_sz + state_sz + seq_sz];
+    int gradient_size = 2 * l * 4 * b + 3 * b;
+    double *J = new double [2 * l * 4 * b + 3 * b];
     double loss;
 
 
@@ -107,7 +95,9 @@ int main(int argc, const char** argv){
 
     printf("\n");
 
+    std::cout << loss << std::endl;
     for( size_t i = 0 ; i < 3 * b ; i++ ){
+
         std::cout << extra_d[i] << std::endl;
     }
 

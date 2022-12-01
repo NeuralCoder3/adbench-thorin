@@ -105,7 +105,7 @@ int main(int argc, const char** argv){
     eval();
 
     //printf("%.20lf\n", error);
-
+/*
     double *alphas_d = &J[0];
     double *means_d = &J[k];
     double *icf_d = &J[k + d * k];
@@ -130,7 +130,7 @@ int main(int argc, const char** argv){
     for (int i = 0; i < k*icf_sz; i++)
     {
         printf("%.20lf\n", icf_d[i]);
-    }
+    }*/
 
     return 0;
 }

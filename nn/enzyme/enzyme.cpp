@@ -49,7 +49,7 @@ double relu(double x){
     }
 }
 
-void fully_connected_layer(int input_size, int output_size, const double *  input, const double *  weights, double * output){
+void fully_connected_layer(int input_size, int output_size, const double * __restrict input, const double * __restrict weights, double * __restrict output){
     for( int i = 0 ; i < input_size ; i++ ){
         auto inp = input[i];
         for( int j = 0 ; j < output_size ; j++ ){
@@ -60,11 +60,11 @@ void fully_connected_layer(int input_size, int output_size, const double *  inpu
 
 
 void mul(int input_size, int hidden_size, int output_size,
-         const double *  input,
-         const double *  first_weights,
-         double * hidden,
-         const double * second_weights,
-         double * output){
+         const double * __restrict input,
+         const double * __restrict first_weights,
+         double * __restrict hidden,
+         const double * __restrict second_weights,
+         double * __restrict output){
     fully_connected_layer(input_size, hidden_size, input, first_weights, hidden);
     fully_connected_layer(hidden_size, output_size, hidden, second_weights, output);
     softmax(output_size, output, output);
@@ -130,7 +130,7 @@ int main(int argc, const char** argv){
     auto output_d = new double[output_size];
     for (int i = 0; i < input_size; i++)
     {
-        input[i] = i * 0.1 + 1;
+        input[i] = i * 0.1 - 0.2;
         input_d[i] = 0;
     }
 
