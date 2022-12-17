@@ -3,180 +3,168 @@ extern "C" {
     fn printFloat(f32) -> ();
     fn printDouble(f64) -> ();
     fn printInteger(i32) -> ();
+    fn printLong(i64) -> ();
     fn log(f64) -> (f64);
+    fn free(&mut[f64]) -> ();
     fn exp(f64) -> (f64);
-    fn sigmoid(f64) -> (f64);
-    fn sqrt(f64) -> (f64);
-    fn sin(f64) -> (f64);
-    fn cos(f64) -> (f64);
-    fn tanh(f64) -> (f64);
-    fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
+    fn max(f64, f64) -> (f64);
+    fn malloc(i64) -> (&mut[f64]);
     fn begin() -> ();
-    fn eval() -> ();
-    fn read_ba_size(
+    fn eval() -> (i64);
+    fn read_gmm_size(
         file: &[u8],
+        d: &mut i32,
+        k: &mut i32,
+        n: &mut i32
+    ) -> ();
+    fn read_gmm(
+        file: &[u8],
+        d: &mut i32,
+        k: &mut i32,
         n: &mut i32,
-        m: &mut i32,
-        p: &mut i32
+        wishartM: &mut i32,
+        wishartGamma: &mut f64,
+        alphas: &mut[f64],
+        means: &mut[f64],
+        icf: &mut[f64],
+        x: &mut[f64],
     ) -> ();
-    fn read_ba_instance(
-        file: &[u8],
-        n: i32,
-        m: i32,
-        p: i32,
-        cams: &mut[f64],
-        X: &mut[f64],
-        w: &mut[f64],
-        obs: &mut[i32],
-        feats: &mut[f64]
-    ) -> ();
-
-    fn read_lstm_instance(file: &[u8],
-                              l: &mut i32,
-                              c: &mut i32,
-                              b: &mut i32,
-                              main_params_p: &&mut[f64],
-                              extra_params_p: &&mut[f64],
-                              state_p: &&mut[f64],
-                              sequence_p: &&mut[f64]) -> ();
 }
 
-/*
-fn sigmoid( x: f64) -> (f64)
+fn preprocess_qs( d: i32, k: i32,
+    icf : &[f64],
+    sum_qs : &mut[f64],
+    Qdiags : &mut[f64]) -> ()
 {
-    1.0 / (1.0 + exp(-x))
-}*/
+    let icf_sz = d * (d + 1) >> 1;
 
-fn logsumexp(vect: &[f64],  sz: i32) -> f64
-{
-    let mut sum = 2.0;
-    for i in 0 .. sz{
-        sum += exp(vect(i));
-    }
-    log(sum)
-}
+    for ik in 0 .. k {
+        sum_qs(ik) = 0.0;
 
-// LSTM OBJECTIVE
-// The LSTM model
-fn lstm_model(
-    hsize: i32,
-    weight: &[f64],
-    bias: &[f64],
-    hidden: &mut[f64],
-    cell: &mut[f64],
-    input: &[f64]
-) -> ()
-{
-    for i in 0  .. hsize
-    {
-        let forget = sigmoid(input(i) * weight(i) + bias(i));
-        let ingate = sigmoid(hidden(i) * weight(hsize + i) + bias(hsize + i));
-        let change = tanh(hidden(i) * weight(3 * hsize + i) + bias(3 * hsize + i));
-        cell(i) = cell(i) * forget + ingate * change;
-
-        let outgate = sigmoid(input(i) * weight(2 * hsize + i) + bias(2 * hsize + i));
-        hidden(i) = outgate * tanh(cell(i));
+        for id in 0 .. d {
+            let q = icf(ik * icf_sz + id);
+            sum_qs(ik) = sum_qs(ik) + q;
+            Qdiags(ik * d + id) = exp(q);
+        }
     }
 }
 
-// Predict LSTM output given an input
-fn lstm_predict(
-    l: i32,
-    b: i32,
-    w: &[f64],
-    w2: &[f64],
-    s: &[f64],
+fn subtract( d: i32,
     x: &[f64],
-    x2: &mut[f64]
-) -> ()
+    y: &[f64],
+    out: &mut[f64]) -> ()
 {
-    for i in 0 .. b
-    {
-        x2(i) = x(i) * w2(i);
-    }
-
-    let weight = &(w(0))  as &mut[f64];
-    let bias = &(w((b) * 4)) as &mut[f64];
-    let hidden = &(s(0)) as &mut[f64];
-    let cell = &(s(b)) as &mut[f64];
-    lstm_model(b, weight, bias, hidden, cell, x2);
-
-    for j in 1 .. l
-    {
-        let i = 2 * j * b;
-        let last_i = 2 * (j - 1) * b;
-        let weight = &(w(i * 4))  as &mut[f64];
-        let bias = &(w((i + b) * 4)) as &mut[f64];
-        let last_hidden = &(s(last_i)) as &mut[f64];
-        let hidden = &(s(i)) as &mut[f64];
-        let cell = &(s(i + b)) as &mut[f64];
-        lstm_model(b, weight, bias, hidden, cell, last_hidden);
-    }
-
-    for i in 0 .. b
-    {
-        let hidden = &(s(2 * (l - 1) * b)) as &mut[f64];
-        x2(i) = hidden(i) * w2(b + i) + w2(2 * b + i);
+    for id in 0 .. d {
+        out(id) = x(id) - y(id);
     }
 }
 
-// LSTM objective (loss function)
-fn lstm(
-    l: i32,
-    c: i32,
-    b: i32,
-    main_params: &mut[f64],
-    extra_params: &mut[f64],
-    state: &[f64],
-    sequence: &[f64],
-) -> f64
+fn Qtimesx( d: i32,
+    Qdiag: &[f64],
+    ltri: &[f64], // strictly lower triangular part
+    x: &[f64],
+    out: &mut[f64]) -> ()
 {
-    let mut total = 0.0;
-    let ypred = ~[b: f64];
-    let ynorm = ~[b: f64];
-
-    lstm_predict(l, b, main_params, extra_params, state, sequence, ypred);
-    let lse = logsumexp(ypred, b);
-
-    for i in 0 .. b{
-        ynorm(i) = ypred(i) - lse;
+    for id in 0 .. d {
+        out(id) = Qdiag(id) * x(id);
     }
 
-    let ygold = &sequence(b) as &[f64];
 
-    for i in 0 .. b{
-        total += ygold(i) * ynorm(i);
-    }
-
-    for i in 1 .. c - 1
-    {
-        let t = i * b;
-        let last_t = (i - 1) * b;
-
-        let input = &sequence(last_t + b) as &[f64];
-        lstm_predict(l, b, main_params, extra_params, state, input, ypred);
-        let lse = logsumexp(ypred, b);
-
-        for i in 0 .. b{
-            ynorm(i) = ypred(i) - lse;
-        }
-
-        let ygold = &sequence(t + b) as &[f64];
-
-        for i in 0 .. b{
-            total += ygold(i) * ynorm(i);
+    let mut Lparamsidx = 0;
+    for i in 0 .. d {
+        let x_val = x(i);
+        for j in (i + 1) .. d {
+            out(j) += ltri(Lparamsidx) * x_val;
+            Lparamsidx++;
         }
     }
+}
 
-    let count = (c - 1) * b;
-    -total / ( count as f64)
+fn sqnorm(d: i32, v : &[f64]) -> (f64){
+    let mut sum = 0.0;
+    for i in 0 .. d {
+        let val = v(i);
+        sum += val * val;
+    }
+
+    sum
+}
+
+fn sum(d: i32, v : &[f64]) -> (f64){
+    let mut sum = 0.0;
+    for i in 0 .. d {
+        let val = v(i);
+        sum += val;
+    }
+
+    sum
+}
+
+fn arr_max(n: i32,x : &[f64] ) -> f64
+{
+    let mut m = x(0);
+    for i in 1 .. n {
+        let val = x(i);
+        if m < val{
+            m = val;
+        }
+    }
+
+    m
+}
+
+fn logsumexp( n: i32, x : &[f64] ) -> f64
+{
+    let mx = arr_max(n, x);
+    let mut semx = 0.0;
+    for i in 0 .. n {
+        semx += exp(x(i) - mx);
+    }
+    log(semx) + mx
+}
+
+fn log_gamma_distrib( a: f64, p: i32) -> f64
+{
+    let PI : f64 = 3.14159265359;
+    let mut out = 0.25 * ((p * (p - 1)) as f64) * log(PI);
+
+    for j in 0 .. p {
+        out += lgamma(a - 0.5 * (j as f64));
+    }
+
+    out
+}
+
+
+fn log_wishart_prior( p: i32, k: i32,
+    wishartM: i32,
+    wishartGamma: f64,
+    sum_qs: &[f64],
+    Qdiags: &[f64],
+    icf: &[f64]) -> f64
+{
+    let n = p + wishartM + 1;
+    let icf_sz = p * (p + 1) >> 1;
+
+    let C = (n as f64) * (p as f64) * (log(wishartGamma) - 0.5 * log(2.0)) - log_gamma_distrib(0.5 * (n as f64), p);
+
+    let mut out = 0.0;
+
+    for ik in 0 .. k {
+        let currentQdiags =  &Qdiags(ik * p) as &[f64];
+        let currentIfc =  &icf(ik * icf_sz + p) as &[f64];
+
+        let frobenius = sqnorm(p, currentQdiags) + sqnorm(icf_sz - p, currentIfc);
+        out += 0.5 * wishartGamma * wishartGamma * frobenius - (wishartM as f64) * sum_qs(ik);
+    }
+
+    out - (k as f64) * C
 }
 
 extern fn print(size: i32, a : &mut [f64]) -> (){
     for i in 0 .. size {
         printDouble(a(i));
-        printString("\n");
     }
 }
 
@@ -186,69 +174,151 @@ extern fn const(size: i32, a : &mut [f64], value : f64) -> (){
     }
 }
 
-fn runGmmBenchmark(file: &[u8]) -> (){
+extern fn gmm(d: i32, k: i32, n: i32,
+        wishartM: i32,
+        wishartGamma: f64,
+        alphas : &[f64],
+        means : &[f64],
+        icf : &[f64],
+        x : &[f64]) -> f64{
 
-    let mut l: i32;
-    let mut c: i32;
-    let mut b: i32;
+    let PI : f64 = 3.14159265359;
+    let CONSTANT = -(n as f64) * ( d as f64) * 0.5 * log(2.0 * PI);
+    let icf_sz = d * (d + 1) >> 1;
 
-    let mut main_params: &mut[f64];
-    let mut extra_params: &mut[f64];
-    let mut state: &mut[f64];
-    let mut sequence: &mut[f64];
+    let Qdiags = ~[d*k:f64];
+    let sum_qs = ~[k:f64];
+    let xcentered = ~[d:f64];
+    let Qxcentered = ~[d:f64];
+    let main_term = ~[k:f64];
 
+    preprocess_qs(d, k, icf, sum_qs, Qdiags);
 
-    read_lstm_instance(file, &mut l, &mut c, &mut b, &mut main_params, &mut extra_params, &mut state, &mut sequence);
+    let mut slse = 0.0;
 
-    let main_sz = 2 * l * 4 * b;
-    let extra_sz = 3 * b;
-    let state_sz = 2 * l * b;
-    let seq_sz = c * b;
+    for ix in 0 .. n {
+        let currentX : &[f64] =  &x(ix * d) as &[f64];
+        for ik in 0 .. k {
+            let currentQdiags =  &Qdiags(ik * d) as &[f64];
+            let currentMeans =  &means(ik * d) as &[f64];
+            let currentIfc =  &icf(ik * icf_sz + d) as &[f64];
 
-    let grad_sz = main_sz + extra_sz + state_sz + seq_sz;
-    let mut gradients : &mut[f64] = ~[grad_sz: f64];
+            subtract(d, currentX, currentMeans, xcentered);
+            Qtimesx(d, currentQdiags, currentIfc, xcentered, Qxcentered);
+            main_term(ik) = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm(d, Qxcentered);
+        }
+        slse += logsumexp(k, main_term);
+    }
 
-    let mut main_params_d: &mut[f64] = gradients;
-    let mut extra_params_d: &mut[f64] = &main_params_d(main_sz) as &mut[f64];
-    let mut state_d: &mut[f64] = &extra_params_d(extra_sz) as &mut[f64];
-    let mut sequence_d: &mut[f64] = &state_d(state_sz) as &mut[f64];
+    let lse_alphas = logsumexp(k, alphas);
 
-    const(main_sz, main_params_d, 0.0);
-    const(extra_sz, extra_params_d, 0.0);
-    const(state_sz, state_d, 0.0);
-    const(seq_sz, sequence_d, 0.0);
+    let result = CONSTANT + slse - (n as f64) * lse_alphas + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
 
-    //let fx = lstm(l, c, b, main_params, extra_params, state, sequence);
+    free(Qdiags);
+    free(sum_qs);
+    free(xcentered);
+    free(Qxcentered);
+    free(main_term);
 
-    let diff = rev_diff(lstm);
-    begin();
-    let (fx, backward) = diff(l, c, b, main_params, main_params_d, extra_params, extra_params_d, state, state_d, sequence, sequence_d);
-    let result = backward(1.0);
-    eval();
-
-
-    printString("extra_params_d\n");
-    print(extra_sz, extra_params_d);
-    printString("\n");
-    printDouble(fx);
-
-
-    //printDouble(loss);
+    result
 }
+
+fn runBenchmark(d: i32, k: i32, n: i32,
+                        wishartM: i32,
+                        wishartGamma: f64,
+                        alphas : &[f64],
+                        alphas_d : &mut[f64],
+                        means : &[f64],
+                        means_d : &mut[f64],
+                        icf : &[f64],
+                        icf_d : &mut[f64],
+                        x : &[f64]) -> i64{
+
+
+    let alphas_size = k;
+    let means_size = (d*k);
+    let icf_size = (k * ( d * (d + 1) / 2 )) ;
+    let x_size = (d*n);
+
+    const(alphas_size, alphas_d, 0.0);
+    const(means_size, means_d, 0.0);
+    const(icf_size, icf_d, 0.0);
+
+    let diff = rev_diff(gmm);
+    begin();
+    let (fx, backward) = diff(d, k, n, wishartM, wishartGamma, alphas, alphas_d, means, means_d, icf, icf_d, x, 0 as &mut[f64]);
+    backward(1.0);
+    eval()
+}
+
+fn initBenchmark(file: &[u8]) -> (){
+    let mut d = 2;
+    let mut k = 5;
+    let mut n = 1000;
+
+    let dp = &mut d;
+    let kp = &mut k;
+    let np = &mut n;
+
+    read_gmm_size(file, dp, kp, np);
+
+    let mut wishartM: i32 = 0;
+    let mut wishartGamma: f64 = 1.0;
+
+    let alphas_size = k;
+    let means_size = (d*k);
+    let icf_size = (k * ( d * (d + 1) / 2 )) ;
+    let x_size = (d*n);
+
+    let size = alphas_size + means_size + icf_size;
+
+    let alphas = ~[alphas_size:f64];
+    let means = ~[means_size:f64];
+    let icf = ~[icf_size:f64];
+    let x = ~[x_size:f64];
+
+    let J = ~[size:f64];
+
+    let alphas_d = J;
+    let means_d = &alphas_d(alphas_size) as &mut[f64];
+    let icf_d = &means_d(means_size) as &mut[f64];
+
+    let wishartMp = &mut wishartM;
+    let wishartGammap = &mut wishartGamma;
+    read_gmm(file, dp, kp, np, wishartMp, wishartGammap, alphas, means, icf, x);
+
+    let min_samples = 10;
+    let min_time = 500 as i64;
+
+    let mut time_sum = 0 as i64;
+    let mut count = 0;
+    let mut min_runtime = -1 as i64;
+
+    while( time_sum < 10000 as i64 && (count < min_samples || time_sum < min_time) ){
+        let time = runBenchmark(d, k, n, wishartM, wishartGamma, alphas, alphas_d, means, means_d, icf, icf_d, x);
+        if min_runtime == -1 as i64 || time < min_runtime{
+            min_runtime = time;
+        }
+
+        time_sum += time;
+        count++;
+    }
+
+    printLong(min_runtime);
+    print(size, J);
+}
+
 
 fn main(argc: i32,argv :&[&[u8]]) -> i32 {
     if argc < 2{
         printString("No Benchmark specified");
     }else{
         let file = argv(1);
-        printString(file);
-        runGmmBenchmark(file);
+        //printString(file);
+        initBenchmark(file);
     }
 
     0
 }
-
-
-
 
 

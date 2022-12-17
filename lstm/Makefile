@@ -15,7 +15,7 @@ ENZYME_NATIVE_BUILD := ${BUILD_lstm}/enzyme
 NATIVE_IMPALA_BUILD := ${BUILD_lstm}/impala/native
 NATIVE_MANUAL_BUILD := ${BUILD_lstm}/manual
 
-NATIVE_MANUAL_BUILD_CPP := ${SHARED_ALL}/read.cpp ${SHARED}/lstm.cpp ./manual/main.cpp ./manual/lstm_d.cpp
+NATIVE_MANUAL_BUILD_CPP := ${SHARED_ALL}/read.cpp ${SHARED_ALL}/lib.cpp ${SHARED}/lstm.cpp ./manual/main.cpp ./manual/lstm_d.cpp
 
 RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 $(eval $(RUN_ARGS):;@:)
@@ -24,6 +24,12 @@ LLVM_BIN := /Users/chris/CLionProjects/anydsl/llvm_install/bin/
 ENZYME_LIB := ../../Enzyme2/enzyme/build/Enzyme/LLVMEnzyme-12.dylib
 IMPALA_EXE := ../../impala/build/bin/impala
 CC := clang++
+
+
+
+LLVM_BIN := /opt/homebrew/Cellar/llvm/15.0.3/bin
+ENZYME_LIB := /opt/homebrew/Cellar/enzyme/0.0.45/lib/LLVMEnzyme-15.dylib
+
 
 build:
 	mkdir -p ${ENZYME_NATIVE_BUILD}
@@ -75,17 +81,19 @@ run-enzyme-impala:
 
 build-enzyme-native:
 	mkdir -p ${ENZYME_NATIVE_BUILD} 
-	${CC} ${ENZYME_NATIVE}/enzyme.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/enzyme_input.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops
-	${CC} ${SHARED_ALL}/read.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/read.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops
-	${CC} ${SHARED}/lstm.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/lstm.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops
+	${LLVM_BIN}/${CC} ${ENZYME_NATIVE}/enzyme.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/enzyme_input.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops -Xclang -no-opaque-pointers
+	${LLVM_BIN}/${CC} ${SHARED_ALL}/read.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/read.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops -Xclang -no-opaque-pointers
+	${LLVM_BIN}/${CC} ${SHARED_ALL}/lib.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/lib.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops -Xclang -no-opaque-pointers
+	${LLVM_BIN}/${CC} ${SHARED}/lstm.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/lstm.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops -Xclang -no-opaque-pointers
 	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_input.ll 
-	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/lstm.ll -o ${ENZYME_NATIVE_BUILD}/lstm.bc 
-	${LLVM_BIN}/llvm-link ${ENZYME_NATIVE_BUILD}/enzyme_input.bc ${ENZYME_NATIVE_BUILD}/lstm.bc  -o ${ENZYME_NATIVE_BUILD}/bundle.bc 
+	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/lib.ll
+	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/lstm.ll
+	${LLVM_BIN}/llvm-link ${ENZYME_NATIVE_BUILD}/enzyme_input.bc ${ENZYME_NATIVE_BUILD}/lstm.bc ${ENZYME_NATIVE_BUILD}/lib.bc  -o ${ENZYME_NATIVE_BUILD}/bundle.bc
 	${LLVM_BIN}/llvm-dis ${ENZYME_NATIVE_BUILD}/bundle.bc -o ${ENZYME_NATIVE_BUILD}/bundle.ll 
-	${LLVM_BIN}/opt ${ENZYME_NATIVE_BUILD}/bundle.ll -load=${ENZYME_LIB} -enzyme -o ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -S -enable-new-pm=0
+	${LLVM_BIN}/opt ${ENZYME_NATIVE_BUILD}/bundle.ll -load=${ENZYME_LIB} -enzyme -o ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -S -enable-new-pm=0 -enzyme-inline=1
 	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -o ${ENZYME_NATIVE_BUILD}/enzyme_output.bc 
 	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/read.ll -o ${ENZYME_NATIVE_BUILD}/read.bc 
-	${CC} ${ENZYME_NATIVE_BUILD}/enzyme_output.bc ${ENZYME_NATIVE_BUILD}/read.bc -O2 -o ${ENZYME_NATIVE_BUILD}/lstm_enzyme
+	${LLVM_BIN}/${CC} ${ENZYME_NATIVE_BUILD}/enzyme_output.bc ${ENZYME_NATIVE_BUILD}/read.bc -O2 -o ${ENZYME_NATIVE_BUILD}/lstm_enzyme
 
 run-enzyme-native:
 	${ENZYME_NATIVE_BUILD}/lstm_enzyme $(RUN_ARGS)

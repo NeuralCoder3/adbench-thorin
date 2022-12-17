@@ -1,0 +1,236 @@
+extern "C" {
+    fn printFloat(f32) -> ();
+    fn printDouble(f64) -> ();
+    fn printInteger(i32) -> ();
+    fn printLong(i64) -> ();
+    fn printString(&[u8]) -> ();
+    fn log(f64) -> (f64);
+    fn exp(f64) -> (f64);
+    fn sqrt(f64) -> (f64);
+    fn sin(f64) -> (f64);
+    fn cos(f64) -> (f64);
+    fn logf(f32) -> (f32);
+    fn lgamma(f64) -> (f64);
+    fn begin() -> ();
+    fn eval() -> (i64);
+    fn read_ba_size(
+        file: &[u8],
+        n: &mut i32,
+        m: &mut i32,
+        p: &mut i32
+    ) -> ();
+    fn read_ba_instance(
+        file: &[u8],
+        n: i32,
+        m: i32,
+        p: i32,
+        cams: &mut[f64],
+        X: &mut[f64],
+        w: &mut[f64],
+        obs: &mut[i32],
+        feats: &mut[f64]
+    ) -> ();
+    fn compute_reproj_error_d(
+        cams: &[f64],
+        X: &[f64],
+        w: f64,
+        feat_x: f64,
+        feat_y: f64,
+        err: &mut[f64],
+        J: &mut[f64],
+    ) -> ();
+
+    fn ba_objective(
+        n: i32,
+        m: i32,
+        p: i32,
+        cams: &[f64],
+        X: &[f64],
+        w: &[f64],
+        obs: &[i32],
+        feats: &[f64],
+        reproj_err: &mut[f64],
+        w_err: &mut[f64]) -> ();
+}
+
+fn cross(
+    a : &[f64],
+    b : &[f64],
+    out : &mut[f64]) -> ()
+{
+    out(0) = a(1) * b(2) - a(2) * b(1);
+    out(1) = a(2) * b(0) - a(0) * b(2);
+    out(2) = a(0) * b(1) - a(1) * b(0);
+}
+
+
+fn sqsum( n: i32, x : &[f64]) -> (f64)
+{
+    let mut res = 0.0;
+    for i in 0 .. n {
+        res = res + x(i) * x(i);
+    }
+
+    res
+}
+
+
+fn rodrigues_rotate_point(
+    rot: &[f64],
+    pt: &[f64],
+    rotatedPt : &mut[f64]) -> ()
+{
+    let sqtheta = sqsum(3, rot);
+
+    if (sqtheta != 0.0)
+    {
+        let mut w : [f64 * 3];
+        let mut w_cross_pt : [f64 * 3];
+
+        cross(w, pt, &w_cross_pt as &mut[f64]);
+
+        for i in 0 .. 3 {
+            rotatedPt(i) = w_cross_pt(i);
+        }
+    }
+}
+
+
+fn radial_distort(
+    rad_params : &[f64],
+    proj: &mut[f64]) -> ()
+{
+    let rsq = sqsum(2, proj);
+    let L = 1.0 + rad_params(0) * rsq + rad_params(1) * rsq * rsq;
+    proj(0) = proj(0) * L;
+    proj(1) = proj(1) * L;
+}
+
+
+fn project(cam: &[f64], X: &[f64], proj: &mut[f64]) -> (){
+
+    let mut Xcam : [f64 * 3];
+
+    rodrigues_rotate_point(&cam(0) as &[f64], &X as &mut[f64], &Xcam as &mut[f64]);
+
+    proj(0) = Xcam(0);
+    proj(1) = Xcam(1);
+}
+
+
+
+fn compute_reproj_error(cam: &[f64], X: &[f64], w: f64, feats: &[f64], err: &mut[f64]) -> (){
+    let mut proj : [f64 * 2];
+    project(cam, X, &proj as &mut[f64]);
+
+    err(0) = w * (proj(0) - feats(0));
+    err(1) = w * (proj(1) - feats(1));
+}
+
+
+
+fn compute_zach_weight_error(w: f64) -> (f64)
+{
+    1.0 - w * w
+}
+
+extern fn print(size: i32, a : &mut [f64]) -> (){
+    for i in 0 .. size {
+        printDouble(a(i));
+        printString("\n");
+    }
+}
+
+extern fn constDouble(size: i32, a : &mut [f64], value : f64) -> (){
+    for i in 0 .. size {
+        a(i) = value;
+    }
+}
+
+extern fn constInt(size: i32, a : &mut [i32], value : i32) -> (){
+    for i in 0 .. size {
+        a(i) = value;
+    }
+}
+
+
+extern fn brusselator_f(x: f64, y: f64, t: f64) -> f64 {
+    // 1.0/(((i+j)*(i+j+1)/2+i+1) as f64)
+    let eq1 = ((x-0.3)*(x-0.3) + (y-0.6)*(y-0.6)) <= 0.01;
+    let eq2 = t>=1.1;
+    if (eq1 && eq2) {
+        5.0
+    } else {
+        0.0
+    }
+}
+
+extern fn RANGE_cps(min:f64, max:f64, i:f64, N:f64) -> f64 {
+    let h = (max-min)/(N-1.0);
+    let x = i*h+min;
+    x
+}
+
+
+// &mut [f64]
+extern fn brusselator_2d_loop(du: &mut[f64], dv: &mut[f64], u: &[f64], v: &[f64], p:&[f64], t: f64) -> () {
+    let N = 32;
+    let N_f64 = 32.0;
+    let xmin = 0.0;
+    let xmax = 1.0;
+    let ymin = 0.0;
+    let ymax = 1.0;
+
+
+    let A = p(0);
+    let B = p(1);
+    let dx = 1.0 / ((N-1) as f64);
+    let alpha = p(2)/(dx*dx);
+
+    for i in 0 .. N {
+        let x = RANGE_cps(xmin,xmax, (i as f64), N_f64);
+
+        let ip1 = (if i == N-1 { i } else { i+1 });
+        let im1 = (if i == 0 { i } else { i-1 });
+
+        for j in 0 .. N {
+            let y = RANGE_cps(ymin,ymax, (j as f64), N_f64);
+
+            let jp1 = (if j == N-1 { j } else { j+1 });
+            let jm1 = (if j == 0 { j } else { j-1 });
+
+            let u2v = u(N*i+j)*u(N*i+j)*v(N*i+j);
+
+            du(N*i+j) = alpha*(u(N*im1+j) + u(N*ip1+j) + u(N*i+jp1) + u(N*i+jm1) - 4.0*u(N*i+j)) + B + u2v - (A+1.0)* u(N*i+j) + brusselator_f(x,y,t);
+            dv(N*i+j) = alpha*(v(N*im1+j) + v(N*ip1+j) + v(N*i+jp1) + v(N*i+jm1) - 4.0*v(N*i+j)) + A *u(N*i+j) - u2v;
+        }
+    }
+}
+
+
+fn runGmmBenchmark(file: &[u8]) -> (){
+
+    let size = 0;
+    let du = ~[size:f64];
+    let dv = ~[size:f64];
+    let u = ~[size:f64];
+    let v = ~[size:f64];
+    let p = ~[size:f64];
+
+    let du_d = ~[size:f64];
+    let dv_d = ~[size:f64];
+    let u_d = ~[size:f64];
+    let v_d = ~[size:f64];
+    let p_d = ~[size:f64];
+
+//du: &mut[f64], dv: &mut[f64], u: &[f64], v: &[f64], p:&[f64], t: f64) -
+
+    let dcompute_reproj_error = rev_diff(brusselator_2d_loop);
+    dcompute_reproj_error(du, du_d, dv, dv_d, u, u_d, v, v_d, p, p_d, 1.0 );
+}
+
+fn main() -> i32 {
+    runGmmBenchmark("../benchmark/ba/ba1_n49_m7776_p31843.txt");
+    0
+}
+

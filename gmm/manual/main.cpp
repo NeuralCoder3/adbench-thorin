@@ -2,28 +2,7 @@
 #include "../shared/gmm_d.h"
 #include <stdio.h>
 #include "../../cpp/read.h"
-#include <string>
-#include<sys/time.h>
-
-
-long long timeInMilliseconds(void) {
-    struct timeval tv;
-
-    gettimeofday(&tv,NULL);
-    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
-}
-
-long long startTime = 0;
-
-void begin(){
-    startTime = timeInMilliseconds();
-}
-
-void eval(){
-    long long endTime = timeInMilliseconds();
-    printf("%d\n", endTime - startTime);
-}
-
+#include "../../cpp/lib.h"
 
 int main(int argc, const char** argv){
     if(argc < 2){
@@ -43,51 +22,40 @@ int main(int argc, const char** argv){
     std::string benchmark = argv[1];//"benchmark/gmm_d2_K5.txt";
     read_gmm_instance(benchmark, &d, &k, &n, alphas, means, icf, x, wishart, false);
 
-    //cpp : -5240.590563
-    //impala : -5240.589720
-    //diff: 0.000843
-
     double error = 0;
     gmm_objective(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart.gamma, wishart.m, &error);
-
 
     std::vector<double> J;
 
     int icf_sz = d * (d + 1) / 2;
-    J.resize(k + d * k + icf_sz * k);
-    begin();
-    gmm_objective_d(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart.gamma, wishart.m, &error, &J[0]);
-    eval();
 
-    double *alphas_d = &J[0];
-    double *means_d = &J[k];
-    double *icf_d = &J[k + d * k];
+    auto min_samples = 10;
+    long min_time = 500;
 
-    /*
-    printf("\n");
-    printf("alpha derivative\n");
+    auto count = 0;
+    long min_runtime = -1;
+    long time_sum = 0;
 
-    for (int i = 0; i < k; i++)
-    {
-        printf("%.20lf\n", alphas_d[i]);
+    while(time_sum < 10000  && (count < min_samples || time_sum < min_time)){
+        J.clear();
+        J.resize(k + d * k + icf_sz * k);
+        begin();
+        gmm_objective_d(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart.gamma, wishart.m, &error, &J[0]);
+        auto time = eval();
+
+        if(min_runtime == -1 || time < min_runtime){
+            min_runtime = time;
+        }
+
+        time_sum += time;
+        count++;
     }
 
-    printf("\n");
-    printf("means derivative\n");
-    for (int i = 0; i < k*d; i++)
+    printLong(min_runtime);
+    for (int i = 0; i < J.size(); i++)
     {
-        printf("%.20lf\n", means_d[i]);
+        std::cout << std::setprecision(20) << J[i] << std::endl;
     }
-
-    printf("\n");
-    printf("icf derivative\n");
-    for (int i = 0; i < k*icf_sz; i++)
-    {
-        printf("%.20lf\n", icf_d[i]);
-    }
-
-    printf("error\n");
-    printf("%.20lf\n", error);*/
 
     return 0;
 }

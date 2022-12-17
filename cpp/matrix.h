@@ -18,7 +18,7 @@ template<typename T>
 int arr_max_idx(int n, const T* const x);
 
 template<typename T>
-T sqnorm(int n, const T* const x);
+T sqnorm(int n, const T*  __restrict__ const x);
 
 template<typename T>
 void cross(

@@ -31,7 +31,7 @@ double sigmoid(double x)
 }
 
 // log(sum(exp(x), 2))
-double logsumexp(double const* vect, int sz)
+double logsumexp(double const*  __restrict__ vect, int sz)
 {
     double sum = 0.0;
     int i;
@@ -45,7 +45,7 @@ double logsumexp(double const* vect, int sz)
     return log(sum);
 }
 
-double sum(double const* vect, int sz)
+double sum(double const*  __restrict__ vect, int sz)
 {
     double sum = 0.0;
 
@@ -63,9 +63,9 @@ void lstm_model(
     int hsize,
     double const* weight,
     double const* bias,
-    double* hidden,
-    double* cell,
-    double const* input
+    double*  __restrict__ hidden,
+    double*  __restrict__ cell,
+    double const*  __restrict__ input
 )
 {
     for (int i = 0; i < hsize; i++)
@@ -78,8 +78,6 @@ void lstm_model(
         cell[i] = cell[i] * forget + ingate * change;
         hidden[i] = outgate * tanh(cell[i]);
     }
-
-
 }
 
 // Predict LSTM output given an input
@@ -87,11 +85,11 @@ void lstm_model(
 void lstm_predict(
     int l,
     int b,
-    double const* w, //main_params
-    double const* w2, // extra_params
-    double* s, //state
-    double const* x, //input
-    double* x2
+    double const*  __restrict__ w, //main_params
+    double const*  __restrict__ w2, // extra_params
+    double*  __restrict__ s, //state
+    double const*  __restrict__ x, //input
+    double*  __restrict__ x2
 )
 {
     int i;
@@ -118,43 +116,49 @@ void lstm_objective(
     int l,
     int c,
     int b,
-    double const* main_params,
-    double const* extra_params,
-    double* state,
-    double const* sequence,
-    double* loss
+    double const*  __restrict__ main_params,
+    double const*  __restrict__ extra_params,
+    double*  __restrict__ state,
+    double const*  __restrict__ sequence,
+    double*  __restrict__ loss
 )
 {
-    int i, t;
     double total = 0.0;
-    int count = 0;
-    const double* input = &(sequence[0]);
     double* ypred = (double*)malloc(b * sizeof(double));
     double* ynorm = (double*)malloc(b * sizeof(double));
     const double* ygold;
     double lse;
 
-    for (t = 0; t <= (c - 1) * b - 1; t += b)
+    lstm_predict(l, b, main_params, extra_params, state, &(sequence[0]), ypred);
+    lse = logsumexp(ypred, b);
+    for (int i = 0; i < b; i++)
     {
-        lstm_predict(l, b, main_params, extra_params, state, input, ypred);
+        ynorm[i] = ypred[i] - lse;
+    }
+
+    for (int i = 0; i < b; i++)
+    {
+        total += sequence[i + b] * ynorm[i];
+    }
+
+    for (int i = 1; i < c - 1; i++)
+    {
+        int t = i * b;
+        int t_last = (i - 1) * b;
+        lstm_predict(l, b, main_params, extra_params, state, &(sequence[t_last + b]), ypred);
         lse = logsumexp(ypred, b);
-        for (i = 0; i < b; i++)
+        for (int i = 0; i < b; i++)
         {
             ynorm[i] = ypred[i] - lse;
         }
 
-        ygold = &(sequence[t + b]);
-        for (i = 0; i < b; i++)
+        for (int i = 0; i < b; i++)
         {
-            total += ygold[i] * ynorm[i];
+            total += sequence[t + b + i] * ynorm[i];
         }
-
-
-        count += b;
-        input = ygold;
     }
 
-    *loss = -total / count;
+    *loss = -total / ((c - 1) * b);
 free(ypred);
     free(ynorm);
 }

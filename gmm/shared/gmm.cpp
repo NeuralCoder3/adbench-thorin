@@ -10,7 +10,7 @@ using std::vector;
 #include "gmm.h"
 
 
-double logsumexp(int n, const double* const __restrict x)
+double logsumexp(int n, const double* const __restrict__ x)
 {
   double mx = arr_max(n, x);
   double semx = 0.;
@@ -24,9 +24,9 @@ double logsumexp(int n, const double* const __restrict x)
 double log_wishart_prior(int p, int k,
                     const double wishart_gamma,
                     const int wishart_m,
-                    const double* const __restrict sum_qs,
-                    const double* const __restrict Qdiags,
-                    const double* const __restrict icf)
+                    const double* const __restrict__ sum_qs,
+                    const double* const __restrict__ Qdiags,
+                    const double* const __restrict__ icf)
 {
   int n = p + wishart_m + 1;
   int icf_sz = p * (p + 1) / 2;
@@ -46,9 +46,9 @@ double log_wishart_prior(int p, int k,
 
 
 void preprocess_qs(int d, int k,
-                   const double* const __restrict icf,
-                   double* __restrict sum_qs,
-                   double* __restrict Qdiags)
+                   const double* const __restrict__ icf,
+                   double* __restrict__ sum_qs,
+                   double* __restrict__ Qdiags)
 {
   int icf_sz = d * (d + 1) / 2;
   for (int ik = 0; ik < k; ik++)
@@ -65,9 +65,9 @@ void preprocess_qs(int d, int k,
 
 
 void Qtimesx(int d,
-             const double* const __restrict Qdiag,
-             const double* const __restrict ltri, // strictly lower triangular part
-             const double* const __restrict x,
+             const double* const __restrict__ Qdiag,
+             const double* const __restrict__ ltri, // strictly lower triangular part
+             const double* const __restrict__ x,
              double* out)
 {
     int i, j;
@@ -88,13 +88,13 @@ void Qtimesx(int d,
 }
 
 void gmm_objective(int d, int k, int n,
-                   const double* const __restrict alphas,
-                   const double* const __restrict means,
-                   const double* const __restrict icf,
-                   const double* const __restrict x,
+                   const double* const __restrict__ alphas,
+                   const double* const __restrict__ means,
+                   const double* const __restrict__ icf,
+                   const double* const __restrict__ x,
                    const double wishart_gamma,
                    const int wishart_m,
-                   double* __restrict err)
+                   double* __restrict__ err)
 {
 
   const double CONSTANT = -n * d * 0.5 * log(2 * PI);

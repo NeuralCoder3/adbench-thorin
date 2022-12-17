@@ -1,32 +1,9 @@
-#include <math.h>
 #include <stdio.h>
-#include <stdbool.h>
-#include <string>
 #include <iostream>
 #include <vector>
 #include "../shared/gmm.h"
-#include "../../cpp/defs.h"
+#include "../../cpp/lib.h"
 #include "../../cpp/read.h"
-#include<sys/time.h>
-
-
-long long timeInMilliseconds(void) {
-    struct timeval tv;
-
-    gettimeofday(&tv,NULL);
-    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
-}
-
-long long startTime = 0;
-
-void begin(){
-    startTime = timeInMilliseconds();
-}
-
-void eval(){
-    long long endTime = timeInMilliseconds();
-    printf("%d\n", endTime - startTime);
-}
 
 extern double __enzyme_autodiff(void*, ...);
 
@@ -36,31 +13,36 @@ int enzyme_out;
 int enzyme_const;
 
 void gmm_d(int d, int k, int n,
-           const double *alphas,
-           const double *means,
-           const double *icf,
-           const double *x,
-           const double wishart_gamma,
-           const int wishart_m,
-           double *err,
-           double *J){
+           const double * __restrict__ alphas,
+           const double * __restrict__ means,
+           const double * __restrict__ icf,
+           const double * __restrict__ x,
+           const Wishart wishart,
+           double * __restrict__ err,
+           double * __restrict__ J){
 
     double *alphas_d = &J[0];
     double *means_d = &J[k];
     double *icf_d = &J[k + d * k];
 
     double err_d = 1.0;
+    double test_d = 1.0;
+    int test2_d = 1.0;
+
+    int lol1;
+    int lol2;
+    int lol3;
 
     __enzyme_autodiff((void*)gmm_objective,
-                        enzyme_const, d,
-                        enzyme_const, k,
-                        enzyme_const, n,
+                        enzyme_dup, d, lol1,
+                        enzyme_dup, k, lol2,
+                        enzyme_dup, n, lol3,
                         enzyme_dup,   alphas, alphas_d,
                         enzyme_dup,   means, means_d,
                         enzyme_dup,   icf, icf_d,
                         enzyme_const, x,
-                        enzyme_const, wishart_gamma,
-                        enzyme_const, wishart_m,
+                        enzyme_dup, wishart.gamma, test_d,
+                        enzyme_dup, wishart.m, test2_d,
                         enzyme_dup, err, &err_d);
 }
 
@@ -89,38 +71,34 @@ int main(int argc, const char** argv){
     int icf_sz = d * (d + 1) / 2;
     J.resize(k + d * k + icf_sz * k);
 
-    begin();
-    gmm_d(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart.gamma, wishart.m, &error, &J[0]);
-    eval();
+    auto min_samples = 10;
+    long min_time = 500;
 
+    auto count = 0;
+    long min_runtime = -1;
+    long time_sum = 0;
 
-    double *alphas_d = &J[0];
-    double *means_d = &J[k];
-    double *icf_d = &J[k + d * k];
-    double *x_d = &J[k + d * k];
+    while(time_sum < 10000  && (count < min_samples || time_sum < min_time)){
+        J.clear();
+        J.resize(k + d * k + icf_sz * k);
+        begin();
+        gmm_d(d, k, n, &alphas[0], &means[0], &icf[0], &x[0], wishart, &error, &J[0]);
+        auto time = eval();
 
-/*
-    printf("%f, \n", error);
-    printf("alpha derivative\n");
+        if(min_runtime == -1 || time < min_runtime){
+            min_runtime = time;
+        }
 
-    for (int i = 0; i < k; i++)
-    {
-        printf("%.20lf\n", alphas_d[i]);
+        time_sum += time;
+        count++;
     }
 
-    printf("\n");
-    printf("means derivative\n");
-    for (int i = 0; i < k*d; i++)
+    printLong(min_runtime);
+    for (int i = 0; i < J.size(); i++)
     {
-        printf("%.20lf\n", means_d[i]);
+        std::cout << std::setprecision(20) << J[i] << std::endl;
     }
 
-    printf("\n");
-    printf("icf derivative\n");
-    for (int i = 0; i < k*icf_sz; i++)
-    {
-        printf("%.20lf\n", icf_d[i]);
-    }*/
 
     return 0;
 }

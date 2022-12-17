@@ -1,0 +1,262 @@
+extern "C" {
+    fn printFloat(f32) -> ();
+    fn printDouble(f64) -> ();
+    fn printInteger(i32) -> ();
+    fn printLong(i64) -> ();
+    fn printString(&[u8]) -> ();
+    fn log(f64) -> (f64);
+    fn exp(f64) -> (f64);
+    fn sqrt(f64) -> (f64);
+    fn sin(f64) -> (f64);
+    fn cos(f64) -> (f64);
+    fn logf(f32) -> (f32);
+    fn lgamma(f64) -> (f64);
+    fn begin() -> ();
+    fn eval() -> (i64);
+    fn read_ba_size(
+        file: &[u8],
+        n: &mut i32,
+        m: &mut i32,
+        p: &mut i32
+    ) -> ();
+    fn read_ba_instance(
+        file: &[u8],
+        n: i32,
+        m: i32,
+        p: i32,
+        cams: &mut[f64],
+        X: &mut[f64],
+        w: &mut[f64],
+        obs: &mut[i32],
+        feats: &mut[f64]
+    ) -> ();
+    fn compute_reproj_error_d(
+        cams: &[f64],
+        X: &[f64],
+        w: f64,
+        feat_x: f64,
+        feat_y: f64,
+        err: &mut[f64],
+        J: &mut[f64],
+    ) -> ();
+
+    fn ba_objective(
+        n: i32,
+        m: i32,
+        p: i32,
+        cams: &[f64],
+        X: &[f64],
+        w: &[f64],
+        obs: &[i32],
+        feats: &[f64],
+        reproj_err: &mut[f64],
+        w_err: &mut[f64]) -> ();
+}
+
+fn cross(
+    a : &[f64],
+    b : &[f64],
+    out : &mut[f64]) -> ()
+{
+    out(0) = a(1) * b(2) - a(2) * b(1);
+    out(1) = a(2) * b(0) - a(0) * b(2);
+    out(2) = a(0) * b(1) - a(1) * b(0);
+}
+
+
+fn sqsum( n: i32, x : &[f64]) -> (f64)
+{
+    let mut res = 0.0;
+    for i in 0 .. n {
+        res = res + x(i) * x(i);
+    }
+
+    res
+}
+
+
+fn sum( n: i32, x : &[f64]) -> (f64)
+{
+    let mut res = 0.0;
+    for i in 0 .. n {
+        res = res + x(i) ;
+    }
+
+    res
+}
+
+
+fn rodrigues_rotate_point(
+    rot: &[f64],
+    pt: &[f64],
+    rotatedPt : &mut[f64]) -> ()
+{
+    let mut save : [f64 * 3];
+
+    let sqtheta = sqsum(3, rot);
+    if (sqtheta != 0.0)
+    {
+        for i in 0 .. 3 {
+            save(i) = rot(i);
+        }
+
+        cross(rot, pt, &save as &mut[f64]);
+
+        for i in 0 .. 3 {
+            rotatedPt(i) = save(i);
+        }
+    }
+}
+
+
+fn radial_distort(
+    rad_params : &[f64],
+    proj: &mut[f64]) -> ()
+{
+    let rsq = sqsum(2, proj);
+    let L = 1.0 + rad_params(0) * rsq + rad_params(1) * rsq * rsq;
+    proj(0) = proj(0) * L;
+    proj(1) = proj(1) * L;
+}
+
+
+fn project(cam: &[f64], X: &[f64], proj: &mut[f64]) -> (){
+    if (cam(0) != 0.0)
+    {
+        proj(0) = cam(0) * X(0);
+    }
+
+
+
+    let rsq = sqsum(2, proj);
+    proj(0) = proj(0) * rsq;
+}
+
+
+
+fn compute_reproj_error(cam: &[f64], X: &[f64], w: f64, feats: &[f64], err: &mut[f64]) -> (){
+    if (cam(0) != 0.0)
+    {
+        err(0) = X(0);
+    }
+
+    let mut rsq = 0.0;
+    for i in 0 .. 2 {
+        rsq += err(i);
+    }
+
+    err(0) = err(1) * rsq;
+}
+
+
+
+fn compute_zach_weight_error(w: f64) -> (f64)
+{
+    1.0 - w * w
+}
+
+extern fn print(size: i32, a : &mut [f64]) -> (){
+    for i in 0 .. size {
+        printDouble(a(i));
+        printString("\n");
+    }
+}
+
+extern fn constDouble(size: i32, a : &mut [f64], value : f64) -> (){
+    for i in 0 .. size {
+        a(i) = value;
+    }
+}
+
+extern fn constInt(size: i32, a : &mut [i32], value : i32) -> (){
+    for i in 0 .. size {
+        a(i) = value;
+    }
+}
+
+
+
+fn runGmmBenchmark(file: &[u8]) -> (){
+
+    let mut n = 2;
+    let mut m = 5;
+    let mut p = 1000;
+
+    read_ba_size(file, &mut n, &mut m, &mut p);
+
+    let nCamParams = 11;
+
+    let cams = ~[nCamParams * n:f64];
+    let X = ~[3 * m:f64];
+    let w = ~[p:f64];
+    let obs = ~[2 * p:i32];
+    let feats = ~[2 * p:f64];
+
+    let reproj_err = ~[2 * p:f64];
+    let w_err = ~[p:f64];
+
+    read_ba_instance(file, n, m, p, cams, X, w, obs, feats);
+
+    let cams_d = ~[nCamParams * n:f64];
+    let X_d = ~[3 * m:f64];
+    let w_d = ~[p:f64];
+    let obs_d = ~[2 * p:i32];
+    let feats_d = ~[2 * p:f64];
+    let reproj_err_d = ~[2 * p:f64];
+    let w_err_d = ~[p:f64];
+
+    let min_samples = 10;
+    let min_time = 500 as i64;
+
+    let mut time_sum = 0 as i64;
+    let mut count = 0;
+    let mut min_runtime = -1 as i64;
+
+    //let mut error : [f64 * 2];
+
+
+    let dcompute_reproj_error = rev_diff(compute_reproj_error);
+    //let dcompute_zach_weight_error = rev_diff(compute_zach_weight_error);
+    while( time_sum < 10000 as i64 && (count < min_samples || time_sum < min_time) ){
+        constDouble(nCamParams * n, cams_d, 0.0);
+        constDouble(3 * m, X_d, 0.0);
+        constDouble(p, w_d, 0.0);
+        constInt(2 * p, obs_d, 0);
+        constDouble(2 * p, feats_d, 0.0);
+        constDouble(2 * p, reproj_err_d, 1.0);
+        constDouble(p, w_err_d, 1.0);
+
+        begin();
+
+
+        reproj_err_d(0) = 1.0;
+        reproj_err_d(1) = 0.0;
+
+        let backward = dcompute_reproj_error(cams, cams_d, X, X_d, w(0), feats, feats_d, reproj_err, reproj_err_d);
+        backward();
+
+        /*
+        for i in 0 .. p{
+            let backward = dcompute_zach_weight_error(n, m, p, cams, cams_d, X, X_d, w, w_d, obs, obs_d, feats, feats_d, reproj_err, reproj_err_d, w_err, &w_err_d as &mut[f64]);
+            backward();
+        }*/
+
+        let time = eval();
+        if min_runtime == -1 as i64 || time < min_runtime{
+            min_runtime = time;
+        }
+
+        time_sum += time;
+        count++;
+    }
+
+    printLong(min_runtime);
+    //print(size, J);
+
+}
+
+fn main() -> i32 {
+    runGmmBenchmark("../benchmark/ba/ba1_n49_m7776_p31843.txt");
+    0
+}
+

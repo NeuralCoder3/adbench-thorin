@@ -1,32 +1,8 @@
 #include <math.h>
 #include <stdio.h>
-#include <stdbool.h>
-#include <string>
-#include <iostream>
 #include <vector>
 #include "../shared/lstm.h"
-#include "../../cpp/defs.h"
-#include "../../cpp/read.h"
-#include<sys/time.h>
-
-
-long long timeInMilliseconds(void) {
-    struct timeval tv;
-
-    gettimeofday(&tv,NULL);
-    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
-}
-
-static long long startTime = 0;
-
-void begin(){
-    startTime = timeInMilliseconds();
-}
-
-void eval(){
-    long long endTime = timeInMilliseconds();
-    printf("%d\n", endTime - startTime);
-}
+#include "../../cpp/lib.h"
 
 extern double __enzyme_autodiff(void*, ...);
 
@@ -36,12 +12,12 @@ int enzyme_out;
 int enzyme_const;
 
 void lstm_d(int l, int c, int b,
-          double *main_params,
-          double *extra_params,
-          double *state,
-          double *sequence,
-          double *loss,
-          double *J){
+          double * __restrict__ main_params,
+          double * __restrict__ extra_params,
+          double * __restrict__ state,
+          double * __restrict__ sequence,
+          double * __restrict__ loss,
+          double * __restrict__ J){
 
 
     int main_sz = 2 * l * 4 * b;
@@ -91,27 +67,39 @@ int main(int argc, const char** argv){
     int state_sz = 2 * l * b;
     int seq_sz = c * b;
 
-    double *J = new double [main_sz + extra_sz + state_sz + seq_sz];
+    auto size = main_sz + extra_sz + state_sz + seq_sz;
+    double *J = new double [size];
     double loss;
 
+    auto min_samples = 10;
+    long min_time = 500;
 
-    //lstm_objective(l, c, b, main_params, extra_params, state, sequence, &loss);
+    auto count = 0;
+    long min_runtime = -1;
+    long time_sum = 0;
 
-    begin();
-    lstm_d(l, c, b, &main_params[0], &extra_params[0], &state[0], &sequence[0], &loss, J);
-    eval();
-    //lstm_objective(l, c, b, main_params, extra_params, state, sequence, &loss);
+    while(time_sum < 10000  && (count < min_samples || time_sum < min_time)){
+        for( size_t i = 0 ; i < size ; i++ ){
+            J[i] = 0.0;
+        }
 
-    double *main_d = &J[0];
-    double *extra_d = &J[2 * l * 4 * b];
+        begin();
+        lstm_d(l, c, b, &main_params[0], &extra_params[0], &state[0], &sequence[0], &loss, J);
+        auto time = eval();
 
-    printf("\n");
+        if(min_runtime == -1 || time < min_runtime){
+            min_runtime = time;
+        }
 
-    for( size_t i = 0 ; i < 3 * b ; i++ ){
-        std::cout << extra_d[i] << std::endl;
+        time_sum += time;
+        count++;
     }
 
-    std::cout << loss << std::endl;
+    printLong(min_runtime);
+
+    for( size_t i = 0 ; i < main_sz + extra_sz ; i++ ){
+        std::cout << std::setprecision(20) << J[i] << std::endl;
+    }
 
     return 0;
 }

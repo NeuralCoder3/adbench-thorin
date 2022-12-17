@@ -1,18 +1,10 @@
 #include <math.h>
 #include <stdio.h>
-#include <stdbool.h>
-#include <string>
 #include <iostream>
-#include <algorithm>
-#include <thread>
 #include <functional>
-#include <vector>
-#include <random>
-#include <sstream>
-//#include <cblas.h>
+#include <iomanip>
 
 #include<sys/time.h>
-#include <cstring>
 
 #define MAX(A,B) ((A) > (B) ? A : B)
 
@@ -37,7 +29,7 @@ void printFloat(float i) {
 }
 
 void printDouble(double i) {
-    std::cout << i << " ";
+    std::cout << std::setprecision(20) << i << std::endl;
 }
 
 void printDoubleLine(double i) {
@@ -45,7 +37,7 @@ void printDoubleLine(double i) {
 }
 
 void printInteger(int i) {
-    printf("%d ", i);
+    printf("%d\n", i);
 }
 
 void printIntegerLine(int i) {
@@ -94,11 +86,12 @@ void begin(){
     startTime = timeInMilliseconds();
 }
 
-void eval(){
+long eval(){
     long long endTime = timeInMilliseconds();
-    printf("%d\n", endTime - startTime);
-    fflush(stdout);
+    //printf("%d\n",);
+    //fflush(stdout);
     //printf("Time elapsed : %lld ms\n", endTime - startTime);
+    return  endTime - startTime;
 }
 
 void measure(std::function<void()> f){

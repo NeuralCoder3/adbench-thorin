@@ -3,6 +3,7 @@ extern "C" {
     fn printLine(&[u8]) -> ();
     fn printFloat(f32) -> ();
     fn printDouble(f64) -> ();
+    fn printLong(i64) -> ();
     fn printInteger(i32) -> ();
     fn randomDouble(f64, f64) -> (f64);
 
@@ -12,7 +13,7 @@ extern "C" {
 
     fn atoi(&[u8]) -> (i32);
     fn begin() -> ();
-    fn eval() -> ();
+    fn eval() -> (i64);
 }
 
 fn softmax(size: i32, input: &[f64], output: &mut[f64]) -> (){
@@ -87,29 +88,45 @@ fn main(argc: i32, argv: &[&[u8]]) -> i32 {
     let hidden_output_d = ~[hidden_size: f64];
     let output_d = ~[output_size: f64];
 
-    init(input_size, input, -0.2);
-    init(first_weights_size, first_weights, 0.0);
-    init(second_weights_size, second_weights, 0.0);
-    const(output_size, output, 0.0);
-
-    const(input_size, input_d, 0.0);
-    const(first_weights_size, first_weights_d, 0.0);
-    const(second_weights_size, second_weights_d, 0.0);
-    const(output_size, output_d, 0.0);
-
-    output_d(0) = 1.0;
-    begin();
     let diff = rev_diff(nn_f);
 
-    let backward = diff(input_size, hidden_size, output_size, input, 0 as &mut[f64], first_weights, first_weights_d, hidden_output, hidden_output_d, second_weights, second_weights_d, output, output_d);
-    let result = backward();
+    let min_samples = 10;
+    let min_time = 500 as i64;
 
-    //let backward = diff(input_size, hidden_size, output_size, input, first_weights, hidden_output, second_weights, output);
-    //let result = backward(input_d, first_weights_d, hidden_output_d, second_weights_d, output_d);
+    let mut time_sum = 0 as i64;
+    let mut count = 0;
+    let mut min_runtime = -1 as i64;
 
-    eval();
+    while( time_sum < 10000 as i64 && (count < min_samples || time_sum < min_time) ){
+        init(input_size, input, -0.2);
+        init(first_weights_size, first_weights, 0.0);
+        init(second_weights_size, second_weights, 0.0);
+        const(output_size, output, 0.0);
+
+        const(input_size, input_d, 0.0);
+        const(first_weights_size, first_weights_d, 0.0);
+        const(second_weights_size, second_weights_d, 0.0);
+        const(output_size, output_d, 0.0);
+
+        output_d(0) = 1.0;
+
+        begin();
+        let backward = diff(input_size, hidden_size, output_size, input, 0 as &mut[f64], first_weights, first_weights_d, hidden_output, hidden_output_d, second_weights, second_weights_d, output, output_d);
+        let result = backward();
+
+        let time =eval();
+        if min_runtime == -1 as i64 || time < min_runtime{
+            min_runtime = time;
+        }
+
+        time_sum += time;
+        count++;
+    }
+
+    printLong(min_runtime);
 
 
+/*
     if argc >= 5 && atoi(argv(4)) == 1 {
         print(input_size, input);
         print(first_weights_size, first_weights);
@@ -122,7 +139,7 @@ fn main(argc: i32, argv: &[&[u8]]) -> i32 {
         print(hidden_size, hidden_output_d);
         print(second_weights_size, second_weights_d);
         print(output_size, output_d);
-    }
+    }*/
 
     0
 }

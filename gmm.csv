@@ -1,0 +1,2 @@
+x,manual_time,manual_memory,manual_error,impala_time,impala_memory,impala_error,enzyme_time,enzyme_memory,enzyme_error,torch_time,torch_memory,torch_error
+5775,92,3785984,0.0,123,505677760,6.141915426417256e-14,75,111133824,1.8181019008615925e-13,293,607540992,8.657579878064937e-13

@@ -2,6 +2,7 @@ extern "C" {
     fn printFloat(f32) -> ();
     fn printDouble(f64) -> ();
     fn printInteger(i32) -> ();
+    fn printLong(i64) -> ();
     fn printString(&[u8]) -> ();
     fn log(f64) -> (f64);
     fn exp(f64) -> (f64);
@@ -11,7 +12,7 @@ extern "C" {
     fn logf(f32) -> (f32);
     fn lgamma(f64) -> (f64);
     fn begin() -> ();
-    fn eval() -> ();
+    fn eval() -> (i64);
     fn read_ba_size(
         file: &[u8],
         n: &mut i32,
@@ -183,8 +184,7 @@ extern fn constInt(size: i32, a : &mut [i32], value : i32) -> (){
     }
 }
 
-fn ba(n: i32, m: i32, p: i32, cams: &[f64], X: &[f64], w: &[f64], obs: &[i32], feats: &[f64], reproj_err: &mut[f64], w_err: &mut[f64]) -> (){
-
+fn computeReprojErrors(p: i32, cams: &[f64], X: &[f64], w: &[f64], obs: &[i32], feats: &[f64], reproj_err: &mut[f64]) -> (){
     for i in 0  .. p
     {
         let camIdx = obs(i * 2 + 0);
@@ -197,12 +197,15 @@ fn ba(n: i32, m: i32, p: i32, cams: &[f64], X: &[f64], w: &[f64], obs: &[i32], f
             &reproj_err(2 * i) as &mut[f64]
         );
     }
+}
 
+fn computeZachWeightErrors(p: i32, w: &[f64], w_err: &mut[f64]) -> (){
     for i in 0 .. p
     {
         w_err(i) = computeZachWeightError(w(i));
     }
 }
+
 
 fn runGmmBenchmark(file: &[u8]) -> (){
 
@@ -253,11 +256,23 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     printDouble(w_err(2));
 */
 
-    let diff = rev_diff(ba);
+    let diff = rev_diff(computeReprojErrors);
+    let diffZach = rev_diff(computeZachWeightErrors);
     begin();
-    let backward = diff(n, m, p, cams, cams_d, X, X_d, w, w_d, obs, obs_d, feats, feats_d, reproj_err, reproj_err_d, w_err, w_err_d);
-    backward();
-    eval();
+    //let backward = diff(p, cams, cams_d, X, X_d, w, w_d, obs, obs_d, feats, feats_d, reproj_err, reproj_err_d);
+    //backward();
+
+    let backwardZach = diffZach(p, w, w_d, reproj_err, reproj_err_d);
+    backwardZach();
+
+    printLong(eval());
+
+
+
+
+
+
+
 /*
     printString("\ncams gradients: \n");
     print(20, cams_d);*/

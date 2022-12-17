@@ -78,10 +78,12 @@ build-enzyme-native:
 	mkdir -p ${ENZYME_NATIVE_BUILD} 
 	${CC} ${ENZYME_NATIVE}/enzyme.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/enzyme_input.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops
 	${CC} ${SHARED_ALL}/read.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/read.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops 
-	${CC} ${SHARED}/ba.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/ba.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops 
-	${LLVM_BIN}llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_input.ll 
-	${LLVM_BIN}llvm-as ${ENZYME_NATIVE_BUILD}/ba.ll -o ${ENZYME_NATIVE_BUILD}/ba.bc 
-	${LLVM_BIN}llvm-link ${ENZYME_NATIVE_BUILD}/enzyme_input.bc ${ENZYME_NATIVE_BUILD}/ba.bc  -o ${ENZYME_NATIVE_BUILD}/bundle.bc 
+	${CC} ${SHARED_ALL}/lib.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/lib.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops
+	${CC} ${SHARED}/ba.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/ba.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops
+	${LLVM_BIN}llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_input.ll
+	${LLVM_BIN}llvm-as ${ENZYME_NATIVE_BUILD}/lib.ll
+	${LLVM_BIN}llvm-as ${ENZYME_NATIVE_BUILD}/ba.ll
+	${LLVM_BIN}llvm-link ${ENZYME_NATIVE_BUILD}/enzyme_input.bc ${ENZYME_NATIVE_BUILD}/ba.bc ${ENZYME_NATIVE_BUILD}/lib.bc  -o ${ENZYME_NATIVE_BUILD}/bundle.bc
 	${LLVM_BIN}llvm-dis ${ENZYME_NATIVE_BUILD}/bundle.bc -o ${ENZYME_NATIVE_BUILD}/bundle.ll 
 	${LLVM_BIN}opt ${ENZYME_NATIVE_BUILD}/bundle.ll -load=${ENZYME_LIB} -enzyme -o ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -S -enable-new-pm=0 
 	${LLVM_BIN}llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -o ${ENZYME_NATIVE_BUILD}/enzyme_output.bc 

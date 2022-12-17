@@ -29,10 +29,10 @@ using std::vector;
 // x: d*n points
 // err: 1 output
 
-void gmm_objective(int d, int k, int n, const double* const alphas, const double* const means,
-                   const double* const icf, const double* const x,
+void gmm_objective(int d, int k, int n, const double* const __restrict alphas, const double* const __restrict means,
+                   const double* const __restrict icf, const double* const __restrict x,
                    const double wishart_gamma,
-                   const int wishart_m, double* err);
+                   const int wishart_m, double* __restrict err);
 
 // split of the outer loop over points
 
