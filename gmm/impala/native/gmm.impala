@@ -213,12 +213,12 @@ extern fn gmm(d: i32, k: i32, n: i32,
     let lse_alphas = logsumexp(k, alphas);
 
     let result = CONSTANT + slse - (n as f64) * lse_alphas + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
-/*
+
     free(Qdiags);
     free(sum_qs);
     free(xcentered);
     free(Qxcentered);
-    free(main_term);*/
+    free(main_term);
 
     result
 }

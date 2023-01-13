@@ -9,12 +9,8 @@ import re
 d_list = [2, 10, 20, 32, 64]
 k_list = [5, 10, 25, 50, 100, 200]
 
-
 d_list = [2, 10, 20, 32, 64]
-k_list = [5, 10, 25, 50, 100]
-
-d_list = [20]
-k_list = [25]
+k_list = [5, 10, 25, 50, 200]
 
 n_list = ['1k', '10k', '2.5M']
 
@@ -41,17 +37,33 @@ build_folder = "build/"
 
 bins = {
     "nn" : {
-            "impala": build_folder + "nn/impala/native/nn_impala",
-            "impala-raw": build_folder + "nn/impala/native/nn_raw_impala",
-            "impala-grad": build_folder + "nn/impala/native/nn_grad_impala",
-            "impala-war": build_folder + "nn/impala/native/nn_war_impala",
-            "impala-dep": build_folder + "nn/impala/native/nn_dep_impala",
-            "enzyme": build_folder + "nn/enzyme/nn_enzyme",
-            "torch": "python3 nn/torch/torch_nn.py"
+        "impala": build_folder + "nn/impala/native/nn_impala",
+        "impala-raw": build_folder + "nn/impala/native/nn_raw_impala",
+        "impala-grad": build_folder + "nn/impala/native/nn_grad_impala",
+        "impala-war": build_folder + "nn/impala/native/nn_war_impala",
+        "impala-dep": build_folder + "nn/impala/native/nn_dep_impala",
+        "impala-war-dep": build_folder + "nn/impala/native/nn_war_dep_impala",
+        "enzyme": build_folder + "nn/enzyme/nn_enzyme",
+        "torch": "python3 nn/torch/torch_nn.py"
     },
-    "gmm" : {"impala": build_folder + "gmm/impala/native/gmm_impala", "enzyme": build_folder + "gmm/enzyme/gmm_enzyme", "manual": build_folder + "gmm/manual/gmm_manual", "torch" : "python3 gmm/torch/main.py GMM"},
-    "ba" : {"impala": build_folder + "ba/impala/native/ba_impala", "enzyme": build_folder + "ba/enzyme/lstm_enzyme", "manual": build_folder + "ba/manual/ba_manual", "torch" : "python3 gmm/torch/main.py BA"},
-    "lstm" : {"impala": build_folder + "lstm/impala/native/lstm_impala", "enzyme": build_folder + "lstm/enzyme/lstm_enzyme", "manual": build_folder + "lstm/manual/lstm_manual", "torch" : "python3 gmm/torch/main.py LSTM"}
+    "gmm" : {
+        "impala": build_folder + "gmm/impala/native/gmm_impala",
+        "impala-fix": build_folder + "gmm/impala/native/gmm_impala_fix",
+        "enzyme": build_folder + "gmm/enzyme/gmm_enzyme",
+        "manual": build_folder + "gmm/manual/gmm_manual",
+        "torch" : "python3 gmm/torch/main.py GMM"
+    },
+    "ba" : {
+        "impala": build_folder + "ba/impala/native/ba_impala",
+        "enzyme": build_folder + "ba/enzyme/lstm_enzyme",
+        "manual": build_folder + "ba/manual/ba_manual",
+        "torch" : "python3 gmm/torch/main.py BA"},
+    "lstm" : {
+        "impala": build_folder + "lstm/impala/native/lstm_impala",
+        "enzyme": build_folder + "lstm/enzyme/lstm_enzyme",
+        "manual": build_folder + "lstm/manual/lstm_manual",
+        "torch" : "python3 gmm/torch/main.py LSTM"
+    }
 }
 
 
@@ -127,7 +139,7 @@ def run_task(bin, type, args):
     memory = -1
 
     try:
-        outs, errs = proc.communicate(timeout=21)
+        outs, errs = proc.communicate(timeout=100)
         gradients = list(filter(len, outs.decode("utf-8").replace(" ", "").split('\n')))
         profiler = list(map( lambda x: re.split('\s+', x), filter(len, map(lambda x: x.strip(), errs.decode("utf-8").split('\n')))))
 
@@ -156,7 +168,7 @@ def run_and_error(bin, type, args, pattern, measure = True):
 
         add_result(result)
 
-        if measure:
+        if measure and result.gradients is not None:
             manual = run_task("manual", type, arg)
             max_error = 0.0
             for (left, right) in zip(manual.gradients, result.gradients):
@@ -170,7 +182,16 @@ def run_and_error(bin, type, args, pattern, measure = True):
         print(result.time)
 
 def run_gmm(bin):
-    run_and_error(bin, "gmm", gmm_list, "d={}, k={}")
+
+
+    variants = [bin]
+    if bin == "impala":
+        variants = ["impala", "impala-fix"]
+
+
+    for variant in variants:
+        print(variant)
+        run_and_error(variant, "gmm", gmm_list, "d={}, k={}")
 
 
 def run_nn(bin):
@@ -179,10 +200,10 @@ def run_nn(bin):
 
     variants = [bin]
     if bin == "impala":
-        variants = ["impala-dep", "impala-war", "impala-grad"]
+        variants = ["impala-dep",  "impala-war-dep", "impala-war", "impala-grad"]
         #variants = ["impala-dep"]
 
-    args = [[str(28 * 28), str(20000 * i), "10"] for i in range(1,30)]
+    args = [[str(28 * 28), str(20000 * i), "10"] for i in range(1,60)]
     for variant in variants:
         print(variant)
         run_and_error(variant, "nn", args, "{1}", False)
@@ -192,6 +213,33 @@ def run_nn(bin):
 def run_lstm(bin):
     run_and_error( bin, "lstm", [(2, 1024), (2, 4096), (4, 1024), (4, 4096)], "l={}, c={}")
 
+def write_result():
+    for [type, type_results] in results.items():
+        with open(type + '.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+
+            header = ["x"]
+
+            for bin in type_results.keys():
+                header.append(bin + "_time")
+                header.append(bin + "_memory")
+                header.append(bin + "_error")
+
+            writer.writerow(header)
+
+            random_results = next(iter(type_results.values()))
+            result_size = len(random_results)
+
+            for i in range(result_size):
+                row = []
+                row.append(calc_x_value(i, random_results[i]))
+                for item in type_results.values():
+                    row.append(item[i].time)
+                    row.append(item[i].memory)
+                    row.append(item[i].max_error)
+
+                writer.writerow(row)
+
 def run(bin, type):
     if type == "gmm":
         run_gmm(bin)
@@ -199,11 +247,6 @@ def run(bin, type):
         run_nn(bin)
     if type == "lstm":
         run_lstm(bin)
-
-def run_all(bin):
-    run(bin, "gmm")
-    #run(bin, "nn")
-    #run(bin, "lstm")
 
 
 def calc_x_value(i, result):
@@ -216,35 +259,16 @@ def calc_x_value(i, result):
     elif type == "lstm":
         return i
 
-for bin in ["manual", "impala", "enzyme", "torch"]:#
-    print(bin)
-    run_all(bin)
 
+def run_all():
+    for benchmark in ["lstm"]:
+        results.clear()
+        print(benchmark)
+        for bin in ["torch"]:
+            print(bin)
+            run(bin, benchmark)
+        write_result()
 
-for [type, type_results] in results.items():
-    with open(type + '.csv', 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile, delimiter=',')
-
-        header = ["x"]
-
-        for bin in type_results.keys():
-            header.append(bin + "_time")
-            header.append(bin + "_memory")
-            header.append(bin + "_error")
-
-        writer.writerow(header)
-
-        random_results = next(iter(type_results.values()))
-        result_size = len(random_results)
-
-        for i in range(result_size):
-            row = []
-            row.append(calc_x_value(i, random_results[i]))
-            for results in type_results.values():
-                row.append(results[i].time)
-                row.append(results[i].memory)
-                row.append(results[i].max_error)
-
-            writer.writerow(row)
+run_all()
 
 

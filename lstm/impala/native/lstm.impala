@@ -41,7 +41,8 @@ extern "C" {
                               main_params_p: &&mut[f64],
                               extra_params_p: &&mut[f64],
                               state_p: &&mut[f64],
-                              sequence_p: &&mut[f64]) -> ();
+                              sequence_p: &&mut[f64],
+                              init: i32) -> ();
 }
 
 
@@ -182,7 +183,7 @@ fn lstm(
     }
 
     free(ypred);
-    free(ypred);
+    free(ynorm);
 
     let count = (c - 1) * b;
     -total / ( count as f64)
@@ -213,7 +214,7 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let mut sequence: &mut[f64];
 
 
-    read_lstm_instance(file, &mut l, &mut c, &mut b, &mut main_params, &mut extra_params, &mut state, &mut sequence);
+    read_lstm_instance(file, &mut l, &mut c, &mut b, &mut main_params, &mut extra_params, &mut state, &mut sequence, 1);
 
     let main_sz = 2 * l * 4 * b;
     let extra_sz = 3 * b;
@@ -224,11 +225,12 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let mut gradients : &mut[f64] = ~[grad_sz: f64];
 
     let mut main_params_d: &mut[f64] = gradients;
+
+    const(grad_sz, gradients, 0.0);
+
     let mut extra_params_d: &mut[f64] = &main_params_d(main_sz) as &mut[f64];
     let mut state_d: &mut[f64] = &extra_params_d(extra_sz) as &mut[f64];
     let mut sequence_d: &mut[f64] = &state_d(state_sz) as &mut[f64];
-
-
 
     let min_samples = 10;
     let min_time = 500 as i64;
@@ -237,16 +239,10 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let mut count = 0;
     let mut min_runtime = -1 as i64;
 
-
-
     let diff = rev_diff(lstm);
     while( time_sum < 10000 as i64 && (count < min_samples || time_sum < min_time) ){
-            read_lstm_instance(file, &mut l, &mut c, &mut b, &mut main_params, &mut extra_params, &mut state, &mut sequence);
-
-        const(main_sz, main_params_d, 0.0);
-        const(extra_sz, extra_params_d, 0.0);
-        const(state_sz, state_d, 0.0);
-        const(seq_sz, sequence_d, 0.0);
+        const(grad_sz, gradients, 0.0);
+        read_lstm_instance(file, &mut l, &mut c, &mut b, &mut main_params, &mut extra_params, &mut state, &mut sequence, 0);
 
         begin();
         let (fx, backward) = diff(l, c, b, main_params, main_params_d, extra_params, extra_params_d, state, state_d, sequence, sequence_d);

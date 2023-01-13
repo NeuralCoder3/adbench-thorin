@@ -47,6 +47,10 @@ build-impala:
 	${LLVM_BIN}/llvm-as ${NATIVE_IMPALA_BUILD}/gmm_impala.ll
 	${CC} -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/gmm_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/gmm_impala
 
+build-llvm-impala:
+	${LLVM_BIN}/llvm-as ${NATIVE_IMPALA_BUILD}/gmm_impala_fix.ll
+	${CC} -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${NATIVE_IMPALA_BUILD}/gmm_impala_fix.bc -O3 -o ${NATIVE_IMPALA_BUILD}/gmm_impala_fix
+
 run-impala:
 	${NATIVE_IMPALA_BUILD}/gmm_impala $(RUN_ARGS)
 # ../benchmark/ba/ba1_n49_m7776_p31843.txt

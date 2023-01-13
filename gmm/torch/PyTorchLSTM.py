@@ -40,6 +40,8 @@ class PyTorchLSTM:
     def calculate_jacobian(self):
         ''' Calculates objective function jacobian many times.'''
 
+        #self.objective = lstm_objective(*self.inputs, *self.params)
+
         self.objective, self.gradient = torch_jacobian(
             lstm_objective,
             self.inputs,

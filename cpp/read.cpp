@@ -218,7 +218,8 @@ extern "C"{
                           double **main_params_p,
                           double **extra_params_p,
                           double **state_p,
-                          double **sequence_p)
+                          double **sequence_p,
+                          int init)
   {
     FILE* fid = fopen(fn, "r");
 
@@ -235,15 +236,23 @@ extern "C"{
     int state_sz = 2 * l_ * b_;
     int seq_sz = c_ * b_;
 
-    double *main_params = new double[main_sz];//{0.0};
-    double *extra_params = new double[extra_sz];//{0.0};
-    double *state = new double[state_sz];//{0.0};
-    double *sequence = new double[seq_sz];//{0.0};
+    if(init){
+        double *main_params = new double[main_sz];//{0.0};
+        double *extra_params = new double[extra_sz];//{0.0};
+        double *state = new double[state_sz];//{0.0};
+        double *sequence = new double[seq_sz];//{0.0};
 
-    *main_params_p = main_params;
-    *extra_params_p = extra_params;
-    *state_p = state;
-    *sequence_p = sequence;
+
+        *main_params_p = main_params;
+        *extra_params_p = extra_params;
+        *state_p = state;
+        *sequence_p = sequence;
+    }
+
+      double *main_params = *main_params_p;
+      double *extra_params = *extra_params_p;
+      double *state = *state_p;
+      double *sequence = *sequence_p;
 
     for (int i = 0; i < main_sz; i++) {
       fscanf(fid, "%lf", &main_params[i]);

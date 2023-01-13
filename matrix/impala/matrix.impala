@@ -195,7 +195,6 @@ extern fn gmm(d: i32, k: i32, n: i32,
     preprocess_qs(d, k, icf, sum_qs, Qdiags);
 
     let mut slse = 0.0;
-
     for ix in 0 .. n {
         let currentX : &[f64] =  &x(ix * d) as &[f64];
         for ik in 0 .. k {
@@ -205,14 +204,11 @@ extern fn gmm(d: i32, k: i32, n: i32,
 
             subtract(d, currentX, currentMeans, xcentered);
             Qtimesx(d, currentQdiags, currentIfc, xcentered, Qxcentered);
-            main_term(ik) = alphas(ik) + sum_qs(ik) - 0.5 * sqnorm(d, Qxcentered);
+            main_term(ik) = sqnorm(d, Qxcentered);
         }
         slse += logsumexp(k, main_term);
     }
 
-    let lse_alphas = logsumexp(k, alphas);
-
-    let result = CONSTANT + slse - (n as f64) * lse_alphas + log_wishart_prior(d, k, wishartM, wishartGamma, sum_qs, Qdiags, icf);
 
     free(Qdiags);
     free(sum_qs);
@@ -220,7 +216,7 @@ extern fn gmm(d: i32, k: i32, n: i32,
     free(Qxcentered);
     free(main_term);
 
-    result
+    slse
 }
 
 fn runBenchmark(d: i32, k: i32, n: i32,

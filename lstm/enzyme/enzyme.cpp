@@ -79,6 +79,8 @@ int main(int argc, const char** argv){
     long time_sum = 0;
 
     while(time_sum < 10000  && (count < min_samples || time_sum < min_time)){
+        read_lstm_instance(benchmark.c_str(), &l, &c, &b, main_params, extra_params, state, sequence);
+
         for( size_t i = 0 ; i < size ; i++ ){
             J[i] = 0.0;
         }
