@@ -18,7 +18,7 @@ long long timeInMilliseconds(void) {
     return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
 }
 
-long long startTime = 0;
+static long long startTime = 0;
 
 void begin(){
     startTime = timeInMilliseconds();
@@ -62,6 +62,7 @@ void ba_d(int n, int m, int p,
         reproj_err_d[i] = 1.0;
     }
 
+    // printf("before enzyme\n");
     __enzyme_autodiff((void*) ba_objective,
                         enzyme_const, n,
                         enzyme_const, m,
@@ -84,14 +85,20 @@ int main(int argc, const char** argv){
     int n = 49;
     int m = 7776;
     int p = 31843;
+
+    // printf("now reading sizes\n");
+    std::string benchmark = argv[1];
+    read_ba_size(benchmark.c_str(), n, m, p);
+    // printf("n: %d, m: %d, p: %d\n", n, m, p);
+
     double *cams = new double[11 * n];
     double *X = new double[3 * m];
     double *w = new double[p];
     int *obs = new int[2 * p];
     double *feats = new double[2 * p];
 
-    std::string benchmark = argv[1];
 
+    // printf("now reading\n");
     read_ba_instance(benchmark.c_str(), n, m, p, cams, X, w, obs, feats);
 
     double *w_err = new double [p];
@@ -105,6 +112,7 @@ int main(int argc, const char** argv){
     }
 
     begin();
+    // printf("before ba_d\n");
     ba_d(n, m, p, cams, X, w, obs, feats, reproj_err, w_err, &J[0]);
 
     eval();

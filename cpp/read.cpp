@@ -172,24 +172,30 @@ extern "C"{
                           int* obs,
                           double* feats)
     {
+        // printf("inside read_ba_instance\n");
         FILE* fid = fopen(file, "r");
         if (!fid) {
             throw "oik";
         }
+        // printf("opened file\n");
 
         fscanf(fid, "%i %i %i", &n, &m, &p);
         int nCamParams = 11;
 
+        // printf("now scanning\n");
         for (int j = 0; j < nCamParams; j++)
             fscanf(fid, "%lf", &cams[j]);
+        // printf("mem copying\n");
         for (int i = 1; i < n; i++)
             memcpy(&cams[i * nCamParams], &cams[0], nCamParams * sizeof(double));
 
+        // printf("read head\n");
         for (int j = 0; j < 3; j++)
             fscanf(fid, "%lf", &X[j]);
         for (int i = 1; i < m; i++)
             memcpy(&X[i * 3], &X[0], 3 * sizeof(double));
 
+        // printf("finally\n");
         fscanf(fid, "%lf", &w[0]);
         for (int i = 1; i < p; i++)
             w[i] = w[0];
@@ -202,6 +208,7 @@ extern "C"{
             obs[i * 2 + 1] = (ptIdx++ % m);
         }
 
+        // printf("read last two lines\n");
         fscanf(fid, "%lf %lf", &feats[0], &feats[1]);
         for (int i = 1; i < p; i++)
         {

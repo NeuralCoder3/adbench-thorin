@@ -3,6 +3,7 @@
 #include <iostream>
 #include <functional>
 #include <iomanip>
+#include <chrono>
 
 #include<sys/time.h>
 
@@ -73,7 +74,7 @@ double randomDouble(double fMin, double fMax)
 
 
 
-long long startTime = 0;
+static long long startTime = 0;
 
 long long timeInMilliseconds(void) {
     struct timeval tv;
