@@ -52,6 +52,7 @@ all: build-impala run-impala
 build-impala:
 	mkdir -p ${NATIVE_IMPALA_BUILD}
 	${IMPALA_EXE} ${NATIVE_IMPALA}/nn.impala -autodiff --emit-llvm --emit-c-interface -o ${NATIVE_IMPALA_BUILD}/nn_impala
+	sed -i 's/llvm\.maximum\.f64/llvm\.maxnum\.f64/g' ${NATIVE_IMPALA_BUILD}/nn_impala.ll
 	${LLVM_BIN}/llvm-as ${NATIVE_IMPALA_BUILD}/nn_impala.ll
 	${CC} -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${SHARED}/mnist.cpp ${NATIVE_IMPALA_BUILD}/nn_impala.bc -O3 -o ${NATIVE_IMPALA_BUILD}/nn_impala
 

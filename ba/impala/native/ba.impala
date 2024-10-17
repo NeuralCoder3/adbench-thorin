@@ -259,8 +259,10 @@ fn runGmmBenchmark(file: &[u8]) -> (){
     let diff = rev_diff(computeReprojErrors);
     let diffZach = rev_diff(computeZachWeightErrors);
     begin();
-    //let backward = diff(p, cams, cams_d, X, X_d, w, w_d, obs, obs_d, feats, feats_d, reproj_err, reproj_err_d);
-    //backward();
+
+    // computeReprojErrors(p, cams, X, w, obs, feats, reproj_err);
+    // let backward = diff(p, cams, cams_d, X, X_d, w, w_d, obs, obs_d, feats, feats_d, reproj_err, reproj_err_d);
+    // backward();
 
     let backwardZach = diffZach(p, w, w_d, reproj_err, reproj_err_d);
     backwardZach();
