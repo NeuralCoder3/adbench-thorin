@@ -24,6 +24,9 @@ ENZYME_LIB := ../../Enzyme2/enzyme/build/Enzyme/LLVMEnzyme-12.dylib
 LLVM_BIN := /opt/homebrew/Cellar/llvm/15.0.3/bin
 ENZYME_LIB := /opt/homebrew/Cellar/enzyme/0.0.45/lib/LLVMEnzyme-15.dylib
 
+LLVM_BIN := /usr/bin
+ENZYME_LIB := /Enzyme/enzyme/build/Enzyme/LLVMEnzyme-14.so
+
 IMPALA_EXE := ../../impala/build/bin/impala
 CC := clang++
 
@@ -68,11 +71,14 @@ build-enzyme-impala:
 	${LLVM_BIN}/llvm-as ${ENZYME_IMPALA_BUILD}/out.ll
 	${CC} -lm ${SHARED_ALL}/lib.cpp ${SHARED_ALL}/read.cpp ${SHARED}/mnist.cpp ${ENZYME_IMPALA_BUILD}/out.bc -O3 -o ${ENZYME_IMPALA_BUILD}/nn_enzyme
 
+# ${LLVM_BIN}/${CC} ${ENZYME_NATIVE}/enzyme.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/enzyme_input.ll -O2 -fno-vectorize -fno-slp-vectorize -ffast-math -fno-unroll-loops -Xclang -no-opaque-pointers
+# ${LLVM_BIN}/${CC} ${SHARED_ALL}/read.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/read.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops -Xclang -no-opaque-pointers
+# ${LLVM_BIN}/${CC} ${SHARED_ALL}/lib.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/lib.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops -Xclang -no-opaque-pointers
 build-enzyme-native:
 	mkdir -p ${ENZYME_NATIVE_BUILD}
-	${LLVM_BIN}/${CC} ${ENZYME_NATIVE}/enzyme.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/enzyme_input.ll -O2 -fno-vectorize -fno-slp-vectorize -ffast-math -fno-unroll-loops -Xclang -no-opaque-pointers
-	${LLVM_BIN}/${CC} ${SHARED_ALL}/read.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/read.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops -Xclang -no-opaque-pointers
-	${LLVM_BIN}/${CC} ${SHARED_ALL}/lib.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/lib.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops -Xclang -no-opaque-pointers
+	${LLVM_BIN}/${CC} ${ENZYME_NATIVE}/enzyme.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/enzyme_input.ll -O2 -fno-vectorize -fno-slp-vectorize -ffast-math -fno-unroll-loops 
+	${LLVM_BIN}/${CC} ${SHARED_ALL}/read.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/read.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops 
+	${LLVM_BIN}/${CC} ${SHARED_ALL}/lib.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/lib.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops 
 	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_input.ll
 	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/lib.ll -o ${ENZYME_NATIVE_BUILD}/lib.bc
 	${LLVM_BIN}/llvm-link ${ENZYME_NATIVE_BUILD}/enzyme_input.bc  ${ENZYME_NATIVE_BUILD}/lib.bc -o ${ENZYME_NATIVE_BUILD}/bundle.bc
@@ -87,3 +93,5 @@ run-enzyme-native:
 
 run-enzyme-impala:
 	${ENZYME_IMPALA_BUILD}/nn_enzyme  $(RUN_ARGS)
+
+# ../build/nn/enzyme/nn_enzyme 78400 2000 10

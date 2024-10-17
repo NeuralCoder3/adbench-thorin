@@ -20,8 +20,11 @@ NATIVE_MANUAL_BUILD := ${BUILD_BA}/manual
 RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 $(eval $(RUN_ARGS):;@:)
 
-LLVM_BIN := /Users/chris/CLionProjects/anydsl/llvm_install/bin/
-ENZYME_LIB := ../../Enzyme2/enzyme/build/Enzyme/LLVMEnzyme-12.dylib
+# LLVM_BIN := /Users/chris/CLionProjects/anydsl/llvm_install/bin/
+# ENZYME_LIB := ../../Enzyme2/enzyme/build/Enzyme/LLVMEnzyme-12.dylib
+LLVM_BIN := /usr/bin
+ENZYME_LIB := /Enzyme/enzyme/build/Enzyme/LLVMEnzyme-14.so
+
 IMPALA_EXE := ../../impala/build/bin/impala
 CC := clang++
 
@@ -45,6 +48,7 @@ run-native:
 
 native: build-native run-native
 
+# ${IMPALA_EXE} ${NATIVE_IMPALA}/ba.impala -autodiff --emit-llvm --emit-c-interface -o ${NATIVE_IMPALA_BUILD}/ba_impala
 build-impala:
 	LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${RUNTIME} 
 	mkdir -p ${NATIVE_IMPALA_BUILD}
@@ -80,15 +84,15 @@ build-enzyme-native:
 	${CC} ${SHARED_ALL}/read.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/read.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops 
 	${CC} ${SHARED_ALL}/lib.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/lib.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops
 	${CC} ${SHARED}/ba.cpp -S -emit-llvm -o ${ENZYME_NATIVE_BUILD}/ba.ll -O2 -fno-vectorize -fno-slp-vectorize -fno-unroll-loops
-	${LLVM_BIN}llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_input.ll
-	${LLVM_BIN}llvm-as ${ENZYME_NATIVE_BUILD}/lib.ll
-	${LLVM_BIN}llvm-as ${ENZYME_NATIVE_BUILD}/ba.ll
-	${LLVM_BIN}llvm-link ${ENZYME_NATIVE_BUILD}/enzyme_input.bc ${ENZYME_NATIVE_BUILD}/ba.bc ${ENZYME_NATIVE_BUILD}/lib.bc  -o ${ENZYME_NATIVE_BUILD}/bundle.bc
-	${LLVM_BIN}llvm-dis ${ENZYME_NATIVE_BUILD}/bundle.bc -o ${ENZYME_NATIVE_BUILD}/bundle.ll 
-	${LLVM_BIN}opt ${ENZYME_NATIVE_BUILD}/bundle.ll -load=${ENZYME_LIB} -enzyme -o ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -S -enable-new-pm=0 
-	${LLVM_BIN}llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -o ${ENZYME_NATIVE_BUILD}/enzyme_output.bc 
-	${LLVM_BIN}llvm-as ${ENZYME_NATIVE_BUILD}/read.ll -o ${ENZYME_NATIVE_BUILD}/read.bc 
-	${LLVM_BIN}${CC} ${ENZYME_NATIVE_BUILD}/enzyme_output.bc ${ENZYME_NATIVE_BUILD}/read.bc -O2 -o ${ENZYME_NATIVE_BUILD}/ba_enzyme
+	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_input.ll
+	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/lib.ll
+	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/ba.ll
+	${LLVM_BIN}/llvm-link ${ENZYME_NATIVE_BUILD}/enzyme_input.bc ${ENZYME_NATIVE_BUILD}/ba.bc ${ENZYME_NATIVE_BUILD}/lib.bc  -o ${ENZYME_NATIVE_BUILD}/bundle.bc
+	${LLVM_BIN}/llvm-dis ${ENZYME_NATIVE_BUILD}/bundle.bc -o ${ENZYME_NATIVE_BUILD}/bundle.ll 
+	${LLVM_BIN}/opt ${ENZYME_NATIVE_BUILD}/bundle.ll -load=${ENZYME_LIB} -enzyme -o ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -S -enable-new-pm=0 
+	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/enzyme_output.ll -o ${ENZYME_NATIVE_BUILD}/enzyme_output.bc 
+	${LLVM_BIN}/llvm-as ${ENZYME_NATIVE_BUILD}/read.ll -o ${ENZYME_NATIVE_BUILD}/read.bc 
+	${LLVM_BIN}/${CC} ${ENZYME_NATIVE_BUILD}/enzyme_output.bc ${ENZYME_NATIVE_BUILD}/read.bc -O2 -o ${ENZYME_NATIVE_BUILD}/ba_enzyme
 
 run-enzyme-native:
 	${ENZYME_NATIVE_BUILD}/ba_enzyme $(RUN_ARGS)
