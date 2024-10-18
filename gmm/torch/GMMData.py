@@ -10,16 +10,16 @@ from output_utils import save_value_to_file, objective_file_name,\
 
 @dataclass
 class GMMInput:
-    alphas:     np.ndarray = field(default = np.empty(0, dtype = np.float64))
-    means:      np.ndarray = field(default = np.empty(0, dtype = np.float64))
-    icf:        np.ndarray = field(default = np.empty(0, dtype = np.float64))
-    x:          np.ndarray = field(default = np.empty(0, dtype = np.float64))
-    wishart:    Wishart = field(default = Wishart())
+    alphas:     np.ndarray = field(default_factory=lambda: np.empty(0, dtype = np.float64))
+    means:      np.ndarray = field(default_factory=lambda: np.empty(0, dtype = np.float64))
+    icf:        np.ndarray = field(default_factory=lambda: np.empty(0, dtype = np.float64))
+    x:          np.ndarray = field(default_factory=lambda: np.empty(0, dtype = np.float64))
+    wishart:    Wishart = field(default_factory=lambda: Wishart())
 
 @dataclass
 class GMMOutput:
     objective: np.float64 = 0.0
-    gradient: np.ndarray = field(default = np.empty(0, dtype = np.float64))
+    gradient: np.ndarray = field(default_factory=lambda: np.empty(0, dtype = np.float64))
 
     def save_output_to_file(
         self,
